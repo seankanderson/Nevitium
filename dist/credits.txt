@@ -1,0 +1,97 @@
+(Nevitium) Copyright 2006, 2007, 2008, 2009 Data Virtue and Sean Anderson
+
+Nevitium uses several free third-party libraries.
+This greatly increases the quality and scope of the
+software.  Had these resources not been made available
+I would not have been able to complete this project in 
+in a timely manner and certainly not at its current 
+level of quality. 
+
+
+http://www.datavirtue.com
+
+
+Nevitium Concept
+Sean Kristen Anderson
+
+
+Nevitium Design
+Sean Kristen Anderson
+
+
+Programming
+Sean Kristen Anderson
+
+
+Systems
+============================================
+Java Development System
+Sun Microsystems - End Users : http://www.java.com/
+                   Developers: http://java.sun.com/
+
+
+Integrated Development Environment
+Netbeans - http://www.netbeans.org/
+--------------------------------------------
+
+
+3rd Party Libraries, Java Code and Utilities
+============================================
+PDF Output
+iText - http://www.lowagie.com/iText/
+
+
+Direct (Non-Java) Adobe Reader based PDF Print Utility
+pdfp - http://www.esnips.com/web/PDFTools
+
+
+Font, Color Chooser - http://www.l2fprod.com/common/
+
+
+Look and Feels (Themes)
+http://www.jtattoo.net
+
+
+Zip files, Compression
+TrueZIP - https://truezip.dev.java.net/
+
+
+Date Chooser, Calendar
+Microba - http://microba.sourceforge.net/
+
+
+Password Encryption
+Bouncy Castle - http://www.bouncycastle.org/java.html
+
+
+URL to Browser
+Browser Launcher 2 - http://browserlaunch2.sourceforge.net/
+--------------------------------------------
+
+
+ICONS
+============================================
+http://www.aha-soft.com
+Free Icons:
+http://www.icojoy.com
+http://www.webdesignerdepot.com
+http://the-ace.deviantart.com/art/Adobe-CS-3-Icons-Replacement-53728408
+http://pixel-mixer.com
+
+--------------------------------------------
+
+Original Icons & Graphics
+============================================
+Created by Sean K Anderson using Inkscape & IcoFX
+http://www.inkscape.org
+http://www.x2studios.com/index.php?page=products
+
+
+Special Thanks
+============================================
+http://www.javaranch.com
+http://forums.sun.com/index.jspa
+http://www.exampledepot.com/
+http://www.java2s.com/
+http://java.dzone.com/
+http://www.addedbytes.com/

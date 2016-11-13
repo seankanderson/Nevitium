@@ -1,0 +1,124 @@
+BUGS:
+
+screen calculation for dual-extended support
+
+check invoice for status before initiating any comand affected by changes during a "view" in the invoice manager
+
+*** turn on buttons for a search but make sure we verify that the button is a viable command for running!
+
+The 31st invoice item is not being printed!!!! Fixed???
+----------------------------------------
+
+add ability to attach more files to a quote or invoice email!
+
+scan My Connections to make sure phone number, email, address, address2  is unique before saving!!
+
+Inventory search functions
+
+More ways to search? inventory invoices customers suppliers
+
+establish a unique return feature for DBEngine search (no duplicate results)
+
+
+invoice aux screen, finish integration
+
+finish invoice layout, statements and report layouts
+add font and color to data element
+
+finish EDI for email feature (version 1.6)
+
+
+add feature to output invoices to a ftp location with pages and folders set with permissions for clients 
+(basic page with a list of availble invoices as links--branded with custom CSS ability)
+
+
+Integration:
+My Connectors
+export columns from a table to a XHTML/CSV/XML files uploaded to a server
+build a folder tree for customers and an index page with htaccess file and email users their password! ftp it for em!
+provide triggers to activate the compilation and upload, create a new dialog with tabs to handle each connector
+
+
+need to copy standard layout files to new companies!
+
+EDI - allow email transfer of data changes to a list of email addresses checked by other stations  
+
+Set up a new data table to house annotations for inventory items.
+Have the annotations independent but linkable to inventory items.
+Need an annotation manager to work with this feature.
+
+Can annotations be linked to a specific invoice item, yes, they must be.
+invitemnote.sch - annotations tied to a specific invitem key
+annotations.sch - reusable annotations
+
+
+On receipts, must be a way to include UPC!!!!
+Make sure each document element is switchable on/off
+
+
+Need recurring billing/payment system
+
+Need a list of sent emails, an email log!
+
+----------------------------------------
+
+**********
+Adding or changing document elements:
+
+DocumentLayout: Make sure there is a proper "if" section for the new element
+
+InvoicePrintPanel: If graphical make sure it is handled properly - paintComponent()
+
+InvoiceLayoutManager: Make sure it is handled in addNewDocumentElement()
+
+DocumentElement: private variable, getter, setter, printElement()?
+
+**********
+
+
+NewEmail object line 69 introduce email checking and prompt
+move sch files into a zip file and calculate a MD5 that is stored in binary for comparison
+
+cash drawer utility
+if no email address is found for a contact as k for one!!!!!!!!!!!
+  
+Create a custom invoice layout for pre-printed forms
+Create a css form builder for custom invoices/workorders/quotes.
+
+make the misc field show up on invoices, allow them to name the misc field
+and select the name for inclusion and the field per customer.
+
+Create a one-off label utility for single labels inappropriate for the database
+
+Allow the user to send a quick text/file email from my connections.
+
+Need more phone numbers and document management features.
+
+when you cast a object and insert it into another object type container you need to check for err
+build a check register to track "printed" checks
+
+inventory labels need to go in workingPath
+inventory groups need managed and barcode label ability
+inventory calc inventory cost needs to be made manual
+
+need to DAO all data access that references a field index
+
+need right-click & Copy abilities on tables cells
+
+INVENTORY:
+need deep searches for inventory description
+
+need image managemnet in inventory, allow them to select files and rename them,
+allow multiple pics and slideshow ability.  rename files based on code
+when selecting multiple file display a list of files with a preview at the right, allow
+the user to change the order of the files as they will be renamed CODE#_1, CODE#_2, etc...
+tell them they are being renamed and copied to path
+check for upc and code and display them in radio format to select auto renaming,
+if none of either is found display a text box for the user to provide a name.
+Put the files in a folder under the base name, this way the user can run slide
+shows of product lines easily
+Nevitium should allow the user to select products from inventory to run as a slide show
+setup to provide user interaction through a touch interface, allowing them to scroll
+and get more information
+
+

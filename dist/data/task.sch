@@ -1,0 +1,16 @@
+task
+data/
+4
+APPOINTMENT
+TXT
+30
+TIME
+LONG
+0
+NOTE
+TXT
+80
+WARN
+YESNO
+0
+-----------

@@ -1,0 +1,16 @@
+ediemaillog
+data/
+3
+FILENAME
+TXT
+50
+RECIPIENT
+TXT
+255
+SENT
+YESNO
+1
+TIME
+LONG
+0
+-----------

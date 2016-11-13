@@ -1,0 +1,10 @@
+invnotes
+data/
+2
+INVENTORY
+INT
+4
+NOTE
+TXT
+1024
+------------

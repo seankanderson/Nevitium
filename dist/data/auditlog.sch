@@ -1,0 +1,12 @@
+auditlog
+data/
+3
+TIME
+LONG
+8
+USER
+TXT
+20
+ACTION
+TXT
+40
