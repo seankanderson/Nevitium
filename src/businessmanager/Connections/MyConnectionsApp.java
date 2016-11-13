@@ -6,7 +6,7 @@
  */
 
 package businessmanager.Connections;
-import EDI.EDIResolver;
+//import EDI.EDIResolver;
 import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
 import businessmanager.Common.TableView;

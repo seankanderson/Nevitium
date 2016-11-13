@@ -9,7 +9,6 @@ import RuntimeManagement.KeyCard;
 
 import datavirtue.*;
 import java.util.*;
-import javax.swing.JOptionPane.*;
 import javax.swing.JOptionPane;
 
 /**

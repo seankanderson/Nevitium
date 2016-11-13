@@ -1,0 +1,10 @@
+messages
+data/
+2
+NAME
+TXT
+20
+MESSAGE
+TXT
+320
+-----------------

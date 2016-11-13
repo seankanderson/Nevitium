@@ -6,7 +6,7 @@
  */
 
 package businessmanager.Config;
-import EDI.EDIConfig;
+//import EDI.EDIConfig;
 import RuntimeManagement.GlobalApplicationDaemon;
 import RuntimeManagement.KeyCard;
 import java.io.*;
@@ -2939,7 +2939,7 @@ private void invoiceFolderFieldActionPerformed(java.awt.event.ActionEvent evt) {
 }//GEN-LAST:event_invoiceFolderFieldActionPerformed
 
     private void configEDIButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configEDIButtonActionPerformed
-        new EDIConfig(null, true, application);
+       // new EDIConfig(null, true, application);
     }//GEN-LAST:event_configEDIButtonActionPerformed
 
     private void changeHandCursor() {

@@ -1,0 +1,70 @@
+Nevitium - Linux Help File
+
+If you can suggest changes to this documment please forward them to software@datavirtue.com
+
+
+For users of Gnome desktop environments (Ubuntu and others) you will need to start Nevitium with a script.  You also need Java installed, at least jre version 1.5.0_10
+
+Create a text file (nevstart) and place it in the directory that holds Nevitium
+
+Right-Click the file and select Properties and the Permissions Tab
+
+Enable the Execute property
+
+Put this inside the text file:
+
+
+nevstart (text file):  <--do not include this 
+
+--------------------------------------------------
+1|   cd "/home/sean/Nevitium 1.5/"
+2|   /home/sean/jre1.5.0_10/bin/java -jar Nevitium.jar
+--------------------------------------------------
+(Only the text between the dashes & Do not include the line numbers "1|" & "2|")
+
+
+Above you can see (on line 2) that I have Java at /home/sean/jre1.5.0_10/bin/
+
+Your Java will be in a different spot, make sure to change that line to reflect the location of Java on your computer.
+
+The actual Java command to launch Nevitium is: java -jar Nevitium.jar
+
+I unzipped Nevitium_1.5.0.zip to: /home/sean/
+
+*********************
+[On Ubuntu 7.04+]
+TIP: To extract the archive, open it in the Archive Manager (Double-Click), choose the Nevitium 1.5 Folder and Click Extract.  If you Right-Click the file and choose Extract you will have to rename it because it automatically assigns a different name to the extracted folder.
+*********************
+
+To Run:
+You first have to change to the Nevitium directory as seen on line 1.
+The directory is enclosed in quotes because the Nevitium directory (Nevitium 1.5) has a space in it.
+
+So, first we change to the Nevitium directory:
+cd "/home/sean/Nevitium 1.5/"
+
+Then we have to run Nevitium:
+/home/sean/jre1.5.0_10/bin/java -jar Nevitium.jar
+
+
+To make a desktop link (launcher) you would point to:
+"/home/sean/Nevitium 1.5/nevstart"
+
+Again, you have to use quote marks around the launcher command or you will get an error.  This is because of the space in the path name between Nevitium & 1.5
+
+Right-Click the desktop and select Create Launcher...
+
+Name: Nevitium 1.5
+Command: "/home/sean/Nevitium 1.5/nevstart"
+
+Click on the No Icon button to select an icon for your launcher.
+I have included a couple small and large .png files perfect for desktop icons.
+The icons should be in: "/home/sean/Nevitium 1.5/icons/png/..."
+
+If you need more help email: software@datavirtue.com
+
+datavirtue.com
+
+
+
+
