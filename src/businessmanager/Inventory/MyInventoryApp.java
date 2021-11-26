@@ -38,6 +38,7 @@ import models.Inventory;
 import services.InventoryService;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.UUID;
 import validators.DecimalPrecisionInputVerifier;
 
 public class MyInventoryApp extends javax.swing.JDialog {
@@ -361,7 +362,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
         if (al == null) {
 
             db.saveRecord("invtcat", new Object[]{new Integer(0), new String(s)}, false);
-            //db.close();
 
             populateCategoryList();
         }
@@ -389,7 +389,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         picButton.setEnabled(enabled);
 
-        if (inventory != null && inventory.getId() != null) {
+        if (currentItem != null && currentItem.getId() != null) {
 
             receiveButton.setEnabled(enabled);
 
@@ -2287,9 +2287,9 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     private void saveRecord() throws SQLException {
 
-        boolean isNewItem = inventory.getId() != null;
+        boolean isNewItem = currentItem.getId() == null;
 
-        if (inventory.getId() == null) {
+        if (currentItem.getId() == null) {
             if (!accessKey.checkInventory(200)) {
                 accessKey.showMessage("Create");
                 clearFields();
@@ -2297,7 +2297,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         }
 
-        if (inventory.getId() != null) {
+        if (currentItem.getId() != null) {
             if (!accessKey.checkInventory(400)) {
                 accessKey.showMessage("Edit");
                 clearFields();
@@ -2336,43 +2336,37 @@ public class MyInventoryApp extends javax.swing.JDialog {
             return;
         }       
         
-        inventory.setUpc(upcTextField.getText().trim());
-        inventory.setCode(nameTextField.getText().trim());
-        inventory.setDescription(descTextField.getText().trim());
-        inventory.setSize(sizeTextField.getText().trim());
-        inventory.setWeight(weightTextField.getText().trim());
-        inventory.setQuantity(new BigDecimal(qtyTextField.getText().trim()).doubleValue());
-        inventory.setCost(new BigDecimal(costTextField.getText().trim()).doubleValue());
-        inventory.setPrice(new BigDecimal(priceTextField.getText().trim()).doubleValue());
-        inventory.setTax1(taxCheckBox.isSelected());
-        inventory.setTax2(tax2CheckBox.isSelected());
-        inventory.setPartialSaleAllowed(partialBox.isSelected());
-        inventory.setAvailable(availableCheckBox.isSelected());
-        inventory.setLastSale(new Date());
-        inventory.setLastReceived(new Date());
-        inventory.setReorderCutoff((Integer) reorderSpinnerControl.getValue());
-        inventoryService.save(inventory);
-        
-        /* Need to update the table model to reflect the changes instead of a total refresh */
-        updateTableModel(inventory, isNewItem);
-               
+        currentItem.setUpc(upcTextField.getText().trim());
+        currentItem.setCode(nameTextField.getText().trim());
+        currentItem.setDescription(descTextField.getText().trim());
+        currentItem.setSize(sizeTextField.getText().trim());
+        currentItem.setWeight(weightTextField.getText().trim());
+        currentItem.setQuantity(new BigDecimal(qtyTextField.getText().trim()).doubleValue());
+        currentItem.setCost(new BigDecimal(costTextField.getText().trim()).doubleValue());
+        currentItem.setPrice(new BigDecimal(priceTextField.getText().trim()).doubleValue());
+        currentItem.setTax1(taxCheckBox.isSelected());
+        currentItem.setTax2(tax2CheckBox.isSelected());
+        currentItem.setPartialSaleAllowed(partialBox.isSelected());
+        currentItem.setAvailable(availableCheckBox.isSelected());
+        currentItem.setLastSale(new Date());
+        currentItem.setLastReceived(new Date());
+        currentItem.setReorderCutoff((Integer) reorderSpinnerControl.getValue());
+        inventoryService.save(currentItem);
+                
+        // reflect changes for the user and cleanup UI
+        updateTableModel(currentItem, isNewItem);               
         saveButton.setEnabled(false);
-
-        /* Get description and save it for later */
-        String last_desc = descTextField.getText().trim();
-
-        clearFields(); 
-        
-        setFieldsEnabled(false);
-        
-        int the_row = DV.searchTable(iTable.getModel(), 3, last_desc);
-
-        iTable.changeSelection(the_row, 0, false, false);
-        
-        inventory = new Inventory();
-        
-        this.normalizeCategoryList(catTextField.getText().trim());
-
+        clearFields();        
+        setFieldsEnabled(false);        
+        changeSelectionTo(currentItem);
+        this.normalizeCategoryList(currentItem.getCategory());
+        currentItem = new Inventory();
+    }
+    
+    private void changeSelectionTo(Inventory inventory){        
+        var tableModel = (InventoryTableModel)iTable.getModel();
+        int row = tableModel.getInventory().indexOf(inventory);
+        iTable.changeSelection(row, 0, false, false);
     }
     
     private void updateTableModel(Inventory inventory, boolean isNewItem) {
@@ -2569,7 +2563,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
     private GlobalApplicationDaemon application;
     private DbEngine db;
     private int[] returnValue = new int[]{-1};
-    private Inventory inventory = new Inventory();
     private Object[] dataOut = new Object[20];
     private Object[] picRef = new Object[4];
     private long lastRecvDate;

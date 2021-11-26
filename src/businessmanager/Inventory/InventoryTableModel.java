@@ -88,6 +88,10 @@ public class InventoryTableModel extends AbstractTableModel{
         return inventory.get(rowIndex);
     }
     
+    public List<Inventory> getInventory() {
+        return inventory;
+    }
+    
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         if (inventory == null) {
