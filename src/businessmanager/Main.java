@@ -12,6 +12,8 @@
 
 package businessmanager;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.jtattoo.plaf.acryl.AcrylLookAndFeel;
 import datavirtue.DV;
 import com.jtattoo.plaf.aero.AeroLookAndFeel;
@@ -25,7 +27,11 @@ import com.jtattoo.plaf.mcwin.McWinLookAndFeel;
 import com.jtattoo.plaf.mint.MintLookAndFeel;
 import com.jtattoo.plaf.noire.NoireLookAndFeel;
 import com.jtattoo.plaf.smart.SmartLookAndFeel;
+import di.GuiceBindingModule;
 import java.util.Properties;
+import models.Inventory;
+import services.DatabaseService;
+import services.InventoryService;
 
 /**
  *
@@ -37,22 +43,33 @@ public class Main {
     /** Creates a new instance of Main */
     public Main() {
     }
-    public static void main(String args[]) {
+    
+    
+    
+    public static void main(String args[]) throws Exception {
+        Injector injector = Guice.createInjector(new GuiceBindingModule());
         
+        ControlCenter control = injector.getInstance(ControlCenter.class);
+        
+        InventoryService inventoryService = injector.getInstance(InventoryService.class);
+        DatabaseService.createTables();
+        var inventory = new Inventory();
+        inventory.setDescription("Battlestar Galactica: Miniseries");
+        inventory.setCode("025192792823");
+        inventory.setQuantity(4.00);
+        inventory.setCost(7.69);
+        inventory.setPrice(14.99);
+        inventory.setCategory("DVD - SciFi");          
+        inventoryService.save(inventory);
+
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
                     
                     String os = System.getProperty("os.name").toLowerCase();
-                                
-                    /* X Setup */
-                    if (!os.contains("nix") && !os.contains("nux") && !os.contains("mac")){
-                
-                        //setLookAndFeel();
-                                
-                    }                   
+                                           
                     setLookAndFeel();
-                    new ControlCenter ().setVisible(true);
+                    control.setVisible(true);
                 
                 }catch(java.lang.UnsupportedClassVersionError e){
                     javax.swing.JOptionPane.showMessageDialog(null,

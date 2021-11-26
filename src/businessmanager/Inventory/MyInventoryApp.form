@@ -11,6 +11,7 @@
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <Events>
     <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="formKeyPressed"/>
@@ -1033,7 +1034,7 @@
                                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                               <Component id="saleField" alignment="0" pref="79" max="32767" attributes="1"/>
                                               <Component id="recvdField" alignment="0" max="32767" attributes="1"/>
-                                              <Component id="jSpinner1" alignment="0" min="-2" pref="56" max="-2" attributes="1"/>
+                                              <Component id="reorderSpinnerControl" alignment="0" min="-2" pref="56" max="-2" attributes="1"/>
                                           </Group>
                                           <EmptySpace pref="155" max="32767" attributes="0"/>
                                           <Component id="availableCheckBox" min="-2" max="-2" attributes="0"/>
@@ -1065,7 +1066,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel20" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jSpinner1" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="reorderSpinnerControl" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="availableCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -1111,7 +1112,7 @@
                     <Property name="text" type="java.lang.String" value="Reorder @"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JSpinner" name="jSpinner1">
+                <Component class="javax.swing.JSpinner" name="reorderSpinnerControl">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="Lowest Amount of Available Stock Before Reorder"/>
                   </Properties>

@@ -4,13 +4,14 @@
  * Created on June 23, 2006, 9:29 AM
  *
  */
-
 /**
  *
  * @author  Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010, 2011 All Rights Reserved.
+ * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010, 2011 All Rights
+ * Reserved.
  */
 package businessmanager.Inventory;
+
 import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
 import businessmanager.Common.LimitedDocument;
@@ -19,8 +20,10 @@ import businessmanager.*;
 
 import businessmanager.Common.JTextFieldFilter;
 import businessmanager.Common.Tools;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import datavirtue.*;
-import java.sql.Date;
+import di.GuiceBindingModule;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,48 +32,62 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.text.*;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.util.Date;
+import models.Inventory;
+import services.InventoryService;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import validators.DecimalPrecisionInputVerifier;
+
 public class MyInventoryApp extends javax.swing.JDialog {
+
     private KeyCard accessKey;
     private boolean debug = false;
-    
+    private InventoryService inventoryService;
+    private Inventory currentItem = new Inventory();
+
     //Custom constructor
-    /** Creates new form InventoryDialog */
+    /**
+     * Creates new form InventoryDialog
+     */
     public MyInventoryApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, boolean select) {
-        
+
         super(parent, modal);
-        
+
         initComponents();
-        
+        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        inventoryService = injector.getInstance(InventoryService.class);
+
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         this.setIconImage(winIcon);
 
         this.application = application;
         accessKey = application.getKey_card();
-        
+
         //Adjust references, to this context, for the needed objects 
-        
         db = application.getDb();
         selectMode = select;
-        
+
         workingPath = application.getWorkingPath();
-        
-        
+
         iTable.setSelectionForeground(Color.BLACK);
-        
-        if (selectMode) receiveModeBox.setVisible(false);
-        props = new Settings (workingPath+"settings.ini");
+
+        if (selectMode) {
+            receiveModeBox.setVisible(false);
+        }
+        props = new Settings(workingPath + "settings.ini");
         String coName = props.getProp("CO NAME");
         this.setTitle(coName + " Inventory Manager");
-        
+
         /* Limit field characters */
-        
         qtyTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
         costTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
         priceTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
 
         /* Allow the price field to accept negative numbers */
-        JTextFieldFilter tf = (JTextFieldFilter)priceTextField.getDocument();
+        JTextFieldFilter tf = (JTextFieldFilter) priceTextField.getDocument();
         tf.setNegativeAccepted(true);
 
         weightTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
@@ -86,30 +103,29 @@ public class MyInventoryApp extends javax.swing.JDialog {
         /* Set tax names */
         taxCheckBox.setText(props.getProp("TAX1NAME"));
         tax2CheckBox.setText(props.getProp("TAX2NAME"));
-        
-        
+
         /* Set the spinner  */
-        /*                                              val min max  incr      */
-        SpinnerNumberModel model = new SpinnerNumberModel(0, 0, null, 1); 
-        jSpinner1.setModel(model);
-        
+ /*                                              val min max  incr      */
+        SpinnerNumberModel model = new SpinnerNumberModel(0, 0, null, 1);
+        reorderSpinnerControl.setModel(model);
 
-        this.addWindowListener(new java.awt.event.WindowAdapter(){
-	public void windowClosing(java.awt.event.WindowEvent e){
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
 
-            recordScreenPosition();
-            props.setProp("INVENTORY SEARCH", Integer.toString(searchFieldCombo.getSelectedIndex()));
+                recordScreenPosition();
+                props.setProp("INVENTORY SEARCH", Integer.toString(searchFieldCombo.getSelectedIndex()));
 
-	}} );
+            }
+        });
 
-         /* Close dialog on escape */
+        /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();
         InputMap im = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         Object windowCloseKey = new Object();
         KeyStroke windowCloseStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
         Action windowCloseAction = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                
+
                 setVisible(false);
                 dispose();
             }
@@ -117,29 +133,34 @@ public class MyInventoryApp extends javax.swing.JDialog {
         im.put(windowCloseStroke, windowCloseKey);
         am.put(windowCloseKey, windowCloseAction);
         /**/
-                       
+
         if (select) {
-                        
+
             tabPanel.setVisible(false);
             savePanel.setVisible(false);
             toggleButton.setText("More");
-           
-        }        
+
+        }
         this.populateCategoryList();
-        
-        
+
         SwingWorker worker = new SwingWorker() {
 
             public Object doInBackground() {
                 StatusDialog sd = new StatusDialog(parentWin, false, "Please Wait", false);
                 sd.changeMessage("Initializing Inventory");
                 sd.addStatus("Building inventory table...");
-                tm = db.createTableModel("inventory", iTable);//time consuming
+                //tm = db.createTableModel("inventory", iTable);//time consuming
+                try {
+                    var allInventory = inventoryService.getAllInventory();
+                    tm = new InventoryTableModel(allInventory);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
                 sd.addStatus("Inventory table Complete.");
                 sd.addStatus("Configuring inventory table...");
                 return sd;
             }
-
 
             public void done() {
                 iTable.setModel(tm);
@@ -174,162 +195,180 @@ public class MyInventoryApp extends javax.swing.JDialog {
             sd.dispose();
             }});
             }}).start();*/
-            if (this.checkForScreenSettings()){
+        if (this.checkForScreenSettings()) {
             this.restoreScreenPosition();//restore saved screen size
-        }else {
+        } else {
             java.awt.Dimension d = DV.computeCenter((java.awt.Window) this);
             this.setLocation(d.width, d.height);
         }
-       
+
         this.setVisible(true);//release to the user
-        
+
     }//end constructor
-    
-    private String workingPath="";
-    
+
+    private String workingPath = "";
+
     private void clearSupplierKeys() {
-        
-        for (int i = 0; i < supp.length; i++){  //3_LOOP            
-            supp [i] = 0;  //initialize "supplier" key holder array to zeros            
+
+        for (int i = 0; i < supp.length; i++) {  //3_LOOP            
+            supp[i] = 0;  //initialize "supplier" key holder array to zeros            
         }
-    }   
-   
+    }
+
     /* My initializer method */
-    private void init () {
-        
-        setView(vals);
-                
+    private void init() {
+
         clearSupplierKeys();
-        
-        if (selectMode) {       /* Setup Select Mode */
+
+        if (selectMode) {
+            /* Setup Select Mode */
             saveButton.setVisible(true);
             saveButton.setEnabled(false);
             selectButton.setVisible(true);
             voidButton.setVisible(true);
             setFieldsEnabled(false);
-            
-        }else {
-                saveButton.setVisible(true);
-                saveButton.setEnabled(false);
-                selectButton.setVisible(false);
-                voidButton.setVisible(false);
-                setFieldsEnabled(false);                
-            }
+
+        } else {
+            saveButton.setVisible(true);
+            saveButton.setEnabled(false);
+            selectButton.setVisible(false);
+            voidButton.setVisible(false);
+            setFieldsEnabled(false);
+        }
 
         int c = Tools.getStringInt(props.getProp("INVENTORY SEARCH"), 2); //default to desc
         searchFieldCombo.setSelectedIndex(c);
-        
+
         taxCheckBox.setToolTipText(props.getProp("TAX1"));
         tax2CheckBox.setToolTipText(props.getProp("TAX2"));
-        
-        findTextField.requestFocus();        
+
+        findTextField.requestFocus();
+
+        qtyTextField.setInputVerifier(new DecimalPrecisionInputVerifier(2));
     }
 
-   private void recordScreenPosition(){
+    private void recordScreenPosition() {
 
         Point p = this.getLocationOnScreen();
         Dimension d = this.getSize();
 
-        props.setProp("INVTPOS", p.x+","+p.y);
-        props.setProp("INVTSIZE", d.width+","+d.height);
+        props.setProp("INVTPOS", p.x + "," + p.y);
+        props.setProp("INVTSIZE", d.width + "," + d.height);
 
     }
 
     private Point defaultScreenPosition;
     private Dimension defaultWindowSize;
 
-    private boolean checkForScreenSettings(){
+    private boolean checkForScreenSettings() {
         String pt = props.getProp("INVTPOS");
         String dim = props.getProp("INVTSIZE");
-        if (pt.equals("")) return false;
-        if (dim.equals("")) return false;
-        if ((Tools.parsePoint(pt))==null) return false;
-        if ((Tools.parseDimension(dim))==null) return false;
+        if (pt.equals("")) {
+            return false;
+        }
+        if (dim.equals("")) {
+            return false;
+        }
+        if ((Tools.parsePoint(pt)) == null) {
+            return false;
+        }
+        if ((Tools.parseDimension(dim)) == null) {
+            return false;
+        }
         return true;
 
     }
 
-    private void storeDefaultScreen(){
+    private void storeDefaultScreen() {
 
-        try{
+        try {
             defaultScreenPosition = this.getLocationOnScreen();
-        }catch(Exception e){
-            defaultScreenPosition = new Point(0,0);
+        } catch (Exception e) {
+            defaultScreenPosition = new Point(0, 0);
         }
 
         defaultWindowSize = this.getSize();
 
     }
 
-    private void restoreDefaultScreenSize(){
+    private void restoreDefaultScreenSize() {
 
         this.setSize(this.defaultWindowSize);
     }
-    private void restorDefaultScreen(){
+
+    private void restorDefaultScreen() {
         restoreDefaultScreenSize();
         restoreDefaultScreenLocation();
     }
-    private void restoreDefaultScreenLocation(){
+
+    private void restoreDefaultScreenLocation() {
         this.setLocation(this.defaultScreenPosition);
     }
 
-    private void restoreScreenPosition(){
+    private void restoreScreenPosition() {
 
         String pt = props.getProp("INVTPOS");
         String dim = props.getProp("INVTSIZE");
         //System.out.println("Point "+pt+"  Dim"+dim);
         Point p = Tools.parsePoint(pt);
-        if (p==null) p = this.defaultScreenPosition;
-        if (p==null) p = new Point(0,0);
+        if (p == null) {
+            p = this.defaultScreenPosition;
+        }
+        if (p == null) {
+            p = new Point(0, 0);
+        }
         this.setLocation(p);
         Dimension d = Tools.parseDimension(dim);
-        if (d==null) d = this.defaultWindowSize;
+        if (d == null) {
+            d = this.defaultWindowSize;
+        }
         this.setSize(d);
 
     }
 
     private java.util.ArrayList catList;
-    
-    private void populateCategoryList (){
-                
+
+    private void populateCategoryList() {
+
         catList = new java.util.ArrayList();
         catList.trimToSize();
-        
+
         TableModel cat_tm = db.createTableModel("invtcat");
-        
-        if (cat_tm != null && cat_tm.getRowCount() > 0){
-            
-            for (int r = 0; r < cat_tm.getRowCount(); r++){
+
+        if (cat_tm != null && cat_tm.getRowCount() > 0) {
+
+            for (int r = 0; r < cat_tm.getRowCount(); r++) {
                 catList.add((String) cat_tm.getValueAt(r, 1));
             }
-        }else {
-            
+        } else {
+
             catList.add("N/A");
-        }        
-        catTextField.setDocument(new AutoCompleteDocument( catTextField, catList ));
-        
+        }
+        catTextField.setDocument(new AutoCompleteDocument(catTextField, catList));
+
     }
-    
-    private void normalizeCategoryList (String s){  //checks for s and if not found it is added to the db        
-        
-        if (s.trim().equals("")) return;        
-       
+
+    private void normalizeCategoryList(String s) {  //checks for s and if not found it is added to the db        
+
+        if (s.trim().equals("")) {
+            return;
+        }
+
         java.util.ArrayList al;
-        
+
         al = db.search("invtcat", 1, s, false);
-        
-        if (al == null){
-            
-            db.saveRecord("invtcat",new Object [] {new Integer(0), new String (s)} ,false);
+
+        if (al == null) {
+
+            db.saveRecord("invtcat", new Object[]{new Integer(0), new String(s)}, false);
             //db.close();
-            
-            populateCategoryList();            
+
+            populateCategoryList();
         }
     }
-    
-       
-    private void setFieldsEnabled (boolean enabled) {
-        
+
+    private void setFieldsEnabled(boolean enabled) {
+
         upcTextField.setEnabled(enabled);
         nameTextField.setEnabled(enabled);
         descTextField.setEnabled(enabled);
@@ -340,42 +379,40 @@ public class MyInventoryApp extends javax.swing.JDialog {
         priceTextField.setEnabled(enabled);
         catTextField.setEnabled(enabled);
         serviceBox.setEnabled(enabled);
-        jSpinner1.setEnabled(enabled);
-        
+        reorderSpinnerControl.setEnabled(enabled);
+
         picField.setEnabled(enabled);
-        
+
         taxCheckBox.setEnabled(enabled);
         tax2CheckBox.setEnabled(enabled);
         availableCheckBox.setEnabled(enabled);
-        
+
         picButton.setEnabled(enabled);
-        
-        
-        if (dataOut != null && dataOut[0] != null && (Integer)dataOut[0] > 0){
-            
+
+        if (inventory != null && inventory.getId() != null) {
+
             receiveButton.setEnabled(enabled);
-            
-            
-        }else{
-            
+
+        } else {
+
             receiveButton.setEnabled(false);
         }
-        
-        if (enabled){
-            
+
+        if (enabled) {
+
             helpBox.setText("Remember to click 'Save' after making changes.");
-            
-        }else {
-            
+
+        } else {
+
             helpBox.setText("Click the UPC field to start a new record.");
-            
+
         }
         noteButton.setEnabled(enabled);
-                
+
     }
 
-    private void clearFields () {
-               
+    private void clearFields() {
+
         upcTextField.setText("");
         nameTextField.setText("");
         descTextField.setText("");
@@ -384,107 +421,80 @@ public class MyInventoryApp extends javax.swing.JDialog {
         qtyTextField.setText("0.000");
         costTextField.setText("0.00");
         priceTextField.setText("0.00");
-        
+
         catTextField.setText("");
-        
+
         saleField.setText("");
         recvdField.setText("");
-        
-        jSpinner1.setValue(new Integer(0));
-        
+
+        reorderSpinnerControl.setValue(new Integer(0));
+
         supp1TextField.setText("");
         supp2TextField.setText("");
         supp3TextField.setText("");
-        
+
         picField.setText("");
-        
+
         taxCheckBox.setSelected(false);
         tax2CheckBox.setSelected(false);
         availableCheckBox.setSelected(false);
         costTotalLabel.setText("0.00");
         retailTotalLabel.setText("0.00");
-                      
-        viewButton.setEnabled(false);
-        
-        findTextField.requestFocus();
-        
-        serviceBox.setSelected(false);
-        
-    }
-    
-    /** This method completes the setup of the actual
-     * JTable look in an appropriate fashion for the
-     * specific data 
-     */
-    private void setView (int [] cols){
-        int col_count = iTable.getColumnCount();
-        if (col_count == 0 || col_count < 6) return;
-        
-        TableColumnModel cm = iTable.getColumnModel();
-        TableColumn tc;
-        
-        for (int i =0; i < cols.length; i++){
-            
-            tc = cm.getColumn(cols[i]);
-            
-            iTable.removeColumn(tc);
-            
-        }
 
-        //Set the width of the most important col in inventory table
-        iTable.getColumn(iTable.getColumnName(1)).setPreferredWidth(220);
-        iTable.getColumn(iTable.getColumnName(2)).setPreferredWidth(25);
-        iTable.getColumn(iTable.getColumnName(3)).setPreferredWidth(50);
-        
-    } 
-           
-    /** Will find ALL occurances of matching records and selects these multiples in the table view. */
-    private void search () {
-        
+        viewButton.setEnabled(false);
+
+        findTextField.requestFocus();
+
+        serviceBox.setSelected(false);
+
+    }
+
+    /**
+     * Will find ALL occurances of matching records and selects these multiples
+     * in the table view.
+     */
+    private void search() {
+
         boolean match = false;
-        
+
         if (findTextField.getText().trim().equals("")) {
-            
+
             refreshTable();
             clearFields();
             setFieldsEnabled(false);
             saveButton.setEnabled(false);
-            
+
             findTextField.requestFocus();
-            
+
             return;
         }
-        
+
         /* get text from findTextField.getText(); */
-        
         String text = findTextField.getText();
-               
+
         /* build search from button status  */
-
-
         int col = searchFieldCombo.getSelectedIndex() + 1;
 
-
-        if (col == 4){ //size
+        if (col == 4) { //size
 
             java.util.ArrayList al = db.search("inventory", 4, text, true);
 
             if (al == null) {
                 refreshTable();
                 findTextField.requestFocus();
-                findTextField.selectAll();  
-             }else {
+                findTextField.selectAll();
+            } else {
                 tm = db.createTableModel("inventory", al, true);
                 iTable.setModel(tm);
-                if (tm != null) setView (vals);
+
                 match = true;
                 findTextField.selectAll();
                 return;
-             }
+            }
 
         }
 
-        if (col == 5){ //weight
+        if (col == 5) { //weight
 
             java.util.ArrayList al = db.search("inventory", 5, text, true);
 
@@ -492,18 +502,20 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 refreshTable();
                 findTextField.requestFocus();
                 findTextField.selectAll();
-             }else {
+            } else {
                 tm = db.createTableModel("inventory", al, true);
                 iTable.setModel(tm);
-                if (tm != null) setView (vals);
+                if (tm != null) {
+                    //setView(vals);
+                }
                 match = true;
                 findTextField.selectAll();
                 return;
-             }
+            }
 
         }
 
-        if (col == 6){ //category
+        if (col == 6) { //category
 
             java.util.ArrayList al = db.search("inventory", 9, text, true);
 
@@ -511,420 +523,333 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 refreshTable();
                 findTextField.requestFocus();
                 findTextField.selectAll();
-             }else {
+            } else {
                 tm = db.createTableModel("inventory", al, true);
                 iTable.setModel(tm);
-                if (tm != null) setView (vals);
+                if (tm != null) {
+                    //setView(vals);
+                }
                 match = true;
                 findTextField.selectAll();
                 return;
-             }
+            }
         }
 
         if (col == 3) { //search for desc
-            
-             java.util.ArrayList al = db.search("inventory",3, text, true );
-            
-             if (al == null) {
-                refreshTable(); 
+
+            java.util.ArrayList al = db.search("inventory", 3, text, true);
+
+            if (al == null) {
+                refreshTable();
                 findTextField.requestFocus();
                 findTextField.selectAll();
-                
-             }else {
+
+            } else {
                 tm = db.createTableModel("inventory", al, true);
-            
+
                 iTable.setModel(tm);
-            
-                if (tm != null) setView (vals);
-                
+
+                if (tm != null) {
+                    //setView(vals);
+                }
+
                 match = true;
-                
-                findTextField.selectAll();                
-             }
+
+                findTextField.selectAll();
+            }
         }
-        
-        if (col == 1)  { //UPC
-                        
+
+        if (col == 1) { //UPC
+
             java.util.ArrayList row = DV.searchTableMulti(iTable.getModel(), 1, text);
-            
-            if (row != null){
-                
+
+            if (row != null) {
+
                 iTable.clearSelection();
-                
-                for (int  r = 0; r < row.size(); r++){
-                //iTable.changeSelection((Integer) row.get(r), 0, true, true);
-                iTable.addRowSelectionInterval((Integer) row.get(r),(Integer) row.get(r));
+
+                for (int r = 0; r < row.size(); r++) {
+                    //iTable.changeSelection((Integer) row.get(r), 0, true, true);
+                    iTable.addRowSelectionInterval((Integer) row.get(r), (Integer) row.get(r));
                 }
                 populateFields();
                 match = true;
-            }else {
-                
-                if (receiveModeBox.isSelected()){
-                int a = 
-                        javax.swing.JOptionPane.showConfirmDialog(null,
-                        "No record for this UPC was found would you like to add a new one?","No Match",  JOptionPane.YES_NO_OPTION);
-                if (a == 0){                    
-                    
-                    dataOut = new Object [20];
-                    dataOut [0] = new Integer (0);
-                    picRef [0] = new Integer(0);
-                    clearSupplierKeys();
-                    
-                    clearFields();
-                    setFieldsEnabled (true);
-                    upcTextField.setText(findTextField.getText());
-                    upcTextField.requestFocus();
-                    saveButton.setEnabled(true);
-                    return;
-                    
-                }else {
-                    
-                    
+            } else {
+
+                if (receiveModeBox.isSelected()) {
+                    int a
+                            = javax.swing.JOptionPane.showConfirmDialog(null,
+                                    "No record for this UPC was found would you like to add a new one?", "No Match", JOptionPane.YES_NO_OPTION);
+                    if (a == 0) {
+
+                        dataOut = new Object[20];
+                        dataOut[0] = new Integer(0);
+                        picRef[0] = new Integer(0);
+                        clearSupplierKeys();
+
+                        clearFields();
+                        setFieldsEnabled(true);
+                        upcTextField.setText(findTextField.getText());
+                        upcTextField.requestFocus();
+                        saveButton.setEnabled(true);
+                        return;
+
+                    } else {
+
+                    }
                 }
             }
-            }            
-            
-            findTextField.selectAll();            
+
+            findTextField.selectAll();
         }
-        
-       if (col == 2)  {  //Code
-            
+
+        if (col == 2) {  //Code
+
             java.util.ArrayList row = DV.searchTableMulti(iTable.getModel(), 2, text);
             //int row = DV.searchTable(iTable.getModel(), 2, text);
-            
-             if (row != null){
-                
+
+            if (row != null) {
+
                 iTable.clearSelection();
-                
-                for (int  r = 0; r < row.size(); r++){
-                //iTable.changeSelection((Integer) row.get(r), 0, true, true);
-                iTable.addRowSelectionInterval((Integer) row.get(r),(Integer) row.get(r));
+
+                for (int r = 0; r < row.size(); r++) {
+                    //iTable.changeSelection((Integer) row.get(r), 0, true, true);
+                    iTable.addRowSelectionInterval((Integer) row.get(r), (Integer) row.get(r));
                 }
-                
+
                 populateFields();
-                
+
                 match = true;
-            }else {
-                
-                if (receiveModeBox.isSelected()){
-                int a = 
-                        javax.swing.JOptionPane.showConfirmDialog(null,
-                        "No record for this CODE was found would you like to add a new one?","No Match",  JOptionPane.YES_NO_OPTION);
-                if (a == 0){
-                    
-                    dataOut = new Object [20];
-                    dataOut [0] = new Integer (0);
-                    picRef [0] = new Integer(0);
-                    clearSupplierKeys();
-                     
-                    clearFields();
-                    setFieldsEnabled (true);
-                    
-                    saveButton.setEnabled(true);
-                    nameTextField.setText(findTextField.getText());
-                    upcTextField.requestFocus();
-                    
-                    return;
-                    
-                }else {
-                    
-                    
+            } else {
+
+                if (receiveModeBox.isSelected()) {
+                    int a
+                            = javax.swing.JOptionPane.showConfirmDialog(null,
+                                    "No record for this CODE was found would you like to add a new one?", "No Match", JOptionPane.YES_NO_OPTION);
+                    if (a == 0) {
+
+                        dataOut = new Object[20];
+                        dataOut[0] = new Integer(0);
+                        picRef[0] = new Integer(0);
+                        clearSupplierKeys();
+
+                        clearFields();
+                        setFieldsEnabled(true);
+
+                        saveButton.setEnabled(true);
+                        nameTextField.setText(findTextField.getText());
+                        upcTextField.requestFocus();
+
+                        return;
+
+                    } else {
+
+                    }
                 }
             }
-            } 
-            findTextField.selectAll();            
+            findTextField.selectAll();
         }
-        
-        if (catTextField.isEnabled()) saveButton.setEnabled(true);
-        
+
+        if (catTextField.isEnabled()) {
+            saveButton.setEnabled(true);
+        }
+
         if (!match) {
-            
+
             clearFields();
             this.setFieldsEnabled(false);
             this.saveButton.setEnabled(false);
-            
-        }else {            
-            if (receiveModeBox.isSelected()){                
-                this.receive();                
+
+        } else {
+            if (receiveModeBox.isSelected()) {
+                this.receive();
             }
         }
     }
-    
-    private void calculateMarkup(){
-        if (!priceTextField.getText().trim().equals("") &&
-                !priceTextField.getText().trim().equals("0.00")) return;
-        float points=0f;
-        if (DV.validFloatString(props.getProp("MARKUP"))){
-            points = Float.parseFloat(props.getProp("MARKUP"));
-        }else return;
 
-        float cost = Float.parseFloat(costTextField.getText());
-        float price = cost * points;
-        priceTextField.setText(DV.money(price));
 
-    }
-       
-    private void refreshTable () {
-        tm =  db.createTableModel ("inventory",iTable);
-        iTable.setModel(tm);
-        setView (vals);
-        //tm = iTable.getModel();
-        
-       
-    }
-    /** Called to populate form JTextFields 
-     * when a user clicks a row on the JTable
-     */
-    private void populateFields () {
-
-        int selectedRow = iTable.getSelectedRow();
-        //Saves the key in the data Object[] taken from the TableModel
-        dataOut [0] = (Integer) tm.getValueAt(selectedRow, 0) ; 
-        int refKey = (Integer)dataOut[0];
-        
-        getNote(refKey);
-
-        upcTextField.setText((String) tm.getValueAt(selectedRow, 1));
-        nameTextField.setText((String) tm.getValueAt(selectedRow, 2));
-        descTextField.setText((String) tm.getValueAt(selectedRow, 3));
-        sizeTextField.setText((String) tm.getValueAt(selectedRow, 4));
-        weightTextField.setText((String) tm.getValueAt(selectedRow, 5));
-        
-        //Version 1.5 Change to float
-        
-        qtyTextField.setText( Float.toString((Float) tm.getValueAt(selectedRow, 6)));
-
-        if (accessKey.checkInventory(300)){
-            costTextField.setText(DV.money((Float) tm.getValueAt(selectedRow, 7)));
+   private void refreshTable() {
+        try {
+            var allInventory = inventoryService.getAllInventory();
+            iTable.setModel(new InventoryTableModel(allInventory));
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        priceTextField.setText(DV.money((Float) tm.getValueAt(selectedRow, 8)));
+    }
 
-        String category = (String) tm.getValueAt(selectedRow, 9);
-       
-        if (debug) System.out.println(category);
-        
-        catTextField.setText(category);
-        //Version 1.5
-        //        
+    /**
+     * Called to populate form JTextFields when a user clicks a row on the
+     * JTable
+     */
+    private void populateFields() {
+
+        this.populateForm();
+    }
+
+    private void populateForm() {
+        int selectedRow = iTable.getSelectedRow();
+
+        var tableModel = (InventoryTableModel) iTable.getModel();
+
+        this.currentItem = (Inventory) tableModel.getValueAt(selectedRow);
+
+        upcTextField.setText(currentItem.getUpc());
+        nameTextField.setText(currentItem.getCode());
+        descTextField.setText(currentItem.getDescription());
+        sizeTextField.setText(currentItem.getSize());
+        weightTextField.setText(currentItem.getWeight());
+        qtyTextField.setText(Double.toString(currentItem.getQuantity()));
+
+        if (accessKey.checkInventory(300)) {
+            costTextField.setText(DV.money(currentItem.getCost()));
+        }
+        priceTextField.setText(DV.money(currentItem.getPrice()));
+
+        catTextField.setText(currentItem.getCategory());
+
         DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
-        
-        lastSaleDate = (Long)tm.getValueAt(selectedRow, 16);
-        lastRecvDate = (Long)tm.getValueAt(selectedRow, 17);
-        
+
+        lastSaleDate = currentItem.getLastSale() != null ? currentItem.getLastSale().getTime() : null;
+        lastRecvDate = currentItem.getLastReceived() != null ? currentItem.getLastReceived().getTime() : null;
+
         String lastSale = df.format(lastSaleDate);
         String recvDate = df.format(lastRecvDate);
-        
+
         saleField.setText(lastSale);
-        recvdField.setText(recvDate );
-        
-        
-        jSpinner1.setValue((Integer) tm.getValueAt(selectedRow, 18));
-        
-        
-        //BEGIN "Relational" Code
-        
-        int col = 10;
-        for (int i = 0; i < supp.length; i++) {
-            
-            supp [i] = Integer.valueOf( (Integer) tm.getValueAt(selectedRow,col ) );
-            //System.out.println("supplier " + supp[i]);
-            col++;
-        }
-        
-        
-        // Suppliers
-        if (supp[0] != 0) {
-        //System.out.println("Supplier 1 getting record!!!");
-        Object [] record = db.getRecord("conn", supp[0]);
-        //DV.expose(record);
-        if (record != null) {
-            supp1TextField.setText( (String) record [1] );  
-            }else supp1TextField.setText("");
-        
-        
-        }else supp1TextField.setText("");
-        
-        //
-        
-        if (supp[1] != 0) {
-            
-        Object [] record = db.getRecord("conn", supp[1]);
-        
-            if (record != null) {
-            
-                supp2TextField.setText( (String) record [1] );  //bad component name
-            }else supp2TextField.setText("");
-        
-        }else supp2TextField.setText("");
-        
-        //
-        
-        if (supp[2] != 0) {
-            
-        Object [] record = db.getRecord("conn", supp[2]);
-        
-        if (record != null) {
-            
-                supp3TextField.setText( (String) record [1] );  //bad component name
-            }else supp3TextField.setText("");
-        
-        
-        }else supp3TextField.setText("");
-        
-        //END Relational Code
-        
-        
-        /* Begin pic code */
-        
-        /*search for pic records with this dataOut[0] as fkey - col 1 */
-        java.util.ArrayList pic_list = db.search("imgref", 1, Integer.toString((Integer) dataOut[0]), false);
-        
-        if (pic_list == null) {
-            
-            picRef[0] = new Integer (0);
-            picField.setText("");
-            viewButton.setEnabled(false);
-        }
-        else {
-            
-            /* class var */             
-            picRef = db.getRecord("imgref", (Integer) pic_list.get(0) );
-            picField.setText( (String)picRef[2] );//show user the path
-            
-            if (picField.getText().trim().equals("")) viewButton.setEnabled(false);
-                else viewButton.setEnabled(true);
-        }
-               
-        /* End pic code  */
-        
-        //check box
-        taxCheckBox.setSelected((Boolean) tm.getValueAt(selectedRow, 13));
-        tax2CheckBox.setSelected((Boolean) tm.getValueAt(selectedRow, 14));
-        partialBox.setSelected((Boolean) tm.getValueAt(selectedRow, 19));
-        availableCheckBox.setSelected((Boolean) tm.getValueAt(selectedRow, 15));
-        
-        
+        recvdField.setText(recvDate);
+
+        reorderSpinnerControl.setValue(currentItem.getReorderCutoff());
+        taxCheckBox.setSelected(currentItem.isTax1());
+        tax2CheckBox.setSelected(currentItem.isTax2());
+        partialBox.setSelected(currentItem.isPartialSaleAllowed());
+        availableCheckBox.setSelected(currentItem.isAvailable());
+
         computePrices();
-        setFieldsEnabled (true);
-        //Version 1.5
-        if (category.equalsIgnoreCase("Service")){
+        setFieldsEnabled(true);
+
+        if (currentItem.getCategory().equalsIgnoreCase("Service")) {
             serviceBox.setSelected(true);
-        }else {
+        } else {
             serviceBox.setSelected(false);
         }
         checkService();
         noteButton.setEnabled(true);
-        
-    }    
+    }
 
+    private void getNote(int invKey) {
 
-    private void getNote(int invKey){
-
-        Object [] note=null;
+        Object[] note = null;
         java.util.ArrayList al;
-        
+
         al = db.search("invnotes", 1, Integer.toString(invKey), false);
 
-        if (al != null){
+        if (al != null) {
 
-            note = db.getRecord("invnotes", (Integer)al.get(0));
-            notesPane.setText((String)note[2]);
+            note = db.getRecord("invnotes", (Integer) al.get(0));
+            notesPane.setText((String) note[2]);
             notesPane.setCaretPosition(0);
 
-        }else {
+        } else {
 
             notesPane.setText("");
         }
     }
-    
+
     private void computePrices() {
-        
-        if (!qtyTextField.getText().equals("") &&
-                !costTextField.getText().equals("") &&
-                !priceTextField.getText().equals("")){
-        
-            //Version 1.5
-            //int qty = Integer.parseInt( qtyTextField.getText() );
-        
-            //float qty = Float.parseFloat( qtyTextField.getText() );
+
+        if (!qtyTextField.getText().equals("")
+                && !costTextField.getText().equals("")
+                && !priceTextField.getText().equals("")) {
+
+            //Version 1.5                   
             float qty = Float.parseFloat(qtyTextField.getText());
-            
+
             if (qty > 0) {
-        
+
                 float cost = Float.parseFloat(costTextField.getText());
-                
-                float price = Float.parseFloat( priceTextField.getText());  //error
-                
+
+                float price = Float.parseFloat(priceTextField.getText());  //error
+
                 costTotalLabel.setText(DV.money(cost * qty));
                 retailTotalLabel.setText(DV.money(price * qty));
-            
-            }else {
-            
+
+            } else {
+
                 costTotalLabel.setText("0.00");
                 retailTotalLabel.setText("0.00");
-                
+
             }
         }
     }
-    
+
     private void receive() {
-        
-        if (catTextField.getText().equalsIgnoreCase("Service")) return;
-        if (!upcTextField.isEnabled()) return;
-        
-        InventoryReceivePromptDialog rpd = 
-                new InventoryReceivePromptDialog(null, true, descTextField.getText());
-        
+
+        if (catTextField.getText().equalsIgnoreCase("Service")) {
+            return;
+        }
+        if (!upcTextField.isEnabled()) {
+            return;
+        }
+
+        InventoryReceivePromptDialog rpd
+                = new InventoryReceivePromptDialog(null, true, descTextField.getText());
+
         boolean negZero = rpd.isNegZero();
-        
-        if (rpd.getInAmount() == 0) return;
-        
-        
-            float current=0f;
-            String _q=qtyTextField.getText();
 
-            if (DV.validFloatString(_q)){
-                current = Float.parseFloat(_q);
+        if (rpd.getInAmount() == 0) {
+            return;
+        }
+
+        float current = 0f;
+        String _q = qtyTextField.getText();
+
+        if (DV.validFloatString(_q)) {
+            current = Float.parseFloat(_q);
+        }
+
+        /*  */
+        if (current < 0) {
+
+            if (negZero) {
+                current = 0.00f;
             }
 
-            /*  */
-            if (current < 0){
-                
-                if (negZero) current = 0.00f;
-                
-            }
-            
-            float received = rpd.getInAmount();
- 
-            rpd = null;
-            
-            current += received;
-        
-            qtyTextField.setText(DV.money(current));
-        
-            //Version 1.5
-            lastRecvDate = new java.util.Date().getTime();
-            DateFormat df = new SimpleDateFormat();
-            recvdField.setText(df.format(new Date (lastRecvDate)));
-            saveRecord();           
-            findTextField.selectAll();
-            findTextField.requestFocus();         
+        }
+
+        float received = rpd.getInAmount();
+
+        rpd = null;
+
+        current += received;
+
+        qtyTextField.setText(DV.money(current));
+
+        //Version 1.5
+        lastRecvDate = new java.util.Date().getTime();
+        DateFormat df = new SimpleDateFormat();
+        recvdField.setText(df.format(new Date(lastRecvDate)));
+
+        try {
+            saveRecord();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Error Saving", JOptionPane.OK_OPTION);
+        }
+
+        findTextField.selectAll();
+        findTextField.requestFocus();
     }
-    
-    
+
     /* Public method to grab the needed value in Select Mode */
-    public int[] getReturnValue () {
-        
+    public int[] getReturnValue() {
+
         return returnValue;
-        
-    }    
-        
+
+    }
+
     /* NetBeans-generated actionPerformance methods */
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -994,7 +919,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         jLabel19 = new javax.swing.JLabel();
         recvdField = new javax.swing.JTextField();
         jLabel20 = new javax.swing.JLabel();
-        jSpinner1 = new javax.swing.JSpinner();
+        reorderSpinnerControl = new javax.swing.JSpinner();
         availableCheckBox = new javax.swing.JCheckBox();
         notesScrollPane = new javax.swing.JScrollPane();
         notesPane = new javax.swing.JTextPane();
@@ -1054,8 +979,8 @@ public class MyInventoryApp extends javax.swing.JDialog {
             .add(org.jdesktop.layout.GroupLayout.TRAILING, savePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(savePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jToolBar2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, helpBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jToolBar2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, helpBox))
                 .addContainerGap())
         );
         savePanelLayout.setVerticalGroup(
@@ -1073,7 +998,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         jScrollPane1.setMinimumSize(new java.awt.Dimension(14, 14));
         jScrollPane1.setRequestFocusEnabled(false);
 
-        iTable.setFont(new java.awt.Font("Tahoma", 0, 12));
+        iTable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         iTable.setToolTipText("Click a row and press F9 to receive.");
         iTable.setSelectionBackground(new java.awt.Color(204, 255, 255));
         iTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
@@ -1169,13 +1094,13 @@ public class MyInventoryApp extends javax.swing.JDialog {
         tablePanelLayout.setVerticalGroup(
             tablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, tablePanelLayout.createSequentialGroup()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 51, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
-        selectButton.setFont(new java.awt.Font("Tahoma", 0, 12));
+        selectButton.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         selectButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/OK.png"))); // NOI18N
         selectButton.setText("Select");
         selectButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
@@ -1185,7 +1110,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         });
 
-        voidButton.setFont(new java.awt.Font("Tahoma", 0, 12));
+        voidButton.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         voidButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/No.png"))); // NOI18N
         voidButton.setText("None");
         voidButton.setMargin(new java.awt.Insets(2, 10, 2, 10));
@@ -1215,7 +1140,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         });
 
         jLabel13.setBackground(new java.awt.Color(255, 255, 255));
-        jLabel13.setFont(new java.awt.Font("Tahoma", 1, 11));
+        jLabel13.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
 
         receiveModeBox.setBackground(new java.awt.Color(204, 204, 204));
         receiveModeBox.setText("Receive Mode");
@@ -1232,22 +1157,22 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         });
 
-        detailTabPane.setFont(new java.awt.Font("Tahoma", 1, 14));
+        detailTabPane.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
 
         detailPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        assField.setFont(new java.awt.Font("Tahoma", 0, 10));
+        assField.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         assField.setText("(EAN/UPC/GTIN Barcode)");
 
-        costTotalLabel.setFont(new java.awt.Font("OCR B MT", 0, 12));
+        costTotalLabel.setFont(new java.awt.Font("OCR B MT", 0, 12)); // NOI18N
         costTotalLabel.setText("0.00");
 
-        retailTotalLabel.setFont(new java.awt.Font("OCR B MT", 0, 12));
+        retailTotalLabel.setFont(new java.awt.Font("OCR B MT", 0, 12)); // NOI18N
         retailTotalLabel.setText("0.00");
 
         jLabel4.setText("Size");
 
-        sizeTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        sizeTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         sizeTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         sizeTextField.setToolTipText("[15 Char] ");
         sizeTextField.setNextFocusableComponent(weightTextField);
@@ -1260,7 +1185,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         jLabel11.setText("Supplier 2");
 
         supp1TextField.setEditable(false);
-        supp1TextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        supp1TextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supp1TextField.setToolTipText("Click this field to add a Supplier from Connections");
         supp1TextField.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1268,7 +1193,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         });
 
-        catTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        catTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         catTextField.setToolTipText("Use Standard Categories to Help Sort Products");
         catTextField.setNextFocusableComponent(taxCheckBox);
         catTextField.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -1285,7 +1210,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         jLabel12.setText("Supplier 3");
 
         supp3TextField.setEditable(false);
-        supp3TextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        supp3TextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supp3TextField.setToolTipText("Click this field to add a Supplier from Connections");
         supp3TextField.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1296,7 +1221,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         jLabel10.setText("Supplier 1");
 
         nameTextField.setColumns(16);
-        nameTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        nameTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         nameTextField.setToolTipText("[16 Char] In-House Code System  [Code or UPC REQUIRED]");
         nameTextField.setNextFocusableComponent(descTextField);
         nameTextField.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -1305,10 +1230,10 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         });
 
-        jLabel8.setFont(new java.awt.Font("Tahoma", 1, 11));
+        jLabel8.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         jLabel8.setText("Price");
 
-        costTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        costTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         costTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         costTextField.setToolTipText("Item Cost");
         costTextField.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -1317,23 +1242,23 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         });
 
-        descTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        descTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         descTextField.setToolTipText("[50 Char] Appears on the Invoices and Quotes  [REQUIRED FIELD]");
         descTextField.setNextFocusableComponent(sizeTextField);
 
-        tax2CheckBox.setFont(new java.awt.Font("Tahoma", 0, 12));
+        tax2CheckBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         tax2CheckBox.setText("Tax 2");
         tax2CheckBox.setToolTipText("See Invoice Settings");
         tax2CheckBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
         tax2CheckBox.setNextFocusableComponent(availableCheckBox);
 
-        taxCheckBox.setFont(new java.awt.Font("Tahoma", 0, 12));
+        taxCheckBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         taxCheckBox.setText("Tax 1");
         taxCheckBox.setToolTipText("See Invoice Settings");
         taxCheckBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
         taxCheckBox.setNextFocusableComponent(tax2CheckBox);
 
-        partialBox.setFont(new java.awt.Font("Tahoma", 0, 12));
+        partialBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         partialBox.setText("Allow Partial Quantities");
         partialBox.setToolTipText("Allows Fractional Quantities to be Sold");
 
@@ -1361,7 +1286,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        receiveButton.setFont(new java.awt.Font("Tahoma", 0, 10));
+        receiveButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         receiveButton.setText("Receive");
         receiveButton.setToolTipText("This button updates the Quanity and saves the record");
         receiveButton.setEnabled(false);
@@ -1381,11 +1306,11 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         });
 
-        qtyTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        qtyTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         qtyTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         qtyTextField.setToolTipText("Quantity On Hand");
 
-        priceTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        priceTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         priceTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         priceTextField.setToolTipText("Selling Price");
         priceTextField.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -1397,7 +1322,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         jLabel7.setText("Cost");
 
         upcTextField.setColumns(14);
-        upcTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        upcTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         upcTextField.setToolTipText("Click Here to Create a New Item [14 Char] [Code or UPC REQUIRED]");
         upcTextField.setNextFocusableComponent(nameTextField);
         upcTextField.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1419,7 +1344,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         jLabel9.setText("Category");
 
-        weightTextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        weightTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         weightTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         weightTextField.setToolTipText("[15 Char] Input a Raw Number to Allow Weight Calculations on the Invoices");
         weightTextField.setNextFocusableComponent(qtyTextField);
@@ -1429,14 +1354,14 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         });
 
-        jLabel16.setFont(new java.awt.Font("Arial Black", 1, 12));
+        jLabel16.setFont(new java.awt.Font("Arial Black", 1, 12)); // NOI18N
         jLabel16.setText("=  ");
 
-        jLabel6.setFont(new java.awt.Font("Tahoma", 1, 11));
+        jLabel6.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         jLabel6.setText("Quantity");
 
         supp2TextField.setEditable(false);
-        supp2TextField.setFont(new java.awt.Font("Tahoma", 0, 12));
+        supp2TextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supp2TextField.setToolTipText("Click this field to add a Supplier from Connections");
         supp2TextField.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1444,7 +1369,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             }
         });
 
-        jLabel14.setFont(new java.awt.Font("Arial Black", 1, 12));
+        jLabel14.setFont(new java.awt.Font("Arial Black", 1, 12)); // NOI18N
         jLabel14.setText("=  ");
 
         jLabel5.setText("Weight");
@@ -1593,18 +1518,18 @@ public class MyInventoryApp extends javax.swing.JDialog {
         jLabel15.setText("Last Sale");
 
         saleField.setEditable(false);
-        saleField.setFont(new java.awt.Font("Courier New", 0, 12));
+        saleField.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
         saleField.setToolTipText("Last Time this Item was Sold on an Invoice ");
 
         jLabel19.setText("Last Received");
 
         recvdField.setEditable(false);
-        recvdField.setFont(new java.awt.Font("Courier New", 0, 12));
+        recvdField.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
         recvdField.setToolTipText("The Last Time Inventory was Added with the Recieve Function");
 
         jLabel20.setText("Reorder @");
 
-        jSpinner1.setToolTipText("Lowest Amount of Available Stock Before Reorder");
+        reorderSpinnerControl.setToolTipText("Lowest Amount of Available Stock Before Reorder");
 
         availableCheckBox.setText("Unavailable");
         availableCheckBox.setToolTipText("Unavailable items fire a warning when you try to sell them");
@@ -1641,19 +1566,21 @@ public class MyInventoryApp extends javax.swing.JDialog {
                     .add(statusPanelLayout.createSequentialGroup()
                         .addContainerGap()
                         .add(statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(jLabel19)
-                            .add(jLabel15)
-                            .add(jLabel20))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(saleField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE)
-                            .add(recvdField)
-                            .add(jSpinner1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 56, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 94, Short.MAX_VALUE)
-                        .add(availableCheckBox))
-                    .add(statusPanelLayout.createSequentialGroup()
-                        .addContainerGap(279, Short.MAX_VALUE)
-                        .add(noteButton)))
+                            .add(statusPanelLayout.createSequentialGroup()
+                                .add(statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                                    .add(jLabel19)
+                                    .add(jLabel15)
+                                    .add(jLabel20))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                    .add(saleField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE)
+                                    .add(recvdField)
+                                    .add(reorderSpinnerControl, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 56, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 155, Short.MAX_VALUE)
+                                .add(availableCheckBox))
+                            .add(statusPanelLayout.createSequentialGroup()
+                                .add(0, 269, Short.MAX_VALUE)
+                                .add(noteButton)))))
                 .addContainerGap())
         );
         statusPanelLayout.setVerticalGroup(
@@ -1670,10 +1597,10 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel20)
-                    .add(jSpinner1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(reorderSpinnerControl, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(availableCheckBox))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(notesScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 225, Short.MAX_VALUE)
+                .add(notesScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(noteButton)
                 .addContainerGap())
@@ -1684,11 +1611,11 @@ public class MyInventoryApp extends javax.swing.JDialog {
         picturesPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         picField.setColumns(50);
-        picField.setFont(new java.awt.Font("Courier New", 0, 11));
+        picField.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
         picField.setToolTipText("Picture Reference");
         picField.setNextFocusableComponent(saveButton);
 
-        picButton.setFont(new java.awt.Font("Tahoma", 0, 10));
+        picButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         picButton.setText("Picture");
         picButton.setToolTipText("Browse to a Picture");
         picButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
@@ -1707,7 +1634,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(picButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(picField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 311, Short.MAX_VALUE)
+                .add(picField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
                 .addContainerGap())
         );
         picturesPanelLayout.setVerticalGroup(
@@ -1717,7 +1644,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 .add(picturesPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(picButton)
                     .add(picField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(347, Short.MAX_VALUE))
+                .addContainerGap(368, Short.MAX_VALUE))
         );
 
         detailTabPane.addTab("Pictures", picturesPanel);
@@ -1726,11 +1653,11 @@ public class MyInventoryApp extends javax.swing.JDialog {
         tabPanel.setLayout(tabPanelLayout);
         tabPanelLayout.setHorizontalGroup(
             tabPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(detailTabPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
+            .add(detailTabPane)
         );
         tabPanelLayout.setVerticalGroup(
             tabPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(detailTabPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
+            .add(detailTabPane)
         );
 
         searchFieldCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "UPC", "Code", "Description", "Size", "Weight", "Category" }));
@@ -1764,8 +1691,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
                                 .add(18, 18, 18)
                                 .add(searchFieldCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 136, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(findTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 170, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                        .add(17, 17, 17))
+                                .add(findTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 170, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
                     .add(receiveModeBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 141, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -1796,232 +1722,232 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void serviceBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_serviceBoxActionPerformed
-        if (serviceBox.isSelected()){
+        if (serviceBox.isSelected()) {
             catTextField.setText("Service");
-        }else {
+        } else {
             catTextField.setText("");
         }
         checkService();
     }//GEN-LAST:event_serviceBoxActionPerformed
 
-   private void checkService() {
-       
-       boolean enabled = true;
-       
-       if (serviceBox.isSelected()) enabled = false;
+    private void checkService() {
 
-            if (!enabled){
-                sizeTextField.setText("0");
-                weightTextField.setText("0");
-            }
-           catTextField.setEnabled(enabled);
-                      
-           qtyTextField.setEnabled(enabled);
-                      
-           sizeTextField.setEnabled(enabled);
-                      
-           weightTextField.setEnabled(enabled);
-                      
-           receiveButton.setEnabled(enabled);
-            
-   }
-    
-    
+        boolean enabled = true;
+
+        if (serviceBox.isSelected()) {
+            enabled = false;
+        }
+
+        if (!enabled) {
+            sizeTextField.setText("0");
+            weightTextField.setText("0");
+        }
+        catTextField.setEnabled(enabled);
+
+        qtyTextField.setEnabled(enabled);
+
+        sizeTextField.setEnabled(enabled);
+
+        weightTextField.setEnabled(enabled);
+
+        receiveButton.setEnabled(enabled);
+
+    }
+
+
     private void receiveModeBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_receiveModeBoxActionPerformed
-        
+
         findTextField.requestFocus();
-        
+
     }//GEN-LAST:event_receiveModeBoxActionPerformed
 
     private void receiveModeBoxMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_receiveModeBoxMouseClicked
-        
+
         findTextField.requestFocus();
-        
+
     }//GEN-LAST:event_receiveModeBoxMouseClicked
 
     private void noteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_noteButtonActionPerformed
 
-        if ((Integer)dataOut[0] < 1) return;
-        new InventoryNoteDialog(null,true, db, (Integer)dataOut[0], descTextField.getText());
-        
-        
+        if ((Integer) dataOut[0] < 1) {
+            return;
+        }
+        new InventoryNoteDialog(null, true, db, (Integer) dataOut[0], descTextField.getText());
+
+
     }//GEN-LAST:event_noteButtonActionPerformed
 
     private void manageInventoryNotes() {
-        
-        
-        
+
     }
 
     private void calculateTotalInventoryCost() {
 
         int rows = tm.getRowCount();
-        if (rows < 1) return;
-        float qty_TMP=0f;
+        if (rows < 1) {
+            return;
+        }
+        float qty_TMP = 0f;
         float cost_TMP;
-        float total=0f;
+        float total = 0f;
 
-        for (int r = 0; r < rows; r++){
-           qty_TMP = (Float)tm.getValueAt(r, 6);//qty
-           cost_TMP = (Float)tm.getValueAt(r, 7);//cost per
-           if (qty_TMP > 0){
+        for (int r = 0; r < rows; r++) {
+            qty_TMP = (Float) tm.getValueAt(r, 6);//qty
+            cost_TMP = (Float) tm.getValueAt(r, 7);//cost per
+            if (qty_TMP > 0) {
                 total += (qty_TMP * cost_TMP);
-           }
+            }
         }
 
-      
     }
-    
+
     private void groupButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupButtonActionPerformed
-        
-        int [] a = iTable.getSelectedRows();
-          
-        int [] v = new int [a.length];
-        
-        for (int i = 0; i < v.length; i++){
-            
-            v[i] = (Integer)iTable.getModel().getValueAt(a[i], 0);
-                        
-        }    
-            new InventoryGroupDialog (null,true,v, workingPath).setVisible(true);
-           
-        
+
+        int[] a = iTable.getSelectedRows();
+
+        int[] v = new int[a.length];
+
+        for (int i = 0; i < v.length; i++) {
+
+            v[i] = (Integer) iTable.getModel().getValueAt(a[i], 0);
+
+        }
+        new InventoryGroupDialog(null, true, v, workingPath).setVisible(true);
+
+
     }//GEN-LAST:event_groupButtonActionPerformed
 
     private void catTextFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_catTextFieldKeyPressed
-        
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER){
-            
+
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+
             picField.requestFocus();
-            
+
         }
-        
-        
+
+
     }//GEN-LAST:event_catTextFieldKeyPressed
 
     private void savePanelKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_savePanelKeyPressed
-        
-        if (iTable.getSelectedRow() > -1 ){
-            
-            
+
+        if (iTable.getSelectedRow() > -1) {
+
             viewPic();
-            
-            
+
         }
-        
+
     }//GEN-LAST:event_savePanelKeyPressed
 
     private void picButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_picButtonActionPerformed
-        
-         try {
-        
+
+        try {
+
             java.io.File file;
             String f;
-        
+
             file = new java.io.File(picField.getText());
             JFileChooser fileChooser = new JFileChooser(file);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             int returnVal = fileChooser.showOpenDialog(null);
             java.io.File curFile = fileChooser.getSelectedFile();
-           
-            if (returnVal == JFileChooser.CANCEL_OPTION) return;
-            
-            if (curFile == null ) return  ;
-            
+
+            if (returnVal == JFileChooser.CANCEL_OPTION) {
+                return;
+            }
+
+            if (curFile == null) {
+                return;
+            }
+
             picField.setText(curFile.getPath());
-            
+
             picField.setText(DV.verifyPath(picField.getText()));
-            
-            
-        }catch (Exception e) {
-            
+
+        } catch (Exception e) {
+
             javax.swing.JOptionPane.showMessageDialog(null, "There was a problem with the file system.");
-            
+
         }
-        
-        
-        
-        
+
+
     }//GEN-LAST:event_picButtonActionPerformed
 
     private void viewButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewButtonActionPerformed
 
-        if (iTable.getSelectedRow() > -1  && !picField.getText().equals("")){
-            
+        if (iTable.getSelectedRow() > -1 && !picField.getText().equals("")) {
+
             viewPic();
-            
+
         }
-        
+
     }//GEN-LAST:event_viewButtonActionPerformed
 
-    private void viewPic () {
-        
-        new PictureDialog (null, true, picField.getText(), true);
-        
+    private void viewPic() {
+
+        new PictureDialog(null, true, picField.getText(), true);
+
         iTable.requestFocus();
-        
+
     }
-    
+
     private void labelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_labelButtonActionPerformed
-        
-        if (iTable.getSelectedRow() > -1){
-        
-            new InventoryLabelsDialog (null, true, iTable.getModel(), iTable.getSelectedRows(), workingPath, props);
-            
-        }else {
-            
+
+        if (iTable.getSelectedRow() > -1) {
+
+            new InventoryLabelsDialog(null, true, iTable.getModel(), iTable.getSelectedRows(), workingPath, props);
+
+        } else {
+
             javax.swing.JOptionPane.showMessageDialog(null, "Select rows from the Inventory table to create labels.");
-            
+
         }
-        
-        
-        
+
+
     }//GEN-LAST:event_labelButtonActionPerformed
 
     private void iTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_iTableKeyReleased
-        
-        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F12){
-           
-            if (!viewButton.isEnabled()) return;
-            
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F12) {
+
+            if (!viewButton.isEnabled()) {
+                return;
+            }
+
             viewPic();
             return;
         }
-        
-        if (iTable.getSelectedRow() > -1){
-            
-            populateFields ();
-        
-            
-            
-            saveButton.setEnabled(true);        
-            
+
+        if (iTable.getSelectedRow() > -1) {
+
+            populateFields();
+
+            saveButton.setEnabled(true);
+
         }
-        
-        
+
+
     }//GEN-LAST:event_iTableKeyReleased
 
     private void formKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
-        
-        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F9 && receiveButton.isEnabled()){
-            
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F9 && receiveButton.isEnabled()) {
+
             receive();
-            
+
         }
-        if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_F11){
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F11) {
 
             togglePanels();
 
         }
-        
-        
-        
+
+
     }//GEN-LAST:event_formKeyPressed
 
     private void receiveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_receiveButtonActionPerformed
-        
+
         receive();
-        
+
     }//GEN-LAST:event_receiveButtonActionPerformed
 
     private void findTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_findTextFieldFocusGained
@@ -2029,120 +1955,125 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }//GEN-LAST:event_findTextFieldFocusGained
 
     private void supp3TextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_supp3TextFieldMouseClicked
-        
-        if (upcTextField.isEnabled())  {
-            
-        
-        MyConnectionsApp cd = new MyConnectionsApp (this.parentWin, true, application, true,false,true);
-        //cd.setVisible(true);
-        int rv;
-        rv = cd.getReturnValue() ;  //real value        
-        
-        cd.dispose(); //dont call dispose before finsihing with method
-        cd = null;
-        
-        if (rv == -1) return;  //user closed Connections window - do nothing
-        
-        if (rv == 0) {
-            
-            supp[2] = new Integer (0);  //none
-            
-        }else supp[2] = new Integer (rv);  //selected Connection record
-        
-        
-        
-        if (supp[2] > 0) {  //
-        Object [] suppRecord = db.getRecord("conn",supp[2]);
-        supp3TextField.setText( (String) suppRecord[1] );
-        
-        } else supp3TextField.setText("");
-        
-    }
-        
-        
+
+        if (upcTextField.isEnabled()) {
+
+            MyConnectionsApp cd = new MyConnectionsApp(this.parentWin, true, application, true, false, true);
+            //cd.setVisible(true);
+            int rv;
+            rv = cd.getReturnValue();  //real value        
+
+            cd.dispose(); //dont call dispose before finsihing with method
+            cd = null;
+
+            if (rv == -1) {
+                return;  //user closed Connections window - do nothing
+            }
+            if (rv == 0) {
+
+                supp[2] = new Integer(0);  //none
+
+            } else {
+                supp[2] = new Integer(rv);  //selected Connection record
+            }
+
+            if (supp[2] > 0) {  //
+                Object[] suppRecord = db.getRecord("conn", supp[2]);
+                supp3TextField.setText((String) suppRecord[1]);
+
+            } else {
+                supp3TextField.setText("");
+            }
+
+        }
+
+
     }//GEN-LAST:event_supp3TextFieldMouseClicked
 
     private void supp2TextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_supp2TextFieldMouseClicked
-        
-        if (upcTextField.isEnabled())  {
-            
-        
-        MyConnectionsApp cd = new MyConnectionsApp (this.parentWin, true, application, true, false, true);
-        //cd.setVisible(true);
-        int rv;
-        rv = cd.getReturnValue() ;  //real value
-        
-        
-        cd.dispose(); //dont call dispose before finsihing with method
-        cd = null;
-        
-        if (rv == -1) return;  //user closed Connections window - do nothing
-        
-        if (rv == 0) {
-            
-            supp[1] = new Integer (0);  //none
-            
-        }else supp[1] = new Integer (rv);  //selected Connection record
-        
-        
-        
-        if (supp[1] > 0) {
-        Object [] suppRecord = db.getRecord("conn",supp[1]);
-        supp2TextField.setText( (String) suppRecord[1] );
-        
-        } else supp2TextField.setText("");
-        
+
+        if (upcTextField.isEnabled()) {
+
+            MyConnectionsApp cd = new MyConnectionsApp(this.parentWin, true, application, true, false, true);
+            //cd.setVisible(true);
+            int rv;
+            rv = cd.getReturnValue();  //real value
+
+            cd.dispose(); //dont call dispose before finsihing with method
+            cd = null;
+
+            if (rv == -1) {
+                return;  //user closed Connections window - do nothing
+            }
+            if (rv == 0) {
+
+                supp[1] = new Integer(0);  //none
+
+            } else {
+                supp[1] = new Integer(rv);  //selected Connection record
+            }
+
+            if (supp[1] > 0) {
+                Object[] suppRecord = db.getRecord("conn", supp[1]);
+                supp2TextField.setText((String) suppRecord[1]);
+
+            } else {
+                supp2TextField.setText("");
+            }
+
         }
-        
+
     }//GEN-LAST:event_supp2TextFieldMouseClicked
 
 
     private void supp1TextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_supp1TextFieldMouseClicked
-        
-          
-        if (upcTextField.isEnabled())  {
-            
-        
-        MyConnectionsApp cd = new MyConnectionsApp (parentWin, true, application, true, false, true);
-        //cd.setVisible(true);
-        int rv;
-        rv = cd.getReturnValue() ;  //real value
-        //System.out.println("1 Conn return value from inventory: "+rv);
-        
-        cd.dispose(); //dont call dispose before finsihing with method
-        cd = null;    
-        
-        if (rv == -1) return;  //user closed Connections window - do nothing
-        
-        if (rv == 0) {
-            
-            supp[0] = new Integer (0);  //none
-            
-        }else supp[0] = new Integer (rv);  //selected Connection record
-        
-        //System.out.println("Supplier 1 value from inventory: "+supp[0]);
-        
-        if (supp[0] > 0) {
-        Object [] suppRecord = db.getRecord("conn",supp[0]);
-        //DV.expose(suppRecord);
-        supp1TextField.setText( (String) suppRecord[1] );
-       
-        } else supp1TextField.setText("");
-        
+
+        if (upcTextField.isEnabled()) {
+
+            MyConnectionsApp cd = new MyConnectionsApp(parentWin, true, application, true, false, true);
+            //cd.setVisible(true);
+            int rv;
+            rv = cd.getReturnValue();  //real value
+            //System.out.println("1 Conn return value from inventory: "+rv);
+
+            cd.dispose(); //dont call dispose before finsihing with method
+            cd = null;
+
+            if (rv == -1) {
+                return;  //user closed Connections window - do nothing
+            }
+            if (rv == 0) {
+
+                supp[0] = new Integer(0);  //none
+
+            } else {
+                supp[0] = new Integer(rv);  //selected Connection record
+            }
+            //System.out.println("Supplier 1 value from inventory: "+supp[0]);
+
+            if (supp[0] > 0) {
+                Object[] suppRecord = db.getRecord("conn", supp[0]);
+                //DV.expose(suppRecord);
+                supp1TextField.setText((String) suppRecord[1]);
+
+            } else {
+                supp1TextField.setText("");
+            }
+
         }
 
-                
+
     }//GEN-LAST:event_supp1TextFieldMouseClicked
 
-    
+
     private void toggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_toggleButtonActionPerformed
-        
+
         togglePanels();
-        
-        
+
+
     }//GEN-LAST:event_toggleButtonActionPerformed
 
-    private void togglePanels(){
+    private void togglePanels() {
         if (savePanel.isVisible()) {
 
             savePanel.setVisible(false);
@@ -2151,7 +2082,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             //totalInventoryCostLabel.setVisible(false);
             toggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Forward.png")));
 
-        }else {
+        } else {
 
             savePanel.setVisible(true);
             this.tabPanel.setVisible(true);
@@ -2163,469 +2094,418 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }
 
     private void iTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_iTableKeyPressed
-        
+
         if (selectMode) {
-            
-            if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER){
-             if (iTable.getSelectedRow() > -1  && selectMode) {  
-        
-                 setReturnValue();
-        
-                this.setVisible(false);
-             }
+
+            if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                if (iTable.getSelectedRow() > -1 && selectMode) {
+
+                    setReturnValue();
+
+                    this.setVisible(false);
+                }
             }
         }
-        
-        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F9 && receiveButton.isEnabled()){
-            
-                receive();
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F9 && receiveButton.isEnabled()) {
+
+            receive();
         }
-                
-        if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_HOME){
-            
-            new InventoryNoteDialog(null,true, db, (Integer)dataOut[0], descTextField.getText());
-            
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_HOME) {
+
+            new InventoryNoteDialog(null, true, db, (Integer) dataOut[0], descTextField.getText());
+
         }
-        
+
     }//GEN-LAST:event_iTableKeyPressed
 
     private void upcTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_upcTextFieldMouseClicked
-        
-        
-        if ( !upcTextField.isEnabled()){
 
-            if (!accessKey.checkInventory(200)){
+        if (!upcTextField.isEnabled()) {
+
+            if (!accessKey.checkInventory(200)) {
                 accessKey.showMessage("Create");
                 return;
             }
 
             /* A new record has begun */
-            dataOut [0] = new Integer (0);
+            dataOut[0] = new Integer(0);
             noteButton.setEnabled(false);
-            picRef [0] = new Integer(0);
-            
+            picRef[0] = new Integer(0);
+
             clearFields();
             setFieldsEnabled(true);
-            
+
             //Version 1.5
             serviceBox.setEnabled(true);
-            
+
             saveButton.setEnabled(true);
             upcTextField.requestFocus();
-            
-            
+
         }
     }//GEN-LAST:event_upcTextFieldMouseClicked
 
     private void findTextFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_findTextFieldKeyPressed
-        
-        if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_F9){
-            
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F9) {
+
             boolean state = receiveModeBox.isSelected();
-            
-            if (state){
-                
+
+            if (state) {
+
                 receiveModeBox.setSelected(false);
-                
-            }else {
-                
+
+            } else {
+
                 receiveModeBox.setSelected(true);
-                
+
             }
-            
+
             findTextField.requestFocus();
             return;
-            
+
         }
-        
-        if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER){
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
             search();
         }
-        if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_F11){
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F11) {
             togglePanels();
         }
     }//GEN-LAST:event_findTextFieldKeyPressed
 
     private void iTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iTableMouseClicked
-    int mouseButton = evt.getButton();
-    if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) return;    
-    //Version 1.5
-       if (selectMode){ 
-        
-           if (evt.getClickCount() == 2){
-                       
-            int row = iTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
-            
-             if (iTable.getSelectedRow() > -1) {  
-                
-                returnValue = new int [1];
-                returnValue[0] = (Integer) tm.getValueAt(row, 0);
-                //DV.expose(DV.getRow(tm, row));
-                //db = null;
-        
-                this.setVisible(false);
-             }
-            
-           }
-                   
-       }
-       
-                    
-            populateFields ();
-            
-            saveButton.setEnabled(true);
-           
-       
-       
-       
-      
-        
+        int mouseButton = evt.getButton();
+        if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) {
+            return;
+        }
+        //Version 1.5
+        if (selectMode) {
+
+            if (evt.getClickCount() == 2) {
+
+                int row = iTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
+
+                if (iTable.getSelectedRow() > -1) {
+
+                    returnValue = new int[1];
+                    returnValue[0] = (Integer) tm.getValueAt(row, 0);
+                    //DV.expose(DV.getRow(tm, row));
+                    //db = null;
+
+                    this.setVisible(false);
+                }
+
+            }
+
+        }
+
+        populateFields();
+
+        saveButton.setEnabled(true);
+
+
     }//GEN-LAST:event_iTableMouseClicked
 
     private void voidButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_voidButtonActionPerformed
-        
-        returnValue = new int [] {-1};
+
+        returnValue = new int[]{-1};
         setVisible(false);
-        
+
     }//GEN-LAST:event_voidButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
 
-        if (!accessKey.checkInventory(500)){
-          
+        if (!accessKey.checkInventory(500)) {
+
             accessKey.showMessage("Delete");
             return;
         }
-        
+
         if (iTable.getSelectedRow() > -1) {
-            
-        int a = JOptionPane.showConfirmDialog(this, "Delete Selected Record?","DELETE",  JOptionPane.YES_NO_OPTION);
-          
-            if (a == 0){
-            
-            /*Delete current inventory record. */
-            Integer key = (Integer) tm.getValueAt(iTable.getSelectedRow(), 0) ;
-            db.removeRecord("inventory",key);
-            
-            /*Delete pic ref */
-            if (!picField.getText().trim().equals("")) {
-                
-                /*Search for image reference record with this inventory's key */
-                java.util.ArrayList pr = db.search("imgref", 1,Integer.toString(key), false);
-                
-                if (pr != null) {
-                                        
-                    /*Get the actual record froma table model  */
-                    TableModel pic_ref = db.createTableModel("imgref", pr, false);
-                    
-                    /*Access the first row,col to get the key of this imgref to delete it from the db  */
-                    db.removeRecord("imgref", (Integer)pic_ref.getValueAt(0,0));
-                    
+
+            int a = JOptionPane.showConfirmDialog(this, "Delete Selected Record?", "DELETE", JOptionPane.YES_NO_OPTION);
+
+            if (a == 0) {
+
+                /*Delete current inventory record. */
+                Integer key = (Integer) tm.getValueAt(iTable.getSelectedRow(), 0);
+                db.removeRecord("inventory", key);
+
+                /*Delete pic ref */
+                if (!picField.getText().trim().equals("")) {
+
+                    /*Search for image reference record with this inventory's key */
+                    java.util.ArrayList pr = db.search("imgref", 1, Integer.toString(key), false);
+
+                    if (pr != null) {
+
+                        /*Get the actual record froma table model  */
+                        TableModel pic_ref = db.createTableModel("imgref", pr, false);
+
+                        /*Access the first row,col to get the key of this imgref to delete it from the db  */
+                        db.removeRecord("imgref", (Integer) pic_ref.getValueAt(0, 0));
+
+                    }
+
                 }
-                
-                
+
+                refreshTable();
+                clearFields();
+                this.setFieldsEnabled(false);
+                this.saveButton.setEnabled(false);
+
             }
-            
-            refreshTable ();
-            clearFields();
-            this.setFieldsEnabled(false);
-            this.saveButton.setEnabled(false);
-            
-            
-            }
-         }
+        }
         //calculateTotalInventoryCost();
     }//GEN-LAST:event_deleteButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
-        
+
         saveButton.setEnabled(false);
-               
+
         clearFields();
         serviceBox.setEnabled(false);
         setFieldsEnabled(false);
-        dataOut = new Object [20];
-        
+        dataOut = new Object[20];
+
     }//GEN-LAST:event_clearButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-            
-        if (validateForm()) saveRecord();
-       
-    }//GEN-LAST:event_saveButtonActionPerformed
- 
-    private void saveRecord () {
 
-        int z = (Integer)dataOut[0];
-        if (z == 0){
-            if (!accessKey.checkInventory(200)){
+        try {
+            if (validateForm()) {
+                saveRecord();
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Error Saving", JOptionPane.OK_OPTION);
+        }
+
+
+    }//GEN-LAST:event_saveButtonActionPerformed
+
+    private void saveRecord() throws SQLException {
+
+        boolean isNewItem = inventory.getId() != null;
+
+        if (inventory.getId() == null) {
+            if (!accessKey.checkInventory(200)) {
                 accessKey.showMessage("Create");
                 clearFields();
                 return;
             }
         }
 
-        if (z > 0){
-            if (!accessKey.checkInventory(400)){
+        if (inventory.getId() != null) {
+            if (!accessKey.checkInventory(400)) {
                 accessKey.showMessage("Edit");
                 clearFields();
                 return;
             }
         }
-        
+
         //call validateForm() before this method
-        if (upcTextField.getText().trim().equals("") && nameTextField.getText().trim().equals("")){
+        if (upcTextField.getText().trim().equals("") && nameTextField.getText().trim().equals("")) {
             JOptionPane.showMessageDialog(this,
                     "You must enter a UPC or Code. Code is displayed on invoices.",
-                    "Need Reference Data",  JOptionPane.OK_OPTION);
-                    return;
+                    "Need Reference Data", JOptionPane.OK_OPTION);
+            return;
         }
-        //make sure CODE and UPC are unique before adding a new record.
         
-                dataOut [1] = new String ( upcTextField.getText().trim() );
-                dataOut [2] = new String ( nameTextField.getText().trim());   //code
-                dataOut [3] = new String ( descTextField.getText().trim() );
-                dataOut [4] = new String ( sizeTextField.getText().trim() );
-                dataOut [5] = new String ( weightTextField.getText().trim() );
+        //Make sure the qty, cost & price fields get set to some number if none are entered
+        if (DV.validFloatString(qtyTextField.getText().trim())) {
+            dataOut[6] = new Float(qtyTextField.getText().trim());
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Make sure QTY is a number.", "Form Problem!", JOptionPane.OK_OPTION);
+            return;
+        }
+
+        if (DV.validFloatString(costTextField.getText().trim())) {
+            dataOut[7] = Tools.round(Float.parseFloat(costTextField.getText().trim()));
+        } else {
+            JOptionPane.showMessageDialog(this, "Make sure COST is a number.", "Form Problem!", JOptionPane.OK_OPTION);
+            return;
+        }
+
+        if (DV.validFloatString(priceTextField.getText().trim())) {
+            dataOut[8] = Tools.round(Float.parseFloat(priceTextField.getText().trim()));
+        } else {
+            JOptionPane.showMessageDialog(this, "Make sure PRICE is a number.", "Form Problem!", JOptionPane.OK_OPTION);
+            return;
+        }       
         
-                //Make sure the qty, cost & price fields get set to some number if none are entered
-                if ( DV.validFloatString(qtyTextField.getText().trim())) {
-                   dataOut [6] = new Float ( qtyTextField.getText().trim() ); 
-             
-             } else {
-                    JOptionPane.showMessageDialog(this,"Make sure QTY is a number.","Form Problem!",  JOptionPane.OK_OPTION);
-                 return;
-             } 
+        inventory.setUpc(upcTextField.getText().trim());
+        inventory.setCode(nameTextField.getText().trim());
+        inventory.setDescription(descTextField.getText().trim());
+        inventory.setSize(sizeTextField.getText().trim());
+        inventory.setWeight(weightTextField.getText().trim());
+        inventory.setQuantity(new BigDecimal(qtyTextField.getText().trim()).doubleValue());
+        inventory.setCost(new BigDecimal(costTextField.getText().trim()).doubleValue());
+        inventory.setPrice(new BigDecimal(priceTextField.getText().trim()).doubleValue());
+        inventory.setTax1(taxCheckBox.isSelected());
+        inventory.setTax2(tax2CheckBox.isSelected());
+        inventory.setPartialSaleAllowed(partialBox.isSelected());
+        inventory.setAvailable(availableCheckBox.isSelected());
+        inventory.setLastSale(new Date());
+        inventory.setLastReceived(new Date());
+        inventory.setReorderCutoff((Integer) reorderSpinnerControl.getValue());
+        inventoryService.save(inventory);
         
-             if ( DV.validFloatString(costTextField.getText().trim())) {
-                    dataOut [7] = new Float ( Tools.round(Float.parseFloat(costTextField.getText().trim()) ));
-             } else  {
-                   JOptionPane.showMessageDialog(this,"Make sure COST is a number.","Form Problem!",  JOptionPane.OK_OPTION);
-                    return;
-                }
+        /* Need to update the table model to reflect the changes instead of a total refresh */
+        updateTableModel(inventory, isNewItem);
+               
+        saveButton.setEnabled(false);
 
-                if ( DV.validFloatString(priceTextField.getText().trim())) {
-                   dataOut [8] = new Float ( Tools.round( Float.parseFloat(priceTextField.getText().trim()) ));
-                } else {
-                    JOptionPane.showMessageDialog(this,"Make sure PRICE is a number.","Form Problem!",  JOptionPane.OK_OPTION);
-                   return;
-                }
+        /* Get description and save it for later */
+        String last_desc = descTextField.getText().trim();
 
-                dataOut [9] = new String ( catTextField.getText().trim() );
+        clearFields(); 
         
-                dataOut [10] = new Integer (supp[0]);
-                dataOut [11] = new Integer (supp[1]);
-                dataOut [12] = new Integer (supp[2]);
-                dataOut [13] = new Boolean (taxCheckBox.isSelected()); 
-                dataOut [14] = new Boolean (tax2CheckBox.isSelected());
-                dataOut [19] = new Boolean (partialBox.isSelected());
-                dataOut [15] = new Boolean (availableCheckBox.isSelected());
-                
-                if ((Integer) dataOut [0] == 0) dataOut [16] = new Long (0);
-                else dataOut [16] = new Long (lastSaleDate);
-                
-                if ((Integer) dataOut [0] == 0) dataOut [17] = new Long (new java.util.Date().getTime());
-                else dataOut [17] = new Long (lastRecvDate);
-                
-                
-                int v = (Integer) jSpinner1.getValue();  //reorder at
-                
-                dataOut[18] = new Integer (v);
-                
-                //System.out.println("EXPOSE for Inventory::saveRecord()");
-                //DV.expose(dataOut);  //debug
-                int currentKey = (Integer)dataOut[0];
-                
-                int ikey = db.saveRecord("inventory", dataOut, false);
-                
-                /* Need to update the table model to reflect the changes instead of a total refresh */
-                if (currentKey > 0){
-                int changeRow = iTable.getSelectedRow();
+        setFieldsEnabled(false);
+        
+        int the_row = DV.searchTable(iTable.getModel(), 3, last_desc);
 
-                int colCount = iTable.getModel().getColumnCount();
-
-                for (int c = 0; c < colCount; c++){
-                    iTable.getModel().setValueAt(dataOut[c], changeRow, c);
-               }
-
-                }else {
-
-                    refreshTable();
-
-                }
-                /* Save picture path info */
-                //picRef [0] = already set
-                picRef [1] = new Integer(ikey);
-                picRef [2] = new String (picField.getText().trim());
-                picRef [3] = new Boolean (true);  //future use for building catalogs and web pages
-                
-                db.saveRecord("imgref", picRef, false);
-                
-                /* Cleanup */
-                saveButton.setEnabled(false);                
-                
-                dataOut = new Object [20];
-                picRef = new Object [4];
-                
-                
-                /* Get description and save it for later */
-                String last_desc = descTextField.getText().trim();
-                                        
-                clearFields();     // clean up   
-                //refreshTable();
-                setFieldsEnabled(false); 
-                //calculateTotalInventoryCost();
-                int the_row = DV.searchTable(iTable.getModel(), 3, last_desc);
-                
-                iTable.changeSelection(the_row,0,false,false);
-                last_desc = null;  //help with memory
-              
+        iTable.changeSelection(the_row, 0, false, false);
+        
+        inventory = new Inventory();
+        
         this.normalizeCategoryList(catTextField.getText().trim());
-        
-        
+
     }
     
-    private boolean validateForm () {
-     
-     
-        if (DV.validFloatString(costTextField.getText().trim()));
-        else {
-            
-  JOptionPane.showMessageDialog(this, "Make sure Cost is a valid number (0.00). ","Form Problem!",  JOptionPane.OK_OPTION);
+    private void updateTableModel(Inventory inventory, boolean isNewItem) {
+        int changeRow = iTable.getSelectedRow();
+        var tableModel = (InventoryTableModel) iTable.getModel();
+        if (isNewItem) {
+            tableModel.setValueAt(inventory);
+        } else {
+            tableModel.setValueAt(changeRow, inventory);
+        }
+    }
+
+    private boolean validateForm() {
+
+        if (DV.validFloatString(costTextField.getText().trim())); else {
+
+            JOptionPane.showMessageDialog(this, "Make sure Cost is a valid number (0.00). ", "Form Problem!", JOptionPane.OK_OPTION);
             return false;
         }
-        if (DV.validFloatString(priceTextField.getText().trim()));
-        else {
-            
-  JOptionPane.showMessageDialog(this, "Make sure Price is a valid number (0.00). ","Form Problem!",  JOptionPane.OK_OPTION);
+        if (DV.validFloatString(priceTextField.getText().trim())); else {
+
+            JOptionPane.showMessageDialog(this, "Make sure Price is a valid number (0.00). ", "Form Problem!", JOptionPane.OK_OPTION);
             return false;
         }
-                      
-       
-        java.util.ArrayList al = null;
-                   
-        
-        if (nameTextField.getText().trim().equalsIgnoreCase("return")){
-            
-            JOptionPane.showMessageDialog(this, "The word 'return' cannot be used for a Code!","Invalid Code",  JOptionPane.OK_OPTION);
-                return false;
-            
-            
+
+        ArrayList al = null;
+
+        if (nameTextField.getText().trim().equalsIgnoreCase("return")) {
+
+            JOptionPane.showMessageDialog(this, "The word 'return' cannot be used for a Code!", "Invalid Code", JOptionPane.OK_OPTION);
+            return false;
+
         }
-            al = db.search("inventory", 3, descTextField.getText().trim(), false);
-            
-            if (al != null){
-                
-                int k = (Integer) al.get(0);
-                                
-                if (k != (Integer) dataOut[0]){
-            
-                JOptionPane.showMessageDialog(this, "A record with this DESC. already exsists.","No Duplicates",  JOptionPane.OK_OPTION);
+        al = db.search("inventory", 3, descTextField.getText().trim(), false);
+
+        if (al != null) {
+
+            int k = (Integer) al.get(0);
+
+            if (k != (Integer) dataOut[0]) {
+
+                JOptionPane.showMessageDialog(this, "A record with this DESC. already exsists.", "No Duplicates", JOptionPane.OK_OPTION);
                 return false;
-            
-                }
+
             }
-        
-           
-            /* Look for duplicate CODE */
-            al = db.search("inventory", 2, nameTextField.getText().trim(), false);
-            
-            if (al != null){
-            
-                if (al.size() > 1) {
-                    
-                    JOptionPane.showMessageDialog(this, "Multiple records with this CODE already exsist. (2 Maximum)","No More Duplicates",  JOptionPane.OK_OPTION);
+        }
+
+        /* Look for duplicate CODE */
+        al = db.search("inventory", 2, nameTextField.getText().trim(), false);
+
+        if (al != null) {
+
+            if (al.size() > 1) {
+
+                JOptionPane.showMessageDialog(this, "Multiple records with this CODE already exsist. (2 Maximum)", "No More Duplicates", JOptionPane.OK_OPTION);
+                return false;
+
+            }
+
+            int k = (Integer) al.get(0);
+
+            if (k != (Integer) dataOut[0]) {
+
+                int a = JOptionPane.showConfirmDialog(this, "A record with this CODE already exists, is this OK ?", "WARNING", JOptionPane.YES_NO_OPTION);
+
+                if (a == 0); else {
+
                     return false;
-            
-                    
+
                 }
-                
-                int k = (Integer) al.get(0);
-                                
-                if (k != (Integer) dataOut[0]){
-                                
-                    int a = JOptionPane.showConfirmDialog(this, "A record with this CODE already exists, is this OK ?","WARNING",  JOptionPane.YES_NO_OPTION);
-          
-                    if (a == 0);
-                    else {
-            
-                        return false;
-                
-                    }
-                   
-                }
-                
+
             }
-        
-            /* Look for duplicate UPC */
-            al = db.search("inventory", 1, upcTextField.getText().trim(), false);
-            if (al != null){
-            
-                
-                if (al.size() > 1) {
-                    
-                    JOptionPane.showMessageDialog(this, "Multiple records with this UPC already exsist. (2 Maximum)","No More Duplicates",  JOptionPane.OK_OPTION);
+
+        }
+
+        /* Look for duplicate UPC */
+        al = db.search("inventory", 1, upcTextField.getText().trim(), false);
+        if (al != null) {
+
+            if (al.size() > 1) {
+
+                JOptionPane.showMessageDialog(this, "Multiple records with this UPC already exsist. (2 Maximum)", "No More Duplicates", JOptionPane.OK_OPTION);
+                return false;
+
+            }
+
+            int k = (Integer) al.get(0);
+
+            if (k != (Integer) dataOut[0]) {
+
+                int a = JOptionPane.showConfirmDialog(this, "A record with this UPC already exists, is this OK ?", "WARNING", JOptionPane.YES_NO_OPTION);
+
+                if (a == 0); else {
+
                     return false;
-                                
-                }
-                
-                int k = (Integer) al.get(0);
-                                
-                if (k != (Integer) dataOut[0]){
-                    
-                
-                    int a = JOptionPane.showConfirmDialog(this, "A record with this UPC already exists, is this OK ?","WARNING",  JOptionPane.YES_NO_OPTION);
-          
-                    if (a == 0);
-                    else {
-            
-                     return false;
-                
-                    }
+
                 }
             }
-            
-              
+        }
+
         return true;
     }
-    
-    
+
+
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
-        
-        if (iTable.getSelectedRow() > -1) {  
-        
+
+        if (iTable.getSelectedRow() > -1) {
             setReturnValue();
-            //this.notifyAll();
-            
-        db = null;
-        
-        this.setVisible(false);
-        
+            db = null;
+            this.setVisible(false);
         }
-        
+
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void notesPaneMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_notesPaneMouseClicked
 
-        if (evt.getClickCount() == 2){
-            Point p = evt.getPoint();
-
+        if (evt.getClickCount() == 2) {
             int tableRow = iTable.getSelectedRow();
             if (tableRow > 0) {
-
                 this.populateFields();
-                int k = (Integer)iTable.getModel().getValueAt(tableRow, 0);
-                new InventoryNoteDialog(null,true, db, (Integer)dataOut[0], descTextField.getText());
+                int k = (Integer) iTable.getModel().getValueAt(tableRow, 0);
+                new InventoryNoteDialog(null, true, db, (Integer) dataOut[0], descTextField.getText());
                 this.getNote(k);
             }
 
-
-           }
+        }
 
     }//GEN-LAST:event_notesPaneMouseClicked
 
     private void priceTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_priceTextFieldFocusGained
-        calculateMarkup();
+        double cost = Double.parseDouble(costTextField.getText());
+        var price = inventoryService.calculateMarkup(cost, props);
+        priceTextField.setText(DV.money(price));
         selectAll(evt);
     }//GEN-LAST:event_priceTextFieldFocusGained
 
@@ -2634,7 +2514,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }//GEN-LAST:event_formKeyTyped
 
     private void upcTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_upcTextFieldFocusGained
-       selectAll(evt);
+        selectAll(evt);
     }//GEN-LAST:event_upcTextFieldFocusGained
 
     private void nameTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_nameTextFieldFocusGained
@@ -2661,53 +2541,53 @@ public class MyInventoryApp extends javax.swing.JDialog {
         findTextField.requestFocus();
     }//GEN-LAST:event_searchFieldComboActionPerformed
 
-    private void selectAll(java.awt.event.FocusEvent evt){
-        JTextField tf = (JTextField)evt.getSource();
+    private void selectAll(java.awt.event.FocusEvent evt) {
+        JTextField tf = (JTextField) evt.getSource();
         tf.selectAll();
     }
 
-    private void setReturnValue () {
-        
-            int tmp [] = iTable.getSelectedRows(); 
-            returnValue = new int [tmp.length];
-            
-            for (int i = 0; i < tmp.length; i++){
-               
-                if (debug) System.out.println("InventoryDialog:Selected Row " + tmp[i]);
-                returnValue [i] = (Integer) tm.getValueAt(tmp[i], 0);
-                //System.out.println(returnValue[i]);
-                /* build inventoryDAO and store in an ArrayList */
-                //store in application DAO list
-                /* call the implemented method! which triggers action on the list of DAOs */
-                
-                /* Dispose this */
-            }  
+    private void setReturnValue() {
+
+        int tmp[] = iTable.getSelectedRows();
+        returnValue = new int[tmp.length];
+
+        for (int i = 0; i < tmp.length; i++) {
+
+            if (debug) {
+                System.out.println("InventoryDialog:Selected Row " + tmp[i]);
+            }
+            returnValue[i] = (Integer) tm.getValueAt(tmp[i], 0);
+            //System.out.println(returnValue[i]);
+            /* build inventoryDAO and store in an ArrayList */
+            //store in application DAO list
+            /* call the implemented method! which triggers action on the list of DAOs */
+
+ /* Dispose this */
+        }
     }
-    
-    /* My private local variables and object references */
 
     private GlobalApplicationDaemon application;
     private DbEngine db;
-    private int [] returnValue = new int [] {-1};
-    private Object [] dataOut = new Object [20];
-    private Object [] picRef = new Object [4];
+    private int[] returnValue = new int[]{-1};
+    private Inventory inventory = new Inventory();
+    private Object[] dataOut = new Object[20];
+    private Object[] picRef = new Object[4];
     private long lastRecvDate;
     private long lastSaleDate;
     private boolean service = false;
     private java.awt.Image winIcon;
-    
+
     //                     k s w a  t1 t2 s1s2s3c upc
-    private int [] vals = {0,3,3,12,11,10,9,8,7,4,0,5,5,5,5}; //col view removal
+    private int[] vals = {0, 3, 3, 12, 11, 10, 9, 8, 7, 4, 0, 5, 5, 5, 5}; //col view removal
     private java.awt.Frame parentWin;
-    private int [] supp = new int [3];  //supplier keys
+    private int[] supp = new int[3];  //supplier keys
     private boolean selectMode;
     private TableModel tm;
     private Settings props;
     private String nl = System.getProperty("line.separator");
-    
-    
+
     /* NetBeans generated privates */
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel assField;
     private javax.swing.JCheckBox availableCheckBox;
@@ -2745,7 +2625,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSpinner jSpinner1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JToolBar jToolBar2;
     private javax.swing.JButton labelButton;
@@ -2762,6 +2641,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
     private javax.swing.JButton receiveButton;
     private javax.swing.JCheckBox receiveModeBox;
     private javax.swing.JTextField recvdField;
+    private javax.swing.JSpinner reorderSpinnerControl;
     private javax.swing.JLabel retailTotalLabel;
     private javax.swing.JTextField saleField;
     private javax.swing.JButton saveButton;
@@ -2784,5 +2664,5 @@ public class MyInventoryApp extends javax.swing.JDialog {
     private javax.swing.JButton voidButton;
     private javax.swing.JTextField weightTextField;
     // End of variables declaration//GEN-END:variables
-    
+
 }
