@@ -5,6 +5,7 @@ Features:
 - Various tools such as barcode label generators, check printing and gift card tracking. 
 - International support for most English speaking regions, including: address formatting, currencies and taxes. 
 - Generates PDF invoices and reports and prints POS recipts.
+
 Developed over several years in collaboration with small business owners spanning the globe.
 Offered as 100% freeware with the goal of providing an alternative to QuickBooks for small businesses.  
 
