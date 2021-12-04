@@ -32,6 +32,7 @@ import java.util.*;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JFileChooser;
+import services.DatabaseService;
 
 /**
  *
@@ -1732,7 +1733,7 @@ private void closeAll() {
             fos.close();
         }    
         
-            
+          
         java.io.File f = new java.io.File("data.run");
             f.delete();
         f = new java.io.File("nevitium.run");
@@ -1746,6 +1747,7 @@ private void closeAll() {
         
         dbsys.close();
         dbsys = null;
+        
         System.exit(0);
     
     

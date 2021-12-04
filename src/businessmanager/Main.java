@@ -56,12 +56,30 @@ public class Main {
         var inventory = new Inventory();
         inventory.setDescription("Battlestar Galactica: Miniseries");
         inventory.setCode("025192792823");
-        inventory.setQuantity(4.00);
+        inventory.setQuantity(10.00);
         inventory.setCost(7.69);
         inventory.setPrice(14.99);
         inventory.setCategory("DVD - SciFi");          
         inventoryService.save(inventory);
 
+        inventory = new Inventory();
+        inventory.setDescription("Star Wars");
+        inventory.setCode("045892797824");
+        inventory.setQuantity(10.00);
+        inventory.setCost(8.69);
+        inventory.setPrice(17.99);
+        inventory.setCategory("DVD - SciFi");          
+        inventoryService.save(inventory);
+        
+        inventory = new Inventory();
+        inventory.setDescription("Gaming Keyboard");
+        inventory.setCode("015692731899");
+        inventory.setQuantity(10.00);
+        inventory.setCost(58.76);
+        inventory.setPrice(199.99);
+        inventory.setCategory("USB - GAMING");          
+        inventoryService.save(inventory);
+        
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {

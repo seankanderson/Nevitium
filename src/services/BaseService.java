@@ -4,15 +4,27 @@
  */
 package services;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.j256.ormlite.dao.BaseDaoImpl;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
-import dao.InventoryDao;
 import java.sql.SQLException;
+import java.util.List;
+import models.BaseModel;
 
 /**
  *
  * @author SeanAnderson
+ * @param <T1> database entity-typed dao implementation
+ * @param <T2> database model entity type
  */
-public class BaseService {
+public abstract class BaseService<T1 extends BaseDaoImpl<T2, Object>, T2 extends BaseModel> implements BaseServiceInterface<T1> {
+    
+    @Inject
+    @Named("DatabaseConnection")
+    protected JdbcConnectionSource connection;
+    protected T1 dao;
+    
     public JdbcConnectionSource getDatabaseConnection() {
         JdbcConnectionSource conn;
         try {
@@ -22,5 +34,18 @@ public class BaseService {
             System.out.println(e.getSQLState());
         }
         return null;
+    }    
+    
+    public List<T2> getAll() throws SQLException {
+        return this.getDao().queryForAll();
     }
+
+    public void save(T2 item) throws SQLException {
+        if (item.getId() == null) {
+            this.getDao().create(item);
+        } else {
+            this.getDao().update(item);
+        }
+    }
+    
 }

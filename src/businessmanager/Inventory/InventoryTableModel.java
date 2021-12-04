@@ -1,58 +1,26 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package businessmanager.Inventory;
 
-import java.util.ArrayList;
 import java.util.List;
-import javax.swing.table.AbstractTableModel;
+import models.AbstractCollectionTableModel;
 import models.Inventory;
 
 /**
- *
+ * December 1st 2021
  * @author SeanAnderson
  */
-public class InventoryTableModel extends AbstractTableModel{
-
-    private List<Inventory> inventory;
-   
+public class InventoryTableModel extends AbstractCollectionTableModel<Inventory>{
+     
     public InventoryTableModel(List<Inventory> inventory) {
-        this.inventory = inventory;
+        this.items = inventory;
+        this.columns = new String[]{ "Code", "Description", "Quantity", "Price", "Category"};
     }
-    
-    private String[] columns = { "Code", "Description", "Quantity", "Price", "Category"};
-      
-    @Override
-    public int getRowCount() {
-        if (inventory != null) {
-            return inventory.size();
-        } else {
-            return 0;
-        }        
-    }
-
-    @Override
-    public int getColumnCount() {
-        if (columns != null)
-        {
-            return columns.length;
-        } else {
-            return 0;
-        }
-    }
-    
-    @Override
-    public String getColumnName(int columnIndex){
-         return columns[columnIndex];
-    }
-
+        
     @Override
     public void setValueAt(Object value, int row, int col) {
-        if (inventory == null) {
+        if (items == null) {
             return;
         }
-        var item = inventory.get(row);
+        var item = items.get(row);
         
         switch (col) {
             case 0: 
@@ -73,31 +41,12 @@ public class InventoryTableModel extends AbstractTableModel{
            }
     }
     
-    public void setValueAt(int rowIndex, Inventory value) {
-        inventory.set(rowIndex, value);
-    }
-    
-    public void setValueAt(Inventory value){
-        inventory.add(value);
-    }
-    
-    public Object getValueAt(int rowIndex) {
-        if (inventory == null) {
-            return new Object();
-        }
-        return inventory.get(rowIndex);
-    }
-    
-    public List<Inventory> getInventory() {
-        return inventory;
-    }
-    
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (inventory == null) {
+        if (items == null) {
             return new Object();
         }
-        var item = inventory.get(rowIndex);
+        var item = items.get(rowIndex);
         
         switch (columnIndex) {
             case 0: 

@@ -22,7 +22,7 @@ public class GuiceBindingModule extends AbstractModule{
        try {
             bind(JdbcConnectionSource.class)
                 .annotatedWith(Names.named("DatabaseConnection"))
-                .toInstance(new JdbcConnectionSource("jdbc:h2:mem:nevitium"));
+                .toInstance(new JdbcConnectionSource("jdbc:h2:~/nevitium;AUTO_SERVER=TRUE"));
        }catch(Exception e) {
            e.printStackTrace();
             //swallow exception...should check the database connection for null
