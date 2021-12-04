@@ -12,6 +12,8 @@ Offered as 100% freeware with the goal of providing an alternative to QuickBooks
 
 ![image](https://user-images.githubusercontent.com/1112636/144695309-d5567598-987a-4c84-89ef-dedf8998c0d5.png)
 
+![image](https://user-images.githubusercontent.com/1112636/144700578-c91ca852-eccd-406f-9f9d-f613487cdc9d.png)
+
 ![image](https://user-images.githubusercontent.com/1112636/144695348-74de7578-d758-4b23-b422-ea468c08795b.png)
 
 ![image](https://user-images.githubusercontent.com/1112636/144695364-e69e8edc-6129-4369-99bf-b896f9debd70.png)
