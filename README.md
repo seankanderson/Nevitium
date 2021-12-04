@@ -1,5 +1,12 @@
 # Nevitium
-Desktop application for inventory and invoice management written in Java using Netbeans IDE
+Cross-platform point-of-sale (POS) desktop application for inventory and invoice management. 
+Features:
+- Many sales tracking and contact management features that focus on making it easy to accurately service customers (billing/payments) and report on sales margins, taxes and inventory levels.
+- Various tools such as barcode label generators, check printing and gift card tracking. 
+- International support for most English speaking regions, including: address formatting, currencies and taxes. 
+- Generates PDF invoices and reports and prints POS recipts.
+Developed over several years in collaboration with small business owners spanning the globe.
+Offered as 100% freeware with the goal of providing an alternative to QuickBooks for small businesses.  
 
 ![image](https://user-images.githubusercontent.com/1112636/144695309-d5567598-987a-4c84-89ef-dedf8998c0d5.png)
 
