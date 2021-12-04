@@ -1,5 +1,6 @@
 # Nevitium
 Cross-platform point-of-sale (POS) desktop application for inventory and invoice management. 
+
 Features:
 - Many sales tracking and contact management features that focus on making it easy to accurately service customers (billing/payments) and report on sales margins, taxes and inventory levels.
 - Various tools such as barcode label generators, check printing and gift card tracking. 
