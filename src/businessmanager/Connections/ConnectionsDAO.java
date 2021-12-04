@@ -1,16 +1,17 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package businessmanager.Connections;
-//import EDI.EDIPushDAO;
 import RuntimeManagement.GlobalApplicationDaemon;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import datavirtue.*;
+import di.GuiceBindingModule;
 import java.util.*;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.*;
+import services.ContactService;
+import java.sql.SQLException;
 /**
  *
  * @author Data Virtue
@@ -20,12 +21,17 @@ import javax.swing.table.*;
 public class ConnectionsDAO {
 private boolean debug = false;
 private GlobalApplicationDaemon application;
+@Inject
+private ContactService contactService;
     /* Initialize new Connection record */
     public ConnectionsDAO(DbEngine dbe, GlobalApplicationDaemon g) {
 
         db = dbe;
         application = g;
         populateDAO(0);
+        
+        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        contactService = injector.getInstance(ContactService.class);
     }
 
     /* Initialize with exsisting record */
@@ -44,8 +50,10 @@ private GlobalApplicationDaemon application;
         }
     }
 
-    public TableModel getMyConnectionsTable(JTable table){
-        return db.createTableModel ("conn",table);
+    public TableModel getMyConnectionsTable(JTable table) throws SQLException{
+                
+        return new ContactsTableModel(contactService.getAll());
+        //return db.createTableModel ("conn",table);
     }
 
     public TableModel getCustomerTable(JTable table){
@@ -118,19 +126,8 @@ private GlobalApplicationDaemon application;
     }
 
     public int saveRecord(){
-
-        int x = db.saveRecord("conn", conn, false);
-        
-        /* Perform EDI */
-        /*EDIPushDAO dao = new EDIPushDAO(application);
-        dao.startStream();
-        dao.addData("conn", conn);
-        dao.endStream();
-        dao.sendEmail();*/
-                
+        int x = db.saveRecord("conn", conn, false);     
         return x;
-        
-        
     }
 
     public boolean deleteRecord(int key){

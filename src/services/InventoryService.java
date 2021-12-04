@@ -1,57 +1,69 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package services;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.misc.TransactionManager;
 import dao.InventoryDao;
 import datavirtue.DV;
 import datavirtue.Settings;
 import java.util.List;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
 import models.Inventory;
 
 /**
  *
  * @author SeanAnderson
  */
-public class InventoryService extends BaseService{
-    
-    @Inject
-    @Named("DatabaseConnection") 
-    private JdbcConnectionSource connection;
-    private InventoryDao inventoryDao;
+public class InventoryService extends BaseService<InventoryDao, Inventory> {
+
     public InventoryService() {
-        
+
     }
-    
-    public List<Inventory> getAllInventory() throws SQLException {        
-        return this.getInventoryDao().queryForAll();
-    }
-    
-    public void save(Inventory inventory) throws SQLException {
-        if (inventory.getId() == null){
-            this.getInventoryDao().create(inventory);
-            System.out.println("INSERTED: " + inventory.getId());
-        }else {
-            this.getInventoryDao().update(inventory);
-        }     
-    }
-    
+
     public List<Inventory> getAllInventoryByUpc(String upc) throws SQLException {
-        return this.getInventoryDao().queryForEq("upc", upc);
+        return this.getDao().queryForEq("upc", upc);
     }
-    
-    
-    
-    private InventoryDao getInventoryDao() throws SQLException {          
-        return inventoryDao == null ? new InventoryDao(connection) : inventoryDao;
+
+    public List<Inventory> getAllInventoryByCode(String code) throws SQLException {
+        return this.getDao().queryForEq("code", code);
     }
-    
-    
+
+    public List<Inventory> getAllInventoryByCategory(String category) throws SQLException {
+        var result = this.getDao().queryBuilder().where().like("category", "%" + category + "%");
+        return result.query();
+    }
+
+    public List<Inventory> getAllInventoryBySize(String size) throws SQLException {
+        var result = this.getDao().queryBuilder().where().like("size", "%" + size + "%");
+        return result.query();
+    }
+
+    public List<Inventory> getAllInventoryByWeight(String weight) throws SQLException {
+        var result = this.getDao().queryBuilder().where().like("weight", "%" + weight + "%");
+        return result.query();
+    }
+
+    public String[] getInventoryCategories() throws SQLException {
+        var results = this.getDao().queryBuilder().distinct().selectColumns("category").query();
+        return results.stream().map(p -> p.getCategory()).toArray(size -> new String[results.size()]);
+    }
+
+    public List<Inventory> getAllInventoryByDecription(String desc) throws SQLException {
+        return this.getDao().queryForEq("description", desc);
+    }
+
+    public void deleteInventory(Inventory inventory) throws SQLException {
+        this.getDao().delete(inventory);
+//        TransactionManager.callInTransaction(connection, new Callable<Void>() {
+//            public Void call() throws Exception {
+//                // delete both objects but make sure that if either one fails, the transaction is rolled back
+//                // and both objects are "restored" to the database
+//                getDao().delete(inventory);
+//                //barDao.delete(bar);
+//                return null;
+//            }
+//        });
+    }
+
     public double calculateMarkup(double cost, Settings props) {
         float points;
         if (DV.validFloatString(props.getProp("MARKUP"))) {
@@ -61,6 +73,10 @@ public class InventoryService extends BaseService{
         }
         return cost * points;
     }
-    
-    
+
+    @Override
+    public InventoryDao getDao() throws SQLException {
+        return dao == null ? new InventoryDao(connection) : dao;
+    }
+
 }

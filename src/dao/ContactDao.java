@@ -6,19 +6,19 @@ package dao;
 
 import com.j256.ormlite.dao.BaseDaoImpl;
 import com.j256.ormlite.support.ConnectionSource;
-import java.util.List;
-import models.Inventory;
 import java.sql.SQLException;
+import java.util.List;
+import models.Contact;
 
 /**
  *
  * @author SeanAnderson
  */
-
-public class InventoryDao extends BaseDaoImpl<Inventory, Object> implements InventoryDaoInterface{
+public class ContactDao extends BaseDaoImpl<Contact, Object> implements ContactDaoInterface {
     
-    public InventoryDao(ConnectionSource connectionSource) throws SQLException {
-        super(connectionSource, Inventory.class);
+    public ContactDao(ConnectionSource connectionSource) throws SQLException {
+        super(connectionSource, Contact.class);
     }
+    
     
 }

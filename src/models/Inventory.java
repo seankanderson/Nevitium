@@ -14,11 +14,7 @@ import java.util.UUID;
  * @author SeanAnderson
  */
 @DatabaseTable(tableName = "inventory")
-public class Inventory {
-
-    
-    @DatabaseField(generatedId = true)
-    private UUID id; 
+public class Inventory extends BaseModel{    
     @DatabaseField
     private String upc;
     @DatabaseField
@@ -64,20 +60,6 @@ public class Inventory {
      */
     public void setCategory(String category) {
         this.category = category;
-    }
-
-    /**
-     * @return the id
-     */
-    public UUID getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     /**

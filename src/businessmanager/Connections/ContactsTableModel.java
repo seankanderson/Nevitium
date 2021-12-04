@@ -1,18 +1,20 @@
-package businessmanager.Inventory;
+package businessmanager.Connections;
 
 import java.util.List;
 import models.AbstractCollectionTableModel;
+import models.Contact;
 import models.Inventory;
 
 /**
- * December 1st 2021
+ 
+ * 2021-12-01
  * @author SeanAnderson
  */
-public class InventoryTableModel extends AbstractCollectionTableModel<Inventory>{
-     
-    public InventoryTableModel(List<Inventory> inventory) {
-        this.items = inventory;
-        this.columns = new String[]{ "Code", "Description", "Quantity", "Price", "Category"};
+public class ContactsTableModel extends AbstractCollectionTableModel<Contact> {
+
+    public ContactsTableModel(List<Contact> contacts) {
+        this.items = contacts;
+        this.columns = new String[]{ "Company", "First Name", "Last Name", "Phone", "Country"};
     }
         
     @Override
@@ -24,19 +26,19 @@ public class InventoryTableModel extends AbstractCollectionTableModel<Inventory>
         
         switch (col) {
             case 0: 
-                item.setCode((String)value);
+                item.setCompany((String)value);
                 break;
             case 1:
-                item.setDescription((String)value);
+                item.setFirstName((String)value);
                 break;
             case 2:
-                item.setQuantity((Double)value);
+                item.setLastName((String)value);
                 break;
             case 3:
-                item.setPrice((Double)value);
+                item.setPhone((String)value);
                 break;
             case 4:
-                item.setCategory((String)value);
+                item.setCountryCode((String)value);
                 break;
            }
     }
@@ -50,18 +52,19 @@ public class InventoryTableModel extends AbstractCollectionTableModel<Inventory>
         
         switch (columnIndex) {
             case 0: 
-                return item.getCode();
+                return item.getCompany();
             case 1:
-                return item.getDescription();
+                return item.getFirstName();
             case 2:
-                return item.getQuantity();
+                return item.getLastName();
             case 3:
-                return item.getPrice();
+                return item.getContact();
             case 4:
-                return item.getCategory();
+                return item.getCountryCode();
            }
            return null;
         
     }
+    
     
 }

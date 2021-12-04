@@ -2,17 +2,16 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
  */
-package dao;
+package services;
 
-import com.j256.ormlite.dao.Dao;
-import java.util.List;
-import models.Inventory;
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import java.sql.SQLException;
 
 /**
  *
  * @author SeanAnderson
  */
-public interface InventoryDaoInterface extends Dao<Inventory, Object> {
+public interface BaseServiceInterface<T> {
+    public T getDao() throws SQLException;
 }
 

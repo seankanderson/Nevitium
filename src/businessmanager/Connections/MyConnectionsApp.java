@@ -4,9 +4,9 @@
  * Created on June 22, 2006, 10:08 AM
  ** Copyright (c) Data Virtue 2006
  */
-
 package businessmanager.Connections;
 //import EDI.EDIResolver;
+
 import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
 import businessmanager.Common.TableView;
@@ -26,57 +26,60 @@ import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.event.*;
 
-
 import java.awt.*;
 import java.net.URI;
+import java.sql.SQLException;
+
 /**
  *
- * @author  Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010 All Rights Reserved.
+ * @author Sean K Anderson - Data Virtue
+ * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010 All Rights
+ * Reserved.
  */
-public class MyConnectionsApp extends javax.swing.JDialog{
+public class MyConnectionsApp extends javax.swing.JDialog {
+
     private KeyCard accessKey;
     private boolean debug = false;
     private final GlobalApplicationDaemon application;
-    /** Creates new form ConnectionsDialog */
-    public MyConnectionsApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon g, boolean select, boolean customers, boolean suppliers){
+
+    /**
+     * Creates new form ConnectionsDialog
+     */
+    public MyConnectionsApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon g, boolean select, boolean customers, boolean suppliers) {
 
         super(parent, modal);
+
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
 
         initComponents();
-        //tesEDIButton.setVisible(false);
         this.application = g;
-        
-        this.addWindowListener(new java.awt.event.WindowAdapter(){
-	public void windowClosing(java.awt.event.WindowEvent e){
 
-            recordScreenPosition();
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
 
-	}} );
+                recordScreenPosition();
+
+            }
+        });
 
         functionToolbar.setLayout(new FlowLayout());
         invoiceToolbar.setLayout(new FlowLayout());
-        
+
         workingPath = application.getWorkingPath();
         accessKey = application.getKey_card();
-        setDbEngine (application.getDb());
+        setDbEngine(application.getDb());
         props = application.getProps();
 
         String coName = props.getProp("CO NAME");
         this.setTitle(coName + " Human Connections");
-        
+
         jTabbedPane1.setSelectedIndex(0); //select a tab to view by default
-        
+
         int c = Tools.getStringInt(props.getProp("CONN COL"), 0);
         searchFieldCombo.setSelectedIndex(c);
 
-        
-       
-       
         /* Limit chars availble in textfields */
-        
         companyTextField.setDocument(new LimitedDocument(35));
         firstTextField.setDocument(new LimitedDocument(20));
         lastTextField.setDocument(new LimitedDocument(20));
@@ -91,9 +94,8 @@ public class MyConnectionsApp extends javax.swing.JDialog{
         emailTextField.setDocument(new LimitedDocument(40));
         wwwTextField.setDocument(new LimitedDocument(50));
         notesTextArea.setDocument(new LimitedDocument(100));
-       
-        
-         /* Close dialog on escape */
+
+        /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();
         InputMap im = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         Object windowCloseKey = new Object();
@@ -108,42 +110,44 @@ public class MyConnectionsApp extends javax.swing.JDialog{
         im.put(windowCloseStroke, windowCloseKey);
         am.put(windowCloseKey, windowCloseAction);
         /* End Close Dialog on Escape*/
-              
+
         fileList.setModel(lm);
-        
-        if (customers && !suppliers) custRadio.setSelected(true);
-        if (suppliers && !customers) suppRadio.setSelected(true);
-        if (customers && suppliers) allRadio.setSelected(true);
+
+        if (customers && !suppliers) {
+            custRadio.setSelected(true);
+        }
+        if (suppliers && !customers) {
+            suppRadio.setSelected(true);
+        }
+        if (customers && suppliers) {
+            allRadio.setSelected(true);
+        }
 
         connDAO = new ConnectionsDAO(db, application);
         edit_key = connDAO.getKey();
-        
+
         connTable.setModel(filter());
-     
-        setView (vals);
+
+        setView(vals);
         selectMode = select;
-        
-        //java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-        //this.setLocation(dim.width, 1);
-        
-        
+
         if (select) {
             saveButton.setVisible(true);
             saveButton.setEnabled(false);
             selectButton.setVisible(true);
             voidButton.setVisible(true);
             setFieldsEnabled(false);
-            
-        }else {
+
+        } else {
             saveButton.setVisible(true);
             saveButton.setEnabled(false);
             selectButton.setVisible(false);
             voidButton.setVisible(false);
             setFieldsEnabled(false);
-            }
-        
+        }
+
         findField.requestFocus();
-        
+
         zip = new DbEngine();
         zip.loadSchema("zip.sch");
 
@@ -151,120 +155,142 @@ public class MyConnectionsApp extends javax.swing.JDialog{
         String tax2name = props.getProp("TAX2NAME");
         tax1CheckBox.setText(tax1name);
         tax2CheckBox.setText(tax2name);
-        connTable.setSelectionForeground(new java.awt.Color (0,0,0));
+        connTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
 
         //check for good stored values
         //if bad do resizing routine if good just position and display
-        if (this.checkForScreenSettings()){
+        if (this.checkForScreenSettings()) {
             this.restoreScreenPosition();//restore saved screen size
-        }else {
+        } else {
             java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
             this.setLocation(dim.width, dim.height);
         }
-        
-        this.setVisible(true);//release to the user
-    }
-   
-    private String workingPath = "";
-    
-    private TableModel filter () {
-        
-        if (allRadio.isSelected()) {
-            return connDAO.getMyConnectionsTable(connTable);           
-        }        
-        if (custRadio.isSelected()) {
-            return connDAO.getCustomerTable(connTable);            
-        }        
-        if (suppRadio.isSelected()) {         
-            return connDAO.getVendorTable(connTable);            
-        }        
-        if (unpaidRadio.isSelected()){
-            return connDAO.getUnpaidTable(connTable);
-        }
-        
-        return connDAO.getMyConnectionsTable(connTable);
-    }
-    
-    //JOptionPane
-    public int getReturnValue () {
-        
-        return returnValue;        
+
+        this.setVisible(true);
     }
 
-   private void recordScreenPosition(){
+    private String workingPath = "";
+
+    private TableModel filter() {
+
+        try {
+
+            if (allRadio.isSelected()) {
+                return connDAO.getMyConnectionsTable(connTable);
+            }
+            if (custRadio.isSelected()) {
+                return connDAO.getCustomerTable(connTable);
+            }
+            if (suppRadio.isSelected()) {
+                return connDAO.getVendorTable(connTable);
+            }
+            if (unpaidRadio.isSelected()) {
+                return connDAO.getUnpaidTable(connTable);
+            }
+
+            return connDAO.getMyConnectionsTable(connTable);
+
+        } catch (SQLException e) {
+            JOptionPane.showConfirmDialog(this, e.getMessage(), "DATABASE ERROR", WIDTH);
+            return null;
+        }
+    }
+
+    //JOptionPane
+    public int getReturnValue() {
+
+        return returnValue;
+    }
+
+    private void recordScreenPosition() {
 
         Point p = this.getLocationOnScreen();
         Dimension d = this.getSize();
 
-        props.setProp("CONNPOS", p.x+","+p.y);
-        props.setProp("CONNSIZE", d.width+","+d.height);
+        props.setProp("CONNPOS", p.x + "," + p.y);
+        props.setProp("CONNSIZE", d.width + "," + d.height);
 
     }
 
     private Point defaultScreenPosition;
     private Dimension defaultWindowSize;
 
-    private boolean checkForScreenSettings(){
+    private boolean checkForScreenSettings() {
         String pt = props.getProp("CONNPOS");
         String dim = props.getProp("CONNSIZE");
-        if (pt.equals("")) return false;
-        if (dim.equals("")) return false;
-        if ((Tools.parsePoint(pt))==null) return false;
-        if ((Tools.parseDimension(dim))==null) return false;
+        if (pt.equals("")) {
+            return false;
+        }
+        if (dim.equals("")) {
+            return false;
+        }
+        if ((Tools.parsePoint(pt)) == null) {
+            return false;
+        }
+        if ((Tools.parseDimension(dim)) == null) {
+            return false;
+        }
         return true;
 
     }
 
-    private void storeDefaultScreen(){
+    private void storeDefaultScreen() {
 
-        try{
+        try {
             defaultScreenPosition = this.getLocationOnScreen();
-        }catch(Exception e){
-            defaultScreenPosition = new Point(0,0);
+        } catch (Exception e) {
+            defaultScreenPosition = new Point(0, 0);
         }
 
         defaultWindowSize = this.getSize();
 
     }
 
-    private void restoreDefaultScreenSize(){
+    private void restoreDefaultScreenSize() {
 
         this.setSize(this.defaultWindowSize);
     }
-    private void restorDefaultScreen(){
+
+    private void restorDefaultScreen() {
         restoreDefaultScreenSize();
         restoreDefaultScreenLocation();
     }
-    private void restoreDefaultScreenLocation(){
+
+    private void restoreDefaultScreenLocation() {
         this.setLocation(this.defaultScreenPosition);
     }
 
-    private void restoreScreenPosition(){
+    private void restoreScreenPosition() {
 
         String pt = props.getProp("CONNPOS");
         String dim = props.getProp("CONNSIZE");
-        //System.out.println("Point "+pt+"  Dim"+dim);
         Point p = Tools.parsePoint(pt);
-        if (p==null) p = this.defaultScreenPosition;
-        if (p==null) p = new Point(0,0);
+        if (p == null) {
+            p = this.defaultScreenPosition;
+        }
+        if (p == null) {
+            p = new Point(0, 0);
+        }
         this.setLocation(p);
         Dimension d = Tools.parseDimension(dim);
-        if (d==null) d = this.defaultWindowSize;
+        if (d == null) {
+            d = this.defaultWindowSize;
+        }
         this.setSize(d);
 
     }
 
-    private void clearFields () {
-       
-         edit_key = 0;
+    private void clearFields() {
 
-         connDAO = new ConnectionsDAO(db, application);
+        edit_key = 0;
 
-         String zone = props.getProp("ADDRESS STYLE");
-         keyLabel.setText(Integer.toString(edit_key));  //show the user the key for the record
-         
-         populateInvoices(false);
-         
+        connDAO = new ConnectionsDAO(db, application);
+
+        String zone = props.getProp("ADDRESS STYLE");
+        keyLabel.setText(Integer.toString(edit_key));  //show the user the key for the record
+
+        populateInvoices(false);
+
         companyTextField.setText("");
         firstTextField.setText("");
         lastTextField.setText("");
@@ -286,396 +312,399 @@ public class MyConnectionsApp extends javax.swing.JDialog{
         tax2CheckBox.setSelected(false);
 
         fileList.setModel(new javax.swing.DefaultListModel());
-    
+
         journalTextArea.setText("");
-    
+
     }
-    
-    
-    private void setFieldsEnabled (boolean enabled) {
-        
-    companyTextField.setEnabled(enabled);
-    firstTextField.setEnabled(enabled);
-    lastTextField.setEnabled(enabled);
-    addressTextField.setEnabled(enabled);
-    suiteTextField.setEnabled(enabled);
-    cityTextField.setEnabled(enabled);
-    stateTextField.setEnabled(enabled);
-    zipTextField.setEnabled(enabled);
-    countryCombo.setEnabled(enabled);
-    contactTextField.setEnabled(enabled);
-    phoneTextField.setEnabled(enabled);
-    faxTextField.setEnabled(enabled);
-    emailTextField.setEnabled(enabled);
-    wwwTextField.setEnabled(enabled);
-    notesTextArea.setEnabled(enabled);
-    custCheckBox.setEnabled(enabled);
-    supplierCheckBox.setEnabled(enabled);
-    tax1CheckBox.setEnabled(enabled);
-    tax2CheckBox.setEnabled(enabled);
-    shipToButton.setEnabled(enabled);    
-    zipButton.setEnabled(enabled);    
-    saveButton.setEnabled(enabled);   
-    viewButton.setEnabled(enabled);    
-    fileList.setEnabled(enabled);    
-    journalTextArea.setEnabled(enabled);
-    
-    if (edit_key != 0 ) newButton.setEnabled(enabled);
-    else {       
-        newButton.setEnabled(false);        
-    }
-    
-    if (enabled){            
-            messageField.setText("Remember to click 'Save' when you modify a record.");
-        }else {
-        
-        messageField.setText("Click the Company Field to start a new record.");
-        
+
+    private void setFieldsEnabled(boolean enabled) {
+
+        companyTextField.setEnabled(enabled);
+        firstTextField.setEnabled(enabled);
+        lastTextField.setEnabled(enabled);
+        addressTextField.setEnabled(enabled);
+        suiteTextField.setEnabled(enabled);
+        cityTextField.setEnabled(enabled);
+        stateTextField.setEnabled(enabled);
+        zipTextField.setEnabled(enabled);
+        countryCombo.setEnabled(enabled);
+        contactTextField.setEnabled(enabled);
+        phoneTextField.setEnabled(enabled);
+        faxTextField.setEnabled(enabled);
+        emailTextField.setEnabled(enabled);
+        wwwTextField.setEnabled(enabled);
+        notesTextArea.setEnabled(enabled);
+        custCheckBox.setEnabled(enabled);
+        supplierCheckBox.setEnabled(enabled);
+        tax1CheckBox.setEnabled(enabled);
+        tax2CheckBox.setEnabled(enabled);
+        shipToButton.setEnabled(enabled);
+        zipButton.setEnabled(enabled);
+        saveButton.setEnabled(enabled);
+        viewButton.setEnabled(enabled);
+        fileList.setEnabled(enabled);
+        journalTextArea.setEnabled(enabled);
+
+        if (edit_key != 0) {
+            newButton.setEnabled(enabled);
+        } else {
+            newButton.setEnabled(false);
         }
-    
-    }
-    
-    private void populateFields () {
-        
-        if (connTable.getSelectedRow() > -1) {  
-                int key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
-                connDAO = new ConnectionsDAO(db,application, key);
-                edit_key = connDAO.getKey();
-                
-            }else return;
 
-            companyTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 1));
-            firstTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 2));
-            lastTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 3));
-            addressTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 4));
-            suiteTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 5));
-            cityTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 6));
-            stateTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 7));
-            zipTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 8));
-            countryCombo.setSelectedItem((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 17));
-            contactTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 9));
-            phoneTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 10));
-            faxTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 11));
-            emailTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 12));
-            wwwTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 13));
-            notesTextArea.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 14));
-            custCheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 15));
-            supplierCheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 16));
-            tax1CheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 18));
-            tax2CheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 19));
+        if (enabled) {
+            messageField.setText("Remember to click 'Save' when you modify a record.");
+        } else {
 
-            //Set active field based on supplier
+            messageField.setText("Click the Company Field to start a new record.");
 
-            //activeCheckBox.setEnabled( supplierCheckBox.isSelected() );
-            populateInvoices(false);
-            populateJournals();
-            
-            keyLabel.setText(Integer.toString(edit_key));  //show the user the key for the record
-            this.setFieldsEnabled(true);
+        }
 
     }
-    
-   private void populateInvoices (boolean change) {
 
-       if (connTable.getSelectedRow() < 0) return;
+    private void populateFields() {
 
-       /* Determin the table we wil work from, quotes or invoices */
-       String table = "invoice";
-       
-       if (invoiceToggleButton.getText().endsWith("Quotes")){
-           if (change){
-           table = "quote";
-           invoiceLabel.setText("Quotes ");
-           
-           invoiceTable.setToolTipText("Quotes found for this contact");
-           invoiceToggleButton.setText("Show Invoices");
-           }else table = "invoice";
-       }else{
-           if (change){
-           table = "invoice";
-           invoiceLabel.setText("Invoices ");
-           
-           invoiceTable.setToolTipText("Invoices found for this contact");
-           invoiceToggleButton.setText("Show Quotes");
-           }else table = "quote";           
-       }
-       
-       int key = (Integer)connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
-       
-       /* the custom TableModel is assigned to the My Connections invoiceTable */
-       invoiceTable.setModel(connDAO.getInvoiceTableModel(table, key));
+        if (connTable.getSelectedRow() > -1) {
+            int key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
+            connDAO = new ConnectionsDAO(db, application, key);
+            edit_key = connDAO.getKey();
 
-       if (invoiceTable.getRowCount() < 1){
-           invoiceReportButton.setEnabled(false);
-           purchaseHistoryButton.setEnabled(false);
-       }else{
-           invoiceReportButton.setEnabled(true);
-           purchaseHistoryButton.setEnabled(true);
-       }
+        } else {
+            return;
+        }
 
-       /* remove key field - clean up*/
-       setView();
-              
-   }
-    
-   private void setView () {
-       
-       TableColumnModel cm = invoiceTable.getColumnModel();
+        companyTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 1));
+        firstTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 2));
+        lastTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 3));
+        addressTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 4));
+        suiteTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 5));
+        cityTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 6));
+        stateTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 7));
+        zipTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 8));
+        countryCombo.setSelectedItem((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 17));
+        contactTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 9));
+        phoneTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 10));
+        faxTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 11));
+        emailTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 12));
+        wwwTextField.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 13));
+        notesTextArea.setText((String) connTable.getModel().getValueAt(connTable.getSelectedRow(), 14));
+        custCheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 15));
+        supplierCheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 16));
+        tax1CheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 18));
+        tax2CheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 19));
+        populateInvoices(false);
+        populateJournals();
+
+        keyLabel.setText(Integer.toString(edit_key));  //show the user the key for the record
+        this.setFieldsEnabled(true);
+
+    }
+
+    private void populateInvoices(boolean change) {
+
+        if (connTable.getSelectedRow() < 0) {
+            return;
+        }
+
+        /* Determin the table we wil work from, quotes or invoices */
+        String table = "invoice";
+
+        if (invoiceToggleButton.getText().endsWith("Quotes")) {
+            if (change) {
+                table = "quote";
+                invoiceLabel.setText("Quotes ");
+
+                invoiceTable.setToolTipText("Quotes found for this contact");
+                invoiceToggleButton.setText("Show Invoices");
+            } else {
+                table = "invoice";
+            }
+        } else {
+            if (change) {
+                table = "invoice";
+                invoiceLabel.setText("Invoices ");
+
+                invoiceTable.setToolTipText("Invoices found for this contact");
+                invoiceToggleButton.setText("Show Quotes");
+            } else {
+                table = "quote";
+            }
+        }
+
+        int key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
+
+        /* the custom TableModel is assigned to the My Connections invoiceTable */
+        invoiceTable.setModel(connDAO.getInvoiceTableModel(table, key));
+
+        if (invoiceTable.getRowCount() < 1) {
+            invoiceReportButton.setEnabled(false);
+            purchaseHistoryButton.setEnabled(false);
+        } else {
+            invoiceReportButton.setEnabled(true);
+            purchaseHistoryButton.setEnabled(true);
+        }
+
+        /* remove key field - clean up*/
+        setView();
+
+    }
+
+    private void setView() {
+
+        TableColumnModel cm = invoiceTable.getColumnModel();
         TableColumn tc;
         invoiceTable.setSelectionForeground(Color.BLACK);
-        
+
         if (invoiceTable.getColumnCount() > 2) {
-                        
+
             //setup hold table view
             tc = cm.getColumn(0);
             invoiceTable.removeColumn(tc);//remove key column
         }
-       
+
         tc = invoiceTable.getColumnModel().getColumn(0);
         tc.setPreferredWidth(90);
         tc = invoiceTable.getColumnModel().getColumn(1);
         tc.setPreferredWidth(40);
-       
-   } 
-   
-   
-  
-    
-    public void setView (int [] cols){
-        
-        if (connTable.getModel().getRowCount() > 0){
-        TableColumnModel cm = connTable.getColumnModel();
-        TableColumn tc;
-        //connTable.setCellEditor(null);
-        
-        for (int i =0; i < cols.length; i++){            
-            tc = cm.getColumn(cols[i]);
-            connTable.removeColumn(tc);            
-        }
-        
-        int a = connTable.getColumnCount();
-        javax.swing.JTextField tf = new javax.swing.JTextField();
-        tf.setEditable(false);
-        for (int i=0; i < a; i++){
-            
-            cm.getColumn(i).setCellEditor(new javax.swing.DefaultCellEditor(tf));
-        }
-        
-        }
-        
+
     }
-    
-    public void setDbEngine (DbEngine dbe){
-        
+
+    public void setView(int[] cols) {
+
+        if (connTable.getModel().getRowCount() > 0) {
+            TableColumnModel cm = connTable.getColumnModel();
+            TableColumn tc;
+            //connTable.setCellEditor(null);
+
+            for (int i = 0; i < cols.length; i++) {
+                tc = cm.getColumn(cols[i]);
+                connTable.removeColumn(tc);
+            }
+
+            int a = connTable.getColumnCount();
+            javax.swing.JTextField tf = new javax.swing.JTextField();
+            tf.setEditable(false);
+            for (int i = 0; i < a; i++) {
+
+                cm.getColumn(i).setCellEditor(new javax.swing.DefaultCellEditor(tf));
+            }
+
+        }
+
+    }
+
+    public void setDbEngine(DbEngine dbe) {
+
         db = dbe;
-        
+
     }
-        
-    private void find () {
-        
-        if (!findField.getText().equals("")){
-            
-            searchColumn = searchFieldCombo.getSelectedIndex()+1;
-        
+
+    private void find() {
+
+        if (!findField.getText().equals("")) {
+
+            searchColumn = searchFieldCombo.getSelectedIndex() + 1;
+
             ArrayList al = connDAO.search(searchColumn, findField.getText());
-            
-            if (al != null){
-                
+
+            if (al != null) {
+
                 connTable.setModel(connDAO.getSearchResultTable(al, true));
                 setView(vals);
                 /* remember search col */
-            
-                props.setProp("CONN COL", Integer.toString(searchColumn-1));
 
-            }else JOptionPane.showMessageDialog(this, "No matching records were found.","Find Failed",  JOptionPane.OK_OPTION);
-                        
-        }else refreshTable();
-        
+                props.setProp("CONN COL", Integer.toString(searchColumn - 1));
+
+            } else {
+                JOptionPane.showMessageDialog(this, "No matching records were found.", "Find Failed", JOptionPane.OK_OPTION);
+            }
+
+        } else {
+            refreshTable();
+        }
+
     }
-    
-    private void export (String filename) {
-        
+
+    private void export(String filename) {
+
         //System.out.println(filename);
         ReportModel rm = new ReportModel(connTable.getModel());
         StringBuilder sb = new StringBuilder();
         int col_count = connTable.getModel().getColumnCount();
-        
+
         /* Headers  */
-            if (!new File(filename).exists()){  
-                
-                String [] headers = db.getFieldNames("conn");
-                
-                for (int i = 0; i < headers.length; i++){
-                    
-                    sb.append(headers[i]);
-                    if (i < headers.length - 1) sb.append(',');
-            
-             }
-        
-             sb.append(System.getProperty("line.separator"));
-        
-        }
-        
-          /* Data  */    
-        do {
-            
-            for (int c = 0; c < col_count ; c++){
-                
-                sb.append(rm.getValueAt(c).replace(',',';'));
-                if (c < connTable.getModel().getColumnCount()-1) sb.append(',');
-                
+        if (!new File(filename).exists()) {
+
+            String[] headers = db.getFieldNames("conn");
+
+            for (int i = 0; i < headers.length; i++) {
+
+                sb.append(headers[i]);
+                if (i < headers.length - 1) {
+                    sb.append(',');
+                }
+
             }
-            
+
             sb.append(System.getProperty("line.separator"));
-            
-        }while (rm.next()); 
-        
-        DV.writeFile(filename, sb.toString(), true);
-        
-    }
-    
-    private void newJournal () {
-        
-        String date = DV.getShortDate().replace('/', '-');
-        String tmp="";
-        int elements = lm.getSize();
-        
-        boolean match=false;
-        
-        for (int e = 0; e < elements; e++){
-            
-            tmp = (String)lm.getElementAt(e);
-            
-            if (tmp.equals(date) ) match = true;            
-            
+
         }
-        
-        if (!match  && edit_key != 0) {
-            
-            File jFile = new File(workingPath + "jrnls/"+Integer.toString(edit_key)+"/");
-            
-            if (!jFile.exists()) jFile.mkdirs();
-            
+
+        /* Data  */
+        do {
+
+            for (int c = 0; c < col_count; c++) {
+
+                sb.append(rm.getValueAt(c).replace(',', ';'));
+                if (c < connTable.getModel().getColumnCount() - 1) {
+                    sb.append(',');
+                }
+
+            }
+
+            sb.append(System.getProperty("line.separator"));
+
+        } while (rm.next());
+
+        DV.writeFile(filename, sb.toString(), true);
+
+    }
+
+    private void newJournal() {
+
+        String date = DV.getShortDate().replace('/', '-');
+        String tmp = "";
+        int elements = lm.getSize();
+
+        boolean match = false;
+
+        for (int e = 0; e < elements; e++) {
+
+            tmp = (String) lm.getElementAt(e);
+
+            if (tmp.equals(date)) {
+                match = true;
+            }
+
+        }
+
+        if (!match && edit_key != 0) {
+
+            File jFile = new File(workingPath + "jrnls/" + Integer.toString(edit_key) + "/");
+
+            if (!jFile.exists()) {
+                jFile.mkdirs();
+            }
+
             DV.writeFile(jFile.toString() + "/" + date, DV.getFullDate(), false);
             lm.insertElementAt(date, 0);
-                       
+
         }
-        
+
     }
-    
-    private void saveJournal () {
-        
-       int idx = fileList.getSelectedIndex();
-       fileList.setEnabled(true);
-       
+
+    private void saveJournal() {
+
+        int idx = fileList.getSelectedIndex();
+        fileList.setEnabled(true);
+
         String text = journalTextArea.getText();
-       
-        if (!text.equals("") && idx > -1){
-            
-            DV.writeFile(workingPath + "jrnls/"+Integer.toString(edit_key) + "/" + (String) lm.getElementAt(idx), text, false);
-            
-            
-        }else journalTextArea.setText("");
-            
-            
-        
+
+        if (!text.equals("") && idx > -1) {
+
+            DV.writeFile(workingPath + "jrnls/" + Integer.toString(edit_key) + "/" + (String) lm.getElementAt(idx), text, false);
+
+        } else {
+            journalTextArea.setText("");
+        }
+
     }
-    
-    
-    private void getJournal () {
-        
-        
+
+    private void getJournal() {
+
         int sel = fileList.getSelectedIndex();
-        
-        if (sel > -1){            
-            
+
+        if (sel > -1) {
+
             String file = (String) lm.getElementAt(sel);
-            
-            journalTextArea.setText(DV.readFile(workingPath + "jrnls/" + Integer.toString(edit_key) + "/" + file ));
-            
+
+            journalTextArea.setText(DV.readFile(workingPath + "jrnls/" + Integer.toString(edit_key) + "/" + file));
+
         }
-        
+
     }
-    
-    
-     public static void launch (String com, String target) {
-     
-     
-        String osName = System.getProperty("os.name" );
-            
-            try {
-                
-                if(osName.contains("Windows")){
-                //Runtime.getRuntime().exec('"' + acro + '"' + " " + file.replace('/','\\'));
-                   
-                    String [] cm = {"cmd.exe", com + target};
-                    Runtime.getRuntime().exec(cm);
-                    
-                }
-                //FOR WINDOWS NT/XP/2000 USE CMD.EXE
-                else {
-                    
-                    Runtime.getRuntime().exec(com + target);
-                   //System.out.println("cmd.exe start " + '"' + "c:\\Program Files\\Adobe\\Acrobat*\\Acrobat\\acrobat " + file.replace('/','\\') + '"');
-                } 
-            } catch (IOException ex) {
-                ex.printStackTrace();
+
+    public static void launch(String com, String target) {
+
+        String osName = System.getProperty("os.name");
+
+        try {
+
+            if (osName.contains("Windows")) {
+                String[] cm = {"cmd.exe", com + target};
+                Runtime.getRuntime().exec(cm);
+
+            } //FOR WINDOWS NT/XP/2000 USE CMD.EXE
+            else {
+
+                Runtime.getRuntime().exec(com + target);
             }
-     
-     
-     
- }   
-    
-    
-    private void zipAction() {
-        
-      
-        java.util.ArrayList al = null;
-        
-        if (zipTextField.getText().length() > 4 && zipTextField.getText().length() < 6  && DV.validIntString(zipTextField.getText()) ) {
-        
-            al = zip.searchFast("zip", 1, zipTextField.getText(), false );
-            
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
-                
-        if (al != null){
-            Object [] zipinfo = new Object [6];            
-            zipinfo = zip.getRecord("zip", (Long) al.get(0));            
+
+    }
+
+    private void zipAction() {
+
+        java.util.ArrayList al = null;
+
+        if (zipTextField.getText().length() > 4 && zipTextField.getText().length() < 6 && DV.validIntString(zipTextField.getText())) {
+
+            al = zip.searchFast("zip", 1, zipTextField.getText(), false);
+
+        }
+
+        if (al != null) {
+            Object[] zipinfo = new Object[6];
+            zipinfo = zip.getRecord("zip", (Long) al.get(0));
             cityTextField.setText((String) zipinfo[2]);
             stateTextField.setText((String) zipinfo[3]);
         }
-        
+
     }
-    
-    private void populateJournals () {
-        
+
+    private void populateJournals() {
+
         lm = new javax.swing.DefaultListModel();
-        
-        
+
         journalTextArea.setText("");
-        
+
         String path = workingPath + "jrnls/" + Integer.toString(edit_key) + "/";
-        
-        File dir = new File (path);
-        if (!dir.exists()) dir.mkdirs();
-        
-        String [] files = dir.list();
-        
-        for (int i = files.length-1; i > -1; i--){
-        
-            lm.addElement(files[i]);
-            
+
+        File dir = new File(path);
+        if (!dir.exists()) {
+            dir.mkdirs();
         }
-        if (files.length < 1) journalTextArea.setEnabled(false);
-        
+
+        String[] files = dir.list();
+
+        for (int i = files.length - 1; i > -1; i--) {
+
+            lm.addElement(files[i]);
+
+        }
+        if (files.length < 1) {
+            journalTextArea.setEnabled(false);
+        }
+
         fileList.setModel(lm);
-        
+
     }
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -1707,526 +1736,510 @@ public class MyConnectionsApp extends javax.swing.JDialog{
     }// </editor-fold>//GEN-END:initComponents
 
     private void invoiceTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_invoiceTableKeyPressed
-        
+
         int kc = evt.getKeyCode();
-        
+
         if (kc == evt.VK_ADD) {
-            
+
             takePayment();
             return;
-            
+
         }
-        
+
         if (kc == evt.VK_ENTER) {
-            
+
             viewInvoice();
             return;
-            
+
         }
-        
+
     }//GEN-LAST:event_invoiceTableKeyPressed
 
     private void toggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_toggleButtonActionPerformed
-        
+
         if (detailPanel.isVisible()) {
-            
+
             detailPanel.setVisible(false);
             toggleButton.setText("More Detail");
             toggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Up.png")));
-            
-        }else {
-            
-            
+
+        } else {
+
             detailPanel.setVisible(true);
             toggleButton.setText("Less Detail");
             toggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Down.png")));
         }
-        
+
         findField.requestFocus();
     }//GEN-LAST:event_toggleButtonActionPerformed
 
     private void invoiceTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_invoiceTableMouseClicked
 
-       
+        if (evt.getClickCount() == 2) {
 
-        if (evt.getClickCount() == 2){
-
-             if (!accessKey.checkManager(300)){
+            if (!accessKey.checkManager(300)) {
                 accessKey.showMessage("Invoice Manager");
                 return;
             }
 
             viewInvoice();
-            
-            
-           }
-        
+
+        }
+
     }//GEN-LAST:event_invoiceTableMouseClicked
 
     private void labelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_labelButtonActionPerformed
-         if (!accessKey.checkConnections(300)){
+        if (!accessKey.checkConnections(300)) {
             accessKey.showMessage("Labels");
             return;
         }
-      
-        if (connTable.getSelectedRow() > -1){
-            
-        
-        new ConnLabelDialog(null, true, connTable.getModel(), connTable.getSelectedRows(), workingPath, props);
-        
-        }else {
-            
-             javax.swing.JOptionPane.showMessageDialog(null, "Select rows from the Connections table to create labels.");
-            
+
+        if (connTable.getSelectedRow() > -1) {
+
+            new ConnLabelDialog(null, true, connTable.getModel(), connTable.getSelectedRows(), workingPath, props);
+
+        } else {
+
+            javax.swing.JOptionPane.showMessageDialog(null, "Select rows from the Connections table to create labels.");
+
         }
-        
+
     }//GEN-LAST:event_labelButtonActionPerformed
 
     private void contactTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_contactTextFieldFocusGained
-        
 
         if (contactTextField.getText().trim().equals("")) {
-            
+
             contactTextField.setText(firstTextField.getText().trim() + " " + lastTextField.getText().trim());
-                        
+
         }
-        
-        
+
+
     }//GEN-LAST:event_contactTextFieldFocusGained
 
     private void wwwButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed
         /* Add protocol info if none is specified */
-        if (!wwwTextField.getText().toUpperCase().contains("HTTP://") && !wwwTextField.getText().toUpperCase().contains("FTP://") )
+        if (!wwwTextField.getText().toUpperCase().contains("HTTP://") && !wwwTextField.getText().toUpperCase().contains("FTP://")) {
             wwwTextField.setText("http://" + wwwTextField.getText());
+        }
 
         boolean desktop = DV.parseBool(props.getProp("DESKTOP SUPPORTED"), false);
-        if(Desktop.isDesktopSupported() && desktop){
-            if (Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)){
+        if (Desktop.isDesktopSupported() && desktop) {
+            if (Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 try {
-                    
+
                     Desktop.getDesktop().mail(new URI(wwwTextField.getText()));
                     return;
                 } catch (Exception ex) {
-                  //try the old manual method below
+                    //try the old manual method below
                 }
-         }
+            }
         }
 
-    
         int a = DV.launchURL(wwwTextField.getText());
-        if (a < 1) 
-            javax.swing.JOptionPane.showMessageDialog(null, "There was a problem trying to launch a web browser." + nl + "This may not be supported by your Operating System." );
+        if (a < 1) {
+            javax.swing.JOptionPane.showMessageDialog(null, "There was a problem trying to launch a web browser." + nl + "This may not be supported by your Operating System.");
+        }
         //process errors
-        
+
     }//GEN-LAST:event_wwwButtonActionPerformed
 
     private void emailButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_emailButtonActionPerformed
-        
-        if (emailTextField.getText().equals("") || emailTextField.getText().length() < 8){  /*REGEX*/
-            
+
+        if (emailTextField.getText().equals("") || emailTextField.getText().length() < 8) {
+            /*REGEX*/
+
             javax.swing.JOptionPane.showMessageDialog(null, "You need to enter a good email address.");
             return;
-            
+
         }
         boolean desktop = DV.parseBool(props.getProp("DESKTOP SUPPORTED"), false);
-        if(Desktop.isDesktopSupported() && desktop){
-            if (Desktop.getDesktop().isSupported(Desktop.Action.MAIL)){
+        if (Desktop.isDesktopSupported() && desktop) {
+            if (Desktop.getDesktop().isSupported(Desktop.Action.MAIL)) {
                 try {
-                    
-                    Desktop.getDesktop().mail(new URI("mailto:"+emailTextField.getText()));
+
+                    Desktop.getDesktop().mail(new URI("mailto:" + emailTextField.getText()));
                     return;
                 } catch (Exception ex) {
-                  //try the old manual method below
+                    //try the old manual method below
                 }
-         }
+            }
         }
-        int a = DV.launchURL("mailto:"+emailTextField.getText());
-        if (a < 1) 
-            javax.swing.JOptionPane.showMessageDialog(null, "There was a problem trying to launch an email application." + nl + "This may not be supported by your Operating System." );
-        
-    
-        
+        int a = DV.launchURL("mailto:" + emailTextField.getText());
+        if (a < 1) {
+            javax.swing.JOptionPane.showMessageDialog(null, "There was a problem trying to launch an email application." + nl + "This may not be supported by your Operating System.");
+        }
+
+
     }//GEN-LAST:event_emailButtonActionPerformed
 
     private void zipTextFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_zipTextFieldKeyPressed
-        
-        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER){
-            
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+
             zipAction();
-            
+
         }
-        
-        
+
+
     }//GEN-LAST:event_zipTextFieldKeyPressed
 
     private void zipButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zipButtonActionPerformed
-        
+
         zipAction();
-        
-        
+
+
     }//GEN-LAST:event_zipButtonActionPerformed
 
     private void takePayment() {
-        
-           int r = invoiceTable.getSelectedRow();
+
+        int r = invoiceTable.getSelectedRow();
         TableModel tm = invoiceTable.getModel();
-        
+
         if (r > -1) {
-        
+
             if ((Boolean) tm.getValueAt(r, 2) == true) {
-                
+
                 javax.swing.JOptionPane.showMessageDialog(this, "Invoice is marked as paid.");
-                invoiceTable.changeSelection(r,0,false,false);
+                invoiceTable.changeSelection(r, 0, false, false);
                 invoiceTable.requestFocus();
                 return;
-                
-            }
-            else{ 
-                
-                int key = (Integer)  tm.getValueAt(r, 0);
-        
-                PaymentDialog pd = new PaymentDialog (parentWin, true, key, application);
+
+            } else {
+
+                int key = (Integer) tm.getValueAt(r, 0);
+
+                PaymentDialog pd = new PaymentDialog(parentWin, true, key, application);
                 pd.setVisible(true);
                 populateInvoices(false);
             }
-            
-            
-        invoiceTable.changeSelection(r,0,false,false);
-        invoiceTable.requestFocus();
-        
+
+            invoiceTable.changeSelection(r, 0, false, false);
+            invoiceTable.requestFocus();
+
         }
-        
+
     }
-    
+
     private void findFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_findFieldFocusGained
-        
+
         findField.selectAll();
-        
+
     }//GEN-LAST:event_findFieldFocusGained
 
     private void viewInvoice() {
 
-     
         int row = invoiceTable.getSelectedRow();
-        
-          if (invoiceTable.getSelectedRow() > -1){
-            
+
+        if (invoiceTable.getSelectedRow() > -1) {
+
             int key = (Integer) invoiceTable.getModel().getValueAt(invoiceTable.getSelectedRow(), 0);
-            
-            if (invoiceToggleButton.getText().endsWith("Quotes")){
+
+            if (invoiceToggleButton.getText().endsWith("Quotes")) {
 
                 if (key > 0) {
-                        /* Opening quotes */
-                        InvoiceDialog id = new InvoiceDialog (parentWin, true, application, key); //no select
+                    /* Opening quotes */
+                    InvoiceDialog id = new InvoiceDialog(parentWin, true, application, key); //no select
 
-                        id.setVisible(true);
-                        id.dispose();
+                    id.setVisible(true);
+                    id.dispose();
 
                 }
-            }else {
+            } else {
                 if (key > 0) {
-                                        
-                        InvoiceDialog id = new InvoiceDialog (parentWin, true, key, application); //no select
 
-                        id.setVisible(true);
-                        id.dispose();
+                    InvoiceDialog id = new InvoiceDialog(parentWin, true, key, application); //no select
+
+                    id.setVisible(true);
+                    id.dispose();
 
                 }
-                
+
             }
 
-
-          }
+        }
         this.populateInvoices(false);
-        invoiceTable.changeSelection(row,0,false,false);
+        invoiceTable.changeSelection(row, 0, false, false);
         invoiceTable.requestFocus();
-        
+
     }
-    
+
     private void viewButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewButtonActionPerformed
 
-        if (!accessKey.checkManager(300)){
+        if (!accessKey.checkManager(300)) {
             accessKey.showMessage("Invoice Manager");
             return;
         }
-      viewInvoice();
-        
+        viewInvoice();
+
     }//GEN-LAST:event_viewButtonActionPerformed
 
     private void journalTextAreaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_journalTextAreaMouseClicked
-      
-       
-       
+
+
     }//GEN-LAST:event_journalTextAreaMouseClicked
 
     private void journalTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_journalTextAreaFocusLost
-            
-        
-        
+
         if (!fileList.isEnabled()) {
-                            
-                saveJournal();
+
+            saveJournal();
             fileList.requestFocus();
-            
-            } 
-        
-      
+
+        }
+
+
     }//GEN-LAST:event_journalTextAreaFocusLost
-    
+
     private void journalTextAreaFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_journalTextAreaFocusGained
         fileList.setEnabled(false);
     }//GEN-LAST:event_journalTextAreaFocusGained
 
     private void connTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_connTableKeyReleased
-        
-        if (connTable.getSelectedRow() > -1) {  
+
+        if (connTable.getSelectedRow() > -1) {
             Integer key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
             edit_key = key;
             populateFields();
-            setFieldsEnabled(true);    
-        
+            setFieldsEnabled(true);
+
             saveButton.setEnabled(true);
-                
+
         }
-        
+
     }//GEN-LAST:event_connTableKeyReleased
 
     private void fileListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileListMouseClicked
-        
-        if (!fileList.isEnabled()  && companyTextField.isEnabled()) {
+
+        if (!fileList.isEnabled() && companyTextField.isEnabled()) {
             saveJournal();
             fileList.requestFocus();
-            
+
         }
-        
-        if (companyTextField.isEnabled()) getJournal();
-        
-        
-               
+
+        if (companyTextField.isEnabled()) {
+            getJournal();
+        }
+
+
     }//GEN-LAST:event_fileListMouseClicked
 
     private void newButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newButtonActionPerformed
-      
-        if (edit_key > 0)  newJournal();
-        
+
+        if (edit_key > 0) {
+            newJournal();
+        }
+
     }//GEN-LAST:event_newButtonActionPerformed
 
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
 
-        if (connTable.getModel().getRowCount() > 0){        
-            if (!accessKey.checkExports(500)){                
+        if (connTable.getModel().getRowCount() > 0) {
+            if (!accessKey.checkExports(500)) {
                 accessKey.showMessage("Export");
                 return;
             }
             String home = System.getProperty("user.home");
-            if (System.getProperty("os.name").contains("Windows")) home =  home + '\\' + "My Documents";
-            
+            if (System.getProperty("os.name").contains("Windows")) {
+                home = home + '\\' + "My Documents";
+            }
+
             businessmanager.FileDialog fd = new businessmanager.FileDialog(parentWin, true, home, "export.csv");
-        
+
             fd.setVisible(true);
-        
-            if (!fd.getPath().equals("") ){        
-                    export( fd.getPath() );                    
-             }
+
+            if (!fd.getPath().equals("")) {
+                export(fd.getPath());
+            }
         }
     }//GEN-LAST:event_exportButtonActionPerformed
 
     private void findFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_findFieldKeyPressed
-        
-        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER){
-           
-            
-                find();
-           
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+
+            find();
+
         }
     }//GEN-LAST:event_findFieldKeyPressed
 
     private void connTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_connTableKeyPressed
-        
-        
+
         if (selectMode) {
-            
-            if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER){
-                                            
-                if (connTable.getSelectedRow() > -1 && selectMode) {  
+
+            if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+
+                if (connTable.getSelectedRow() > -1 && selectMode) {
                     returnValue = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
                     this.setVisible(false);
                 }
-           
+
             }
-        
+
         }
-        
-        
+
+
     }//GEN-LAST:event_connTableKeyPressed
 
     private void companyTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_companyTextFieldMouseClicked
-        
+
         if (!companyTextField.isEnabled()) {
-            
-            if (!accessKey.checkConnections(200)){
+
+            if (!accessKey.checkConnections(200)) {
                 accessKey.showMessage("Create");
                 return;
             }
 
             clearFields();
             setFieldsEnabled(true);
-            
+
             companyTextField.requestFocus();
-            
+
         }
-        
-        
+
+
     }//GEN-LAST:event_companyTextFieldMouseClicked
 
     private void connTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_connTableMouseClicked
-    int mouseButton = evt.getButton();
-    if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) return;    
-            //on Double Click
-         
-        if (selectMode){ 
-        
-           if (evt.getClickCount() == 2){
-                        
-            int row = connTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
-            
-             if (connTable.getSelectedRow() > -1) {  
-                
-                returnValue = (Integer) connTable.getModel().getValueAt(row, 0);
-              
-                this.setVisible(false);
-             }
-            
-           }
-                   
+        int mouseButton = evt.getButton();
+        if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) {
+            return;
         }
-        
-            populateFields();
-       
+        //on Double Click
+
+        if (selectMode) {
+
+            if (evt.getClickCount() == 2) {
+
+                int row = connTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
+
+                if (connTable.getSelectedRow() > -1) {
+
+                    returnValue = (Integer) connTable.getModel().getValueAt(row, 0);
+
+                    this.setVisible(false);
+                }
+
+            }
+
+        }
+
+        populateFields();
+
     }//GEN-LAST:event_connTableMouseClicked
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        
-                
+
         if (connTable.getSelectedRow() > -1) {
 
-            if (!accessKey.checkConnections(500)){
+            if (!accessKey.checkConnections(500)) {
                 accessKey.showMessage("Delete");
                 return;
             }
 
-            int a = JOptionPane.showConfirmDialog(this, "Delete Selected Record?","ERASE",  JOptionPane.YES_NO_OPTION);
-          
-            if (a == 0){
+            int a = JOptionPane.showConfirmDialog(this, "Delete Selected Record?", "ERASE", JOptionPane.YES_NO_OPTION);
 
-                int key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0) ;
-                  
+            if (a == 0) {
+
+                int key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
+
                 boolean delete_successful = connDAO.deleteRecord(key);
 
-                if (delete_successful){
+                if (delete_successful) {
                     clearFields();
                     setFieldsEnabled(false);
-                    refreshTable ();
+                    refreshTable();
                     JOptionPane.showMessageDialog(null, "The record was deleted.");
-                }else {
+                } else {
 
                     JOptionPane.showMessageDialog(null, "The record was NOT deleted.");
                 }
-                  
+
             }
-         
-        
+
         }
     }//GEN-LAST:event_deleteButtonActionPerformed
-    
-    private void refreshTable () {
-        
+
+    private void refreshTable() {
+
         connTable.setModel(filter());
-        
-        setView (vals);
-        
+        setView(vals);
+
     }
-    
-    
+
+
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
-        
-       
+
         clearFields();
         setFieldsEnabled(false);
-        
-        
+
+
     }//GEN-LAST:event_clearButtonActionPerformed
 
-    
-    
     private boolean checkDuplicates() {
-        
-        ArrayList al = new ArrayList ();
-                
+
+        ArrayList al = new ArrayList();
+
         al = db.search("conn", 9, phoneTextField.getText().trim(), false);
         /* DV.scanArrayList() checks through the al for the specified int value, if found the int is returned */
-        if (al == null || DV.scanArrayList(al, (Integer) edit_key) == edit_key);
-        else{
-            
-            JOptionPane.showMessageDialog(this, "Phone number is used in another record.","Duplicate Data!",  JOptionPane.OK_OPTION);
-            return false;
-            
-            
-        }
-        
-        al = db.search("conn", 1, companyTextField.getText().trim(), false);
-        
-        if (al == null || DV.scanArrayList(al, edit_key) == edit_key);
-        else{
-            
-            JOptionPane.showMessageDialog(this, "Company name is used in another record.","Duplicate Data!",  JOptionPane.OK_OPTION);
-            return false;
-            
-            
-        }
-        
-        al = db.search("conn", 12, emailTextField.getText().trim(), false);
-        
-        if (al == null || DV.scanArrayList(al, edit_key) == edit_key);
-        else{
-            
-            JOptionPane.showMessageDialog(this, "Email address is used in another record.","Duplicate Data!",  JOptionPane.OK_OPTION);
-            return false;
-            
-            
-        }
-       
-       return true;
-        
-    }
-    
-    private void saveAction(){
+        if (al == null || DV.scanArrayList(al, (Integer) edit_key) == edit_key); else {
 
-        if (!accessKey.checkConnections(200)){
+            JOptionPane.showMessageDialog(this, "Phone number is used in another record.", "Duplicate Data!", JOptionPane.OK_OPTION);
+            return false;
+
+        }
+
+        al = db.search("conn", 1, companyTextField.getText().trim(), false);
+
+        if (al == null || DV.scanArrayList(al, edit_key) == edit_key); else {
+
+            JOptionPane.showMessageDialog(this, "Company name is used in another record.", "Duplicate Data!", JOptionPane.OK_OPTION);
+            return false;
+
+        }
+
+        al = db.search("conn", 12, emailTextField.getText().trim(), false);
+
+        if (al == null || DV.scanArrayList(al, edit_key) == edit_key); else {
+
+            JOptionPane.showMessageDialog(this, "Email address is used in another record.", "Duplicate Data!", JOptionPane.OK_OPTION);
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    private void saveAction() {
+
+        if (!accessKey.checkConnections(200)) {
             accessKey.showMessage("Create, Edit");
             return;
         }
 
         if (custCheckBox.isSelected() == false && supplierCheckBox.isSelected() == false) {
-            
-           int a = JOptionPane.showConfirmDialog(this, "You did NOT select 'Customer' OR 'Supplier'.  Is this ok? ","No Category",  JOptionPane.YES_NO_OPTION);
-          
-           //System.out.println("OPTION " + a);
-          
-            if (a != 0) return;
-            
+
+            int a = JOptionPane.showConfirmDialog(this, "You did NOT select 'Customer' OR 'Supplier'.  Is this ok? ", "No Category", JOptionPane.YES_NO_OPTION);
+
+            //System.out.println("OPTION " + a);
+            if (a != 0) {
+                return;
+            }
+
         }
-        
-        if (companyTextField.getText().trim().equals("") && firstTextField.getText().trim().equals("") &&
-                contactTextField.getText().trim().equals("")){
-            
-            JOptionPane.showMessageDialog(this, "You have to provide some type of contact data; Company, First Name, or Contact.","Form Problem!",  JOptionPane.OK_OPTION);
+
+        if (companyTextField.getText().trim().equals("") && firstTextField.getText().trim().equals("")
+                && contactTextField.getText().trim().equals("")) {
+
+            JOptionPane.showMessageDialog(this, "You have to provide some type of contact data; Company, First Name, or Contact.", "Form Problem!", JOptionPane.OK_OPTION);
             return;
         }
-        
-        if (!checkDuplicates()) return;
-        
-   
+
+        if (!checkDuplicates()) {
+            return;
+        }
+
         connDAO.setCompany(companyTextField.getText().trim());
         connDAO.setFirstName(firstTextField.getText().trim());
         connDAO.setLastName(lastTextField.getText().trim());
@@ -2243,56 +2256,56 @@ public class MyConnectionsApp extends javax.swing.JDialog{
         connDAO.setMisc(notesTextArea.getText().trim());
         connDAO.setCustomer(custCheckBox.isSelected());
         connDAO.setSupplier(supplierCheckBox.isSelected());
-        connDAO.setAlphaCountryCode((String)countryCombo.getSelectedItem());
+        connDAO.setAlphaCountryCode((String) countryCombo.getSelectedItem());
         connDAO.setTax1(tax1CheckBox.isSelected());
         connDAO.setTax2(tax2CheckBox.isSelected());
 
+        if (debug) {
+            System.out.println("The current propsed key: " + edit_key);
+        }
 
-        if (debug) System.out.println("The current propsed key: "+edit_key);
-        
         int zx = connDAO.saveRecord();
 
-        if (debug) System.out.println("Recorded as key: "+zx);
-        
+        if (debug) {
+            System.out.println("Recorded as key: " + zx);
+        }
+
         clearFields();
         setFieldsEnabled(false);
-        
+
         saveButton.setEnabled(false);
-                
+
         allRadio.setSelected(true);
-        
+
         refreshTable();
-                
+
         /*  select  */
-                
         int row = DV.searchTable(connTable.getModel(), 0, zx);
-        
-        if (row > connTable.getModel().getRowCount());
-        else{
-            
-            connTable.changeSelection(row,0,false,false);
-            
+
+        if (row > connTable.getModel().getRowCount()); else {
+
+            connTable.changeSelection(row, 0, false, false);
+
         }
-      
-        
+
     }
-    
-    
+
+
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-        
+
         saveAction();
-        
+
     }//GEN-LAST:event_saveButtonActionPerformed
 
-    private void importCountries(){
+    private void importCountries() {
 
         JFileChooser fileChooser = DV.getFileChooser("c:/1Data/Data Virtue/Research/International/");
 
         File f = fileChooser.getSelectedFile();
 
-        int [] r = {0,1,2,3,4,5};
+        int[] r = {0, 1, 2, 3, 4, 5};
         db.csvImport("countries", f, false, r, false);
-        
+
     }
 
     private void notesTextAreaFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_notesTextAreaFocusGained
@@ -2304,7 +2317,8 @@ public class MyConnectionsApp extends javax.swing.JDialog{
     }//GEN-LAST:event_notesTextAreaFocusLost
 
     private void shipToButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shipToButtonActionPerformed
-        if (edit_key > 0) shipToAction();
+        if (edit_key > 0)
+            shipToAction();
     }//GEN-LAST:event_shipToButtonActionPerformed
 
     private void invoiceToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceToggleButtonActionPerformed
@@ -2354,16 +2368,16 @@ public class MyConnectionsApp extends javax.swing.JDialog{
     }//GEN-LAST:event_unpaidRadioActionPerformed
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
-        
+
         if (connTable.getSelectedRow() > -1) {
             returnValue = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
             ArrayList al = new ArrayList();
-            al.add(new ConnectionsDAO(application.getDb(),application, returnValue));
+            al.add(new ConnectionsDAO(application.getDb(), application, returnValue));
             al.trimToSize();
             application.setAppReturnObjects(al);
             application.setWaiting(false);
             this.dispose();
-            
+
         }
     }//GEN-LAST:event_selectButtonActionPerformed
 
@@ -2372,89 +2386,91 @@ public class MyConnectionsApp extends javax.swing.JDialog{
         this.setVisible(false);
     }//GEN-LAST:event_voidButtonActionPerformed
 
-    private void doInvoiceReport(){
+    private void doInvoiceReport() {
         int r = connTable.getSelectedRow();
 
-        if (r < 0) return;
-        if (!accessKey.checkReports(500)){
+        if (r < 0) {
+            return;
+        }
+        if (!accessKey.checkReports(500)) {
             accessKey.showMessage("Customer/Supplier Reports");
             return;
         }
 
-        int k = (Integer)connTable.getModel().getValueAt(r, 0);
+        int k = (Integer) connTable.getModel().getValueAt(r, 0);
 
-        if (k > 0) ReportFactory.generateCustomerStatement(application, k);
-        
+        if (k > 0) {
+            ReportFactory.generateCustomerStatement(application, k);
+        }
+
     }
 
-    private void doPurchaseReport(){
+    private void doPurchaseReport() {
 
-        if (!accessKey.checkReports(500)){
+        if (!accessKey.checkReports(500)) {
             accessKey.showMessage("Customer/Supplier Reports");
             return;
         }
-
 
         int row = connTable.getSelectedRow();
 
-        if (row < 0) return;
+        if (row < 0) {
+            return;
+        }
 
         int k = edit_key;
 
+        java.util.ArrayList al = db.search("invoice", 11, Integer.toString(k), false);
 
-       java.util.ArrayList al = db.search("invoice", 11, Integer.toString(k), false);
+        if (al == null || al.size() < 1) {
 
-       if (al == null || al.size() < 1){
+            javax.swing.JOptionPane.showMessageDialog(null,
+                    "No invoices found for this contact.");
+            return;
+        }
 
-           javax.swing.JOptionPane.showMessageDialog(null,
-                   "No invoices found for this contact.");
-           return;
-       }
-
-       
-        k = (Integer)connTable.getModel().getValueAt(row, 0);
+        k = (Integer) connTable.getModel().getValueAt(row, 0);
         PurchaseHistoryReport phr = new PurchaseHistoryReport(application);
         phr.SetTitle("Customer Purchase History Report");
         phr.setCustomer(k);
         phr.buildReport();
         new ReportTableDialog(parentWin, true, phr, props);
-        
+
     }
 
     private void shipToAction() {
 
         //utilize connctions key to create a new shipping address
-        new ConnectionsShippingDialog(parentWin,true,db, edit_key, false, application);
+        new ConnectionsShippingDialog(parentWin, true, db, edit_key, false, application);
     }
 
     private void getCountry() {
 
-        int [] r = {0};
+        int[] r = {0};
 
         TableView tv = new TableView(parentWin, true, db, "countries", 0,
-                "Select a country from the table.",r);
+                "Select a country from the table.", r);
 
         tv.dispose();
 
     }
-   
-   
+
     Settings props;
-    private DbEngine db=null;
-    private ConnectionsDAO connDAO=null;
+    private DbEngine db = null;
+    private ConnectionsDAO connDAO = null;
     private int returnValue = -1;
     private boolean selectMode = false;
     //private Object [] dataOut = new Object [20];
     private int edit_key = 0;
-    private int [] vals = {0,15,14,13,12,11,10,3,3,3,3,3,6,6}; //col view removal
+    private int[] vals = {0, 15, 14, 13, 12, 11, 10, 3, 3, 3, 3, 3, 6, 6}; //col view removal
     private java.awt.Frame parentWin;
-    private javax.swing.DefaultListModel lm = new javax.swing.DefaultListModel ();
+    private javax.swing.DefaultListModel lm = new javax.swing.DefaultListModel();
     private DbEngine zip;
     private String nl = System.getProperty("line.separator");
     private Image winIcon;
     private boolean small = false;
     private int searchColumn = 1;
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addressPanel;
     private javax.swing.JTextField addressTextField;
@@ -2544,5 +2560,5 @@ public class MyConnectionsApp extends javax.swing.JDialog{
     private javax.swing.JButton zipButton;
     private javax.swing.JTextField zipTextField;
     // End of variables declaration//GEN-END:variables
-    
+
 }
