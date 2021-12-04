@@ -13,5 +13,7 @@ Desktop application for inventory and invoice management written in Java using N
 
 ![image](https://user-images.githubusercontent.com/1112636/144695513-bf76ce0b-0743-4b72-8147-3f6f26bd6832.png)
 
+![image](https://user-images.githubusercontent.com/1112636/144695580-48ecfd53-3312-4d1e-91d3-95815235ef83.png)
+
 ![image](https://user-images.githubusercontent.com/1112636/144695447-894a1b2d-fc2a-40ee-a6be-55f6377934f4.png)
 
