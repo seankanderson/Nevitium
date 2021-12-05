@@ -187,7 +187,7 @@ public class InventoryLabelsDialog extends javax.swing.JDialog {
                     }else { //info label
                          
                         if (upcBox.isSelected()) sb.append( (String) tm.getValueAt(row, 1)+ " ");
-                        if (codeBox.isSelected()) sb.append( "CODE: " + (String) tm.getValueAt(row, 2));
+                        if (codeBox.isSelected()) sb.append( "CODE: " + tm.getValueAt(row, 2).toString());
                         if (upcBox.isSelected() || codeBox.isSelected()) sb.append(nl);
                         
                         if (descBox.isSelected()) sb.append( (String) tm.getValueAt(row, 3) + nl);

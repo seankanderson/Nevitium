@@ -544,14 +544,11 @@ public class PDFLabels {
             
             BarcodePostnet pnbc = new BarcodePostnet();
         
-            pnbc.setCode(post);
-                 
+            pnbc.setCode(post);                 
             cell = new PdfPCell(pnbc.createImageWithBarcode(cb, null,null));
             cell.setFixedHeight(H * .15f);
             //cell.setVerticalAlignment(Element.ALIGN_TOP);
-            this.formatCell(cell);
-                      
-            
+            this.formatCell(cell);            
             t.addCell(cell);
         }
         

@@ -52,8 +52,8 @@ private ContactService contactService;
 
     public TableModel getMyConnectionsTable(JTable table) throws SQLException{
                 
-        return new ContactsTableModel(contactService.getAll());
-        //return db.createTableModel ("conn",table);
+        //return new ContactsTableModel(contactService.getAll());
+        return db.createTableModel ("conn",table);
     }
 
     public TableModel getCustomerTable(JTable table){
