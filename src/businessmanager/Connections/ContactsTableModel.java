@@ -3,7 +3,6 @@ package businessmanager.Connections;
 import java.util.List;
 import models.AbstractCollectionTableModel;
 import models.Contact;
-import models.Inventory;
 
 /**
  

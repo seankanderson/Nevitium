@@ -1,5 +1,5 @@
-
 package businessmanager.Connections;
+
 import RuntimeManagement.GlobalApplicationDaemon;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -12,117 +12,126 @@ import javax.swing.JTable;
 import javax.swing.table.*;
 import services.ContactService;
 import java.sql.SQLException;
+
 /**
  *
  * @author Data Virtue
  */
 
-
 public class ConnectionsDAO {
-private boolean debug = false;
-private GlobalApplicationDaemon application;
-@Inject
-private ContactService contactService;
+
+    private final boolean debug = false;
+    private GlobalApplicationDaemon application;
+    @Inject
+    private ContactService contactService;
+
     /* Initialize new Connection record */
     public ConnectionsDAO(DbEngine dbe, GlobalApplicationDaemon g) {
 
         db = dbe;
         application = g;
         populateDAO(0);
-        
+
         Injector injector = Guice.createInjector(new GuiceBindingModule());
         contactService = injector.getInstance(ContactService.class);
     }
 
     /* Initialize with exsisting record */
-    public ConnectionsDAO(DbEngine dbe, GlobalApplicationDaemon g, int key){
+    public ConnectionsDAO(DbEngine dbe, GlobalApplicationDaemon g, int key) {
         db = dbe;
-        application=g;
+        application = g;
         populateDAO(key);
     }
 
-    public void populateDAO(int key){
-        if (key == 0){            
-            conn[0] = new Integer(0);
-        }else {
+    public void populateDAO(int key) {
+        if (key == 0) {
+            conn[0] = 0;
+        } else {
             conn = db.getRecord("conn", key);
             retrieveShipToTable(key);
         }
     }
 
-    public TableModel getMyConnectionsTable(JTable table) throws SQLException{
-                
-        //return new ContactsTableModel(contactService.getAll());
-        return db.createTableModel ("conn",table);
+    public TableModel getMyConnectionsTable(JTable table) throws SQLException {
+
+        return new ContactsTableModel(contactService.getAll());
+        //return db.createTableModel ("conn",table);
     }
 
-    public TableModel getCustomerTable(JTable table){
+    public TableModel getCustomerTable(JTable table) throws SQLException  {
 
-        java.util.ArrayList al = db.search ("conn", 15, "true", false);
-
-            if (al == null) return new DefaultTableModel();
-
-            return db.createTableModel ("conn",al,table);
+//        java.util.ArrayList al = db.search("conn", 15, "true", false);
+//
+//        if (al == null) {
+//            return new DefaultTableModel();
+//        }
+//
+//        return db.createTableModel("conn", al, table);
+        return new ContactsTableModel(contactService.getAllCustomers());
     }
 
-    public TableModel getVendorTable(JTable table){
-        java.util.ArrayList al = db.search ("conn", 16, "true", false);
-
-            if (al == null) return new DefaultTableModel();
-
-            return db.createTableModel ("conn",al,table);
-        
+    public TableModel getVendorTable(JTable table) throws SQLException {
+//        java.util.ArrayList al = db.search ("conn", 16, "true", false);
+//
+//            if (al == null) return new DefaultTableModel();
+//
+//            return db.createTableModel ("conn",al,table);
+        return new ContactsTableModel(contactService.getAllVendors());
     }
 
-    
-    public TableModel getUnpaidTable(JTable table){
+    public TableModel getUnpaidTable(JTable table) {
         ArrayList<Integer> customers = new ArrayList();
         ArrayList<Integer> al = db.search("invoice", 8, "false", false);
-                
-        if (al != null){
-                                  
-            DefaultTableModel tm = (DefaultTableModel)db.createTableModel("invoice", al, false);
-            
-            int k = 0; boolean vd = false;
-            for (int r = 0; r < tm.getRowCount(); r++){
-                k = (Integer)tm.getValueAt(r, 11);
+
+        if (al != null) {
+
+            DefaultTableModel tm = (DefaultTableModel) db.createTableModel("invoice", al, false);
+
+            int k;
+            boolean voided;
+            for (int r = 0; r < tm.getRowCount(); r++) {
+                k = (Integer) tm.getValueAt(r, 11);
                 if (k > 0) {
-                    if (!DV.arrayListContains(customers, k)){//check for voids - skip them
-                        vd = (Boolean)tm.getValueAt(r, 9);
-                        if (!vd) customers.add(k); //add  customer if they have unpaid and are not voided
+                    if (!DV.arrayListContains(customers, k)) {//check for voids - skip them
+                        voided = (Boolean) tm.getValueAt(r, 9);
+                        if (!voided) {
+                            customers.add(k); //add  customer if they have unpaid and are not voided
+                        }
                     } //store customer keys in arraylist
-                }else {
+                } else {
                     //unpaid SALE!!
-                }   
+                }
             }
             customers.trimToSize();
-        }else {
+        } else {
             return new DefaultTableModel();
         }
-        
-        if (customers != null && customers.size() > 0) {
-            return db.createTableModel ("conn", customers, table);
+
+        if (customers.size() > 0) {
+            return db.createTableModel("conn", customers, table);
         }
         return new DefaultTableModel();
     }
-    
-    private void retrieveShipToTable(int key){
-        
+
+    private void retrieveShipToTable(int key) {
+
         ArrayList al = db.nSearch("connship", 1, key, key, false);
-        if (al != null){            
+        if (al != null) {
             shipToTable = db.createTableModel("connship", al, false);
-            if (debug) System.out.println("CDAO retreiveTable row count "+shipToTable.getRowCount());
+            if (debug) {
+                System.out.println("CDAO retreiveTable row count " + shipToTable.getRowCount());
+            }
 
-            for (int x = 0; x < shipToTable.getRowCount(); x++){
+            for (int x = 0; x < shipToTable.getRowCount(); x++) {
 
-                shiptos.add(new ShipToDAO(db, (Integer)shipToTable.getValueAt(x, 0)));
+                shiptos.add(new ShipToDAO(db, (Integer) shipToTable.getValueAt(x, 0)));
 
             }
 
-        }else {            
+        } else {
             shipToTable = null;
             shiptos = new ArrayList();
-        }        
+        }
     }
 
     public int saveRecord(){
@@ -130,11 +139,11 @@ private ContactService contactService;
         return x;
     }
 
-    public boolean deleteRecord(int key){
+    public boolean deleteRecord(int key) {
 
         if (checkInventory(key)) {
 
-            return db.removeRecord("conn",key);
+            return db.removeRecord("conn", key);
 
         } else {
             JOptionPane.showMessageDialog(null, "This record cannot be deleted, it is referenced in INVENTORY!");
@@ -143,277 +152,310 @@ private ContactService contactService;
 
     }
 
-    private boolean checkInventory (int key) {
+    private boolean checkInventory(int key) {
 
         //scan inventory field 10,11,12 for key
         //return false if found anywhere
-       for (int f = 10; f < 13; f++) {
+        for (int f = 10; f < 13; f++) {
 
-            if (db.search("inventory", f, Integer.toString(key), false) != null) return false;
+            if (db.search("inventory", f, Integer.toString(key), false) != null) {
+                return false;
+            }
 
-       }
-       return true;
-   }
-    public ArrayList search(int search_column, String search_text){
+        }
+        return true;
+    }
 
-        return db.search("conn", search_column,search_text, true);
+    public ArrayList search(int search_column, String search_text) {
+
+        return db.search("conn", search_column, search_text, true);
 
     }
-    public TableModel getSearchResultTable(ArrayList keys, boolean sorted){
+
+    public TableModel getSearchResultTable(ArrayList keys, boolean sorted) {
 
         return db.createTableModel("conn", keys, sorted);
     }
 
     /* the table parameter allows this to be used for quotes and invoices */
-    public TableModel getInvoiceTableModel(String table, int key){
-        
-       /* Build the My Connections Invoice Table Model */
-       DefaultTableModel im = new DefaultTableModel (new Object [] {"_", "Date", "Pd"}, 0){
+    public TableModel getInvoiceTableModel(String table, int key) {
 
-           Class[] types = new Class [] {
+        /* Build the My Connections Invoice Table Model */
+        DefaultTableModel im = new DefaultTableModel(new Object[]{"_", "Date", "Pd"}, 0) {
+
+            Class[] types = new Class[]{
                 java.lang.Integer.class, java.lang.String.class, java.lang.Boolean.class};
 
-            boolean[] canEdit = new boolean [] {false, false, false};
+            boolean[] canEdit = new boolean[]{false, false, false};
 
-           /* public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }*/
-
-            //Version 1.5
+            @Override
             public Class getColumnClass(int column) {
-                return DV.idObject(this.getValueAt(0,column));
+                return DV.idObject(this.getValueAt(0, column));
             };
 
-
+           @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+                return canEdit[columnIndex];
             };
 
+        };//end custom TableModel
 
+       if (key == 0) {
+            return im;
+        }
 
-       };//end custom TableModel
+        TableModel t;
 
-       if (key == 0) return im;
+        /* Search for invoices attached to this customer, the keys are stored in al */
+        java.util.ArrayList al = db.search(table, 11, Integer.toString(key), false);
 
-       TableModel t;
-      
-       /* Search for invoices attached to this customer, the keys are stored in al */
-       java.util.ArrayList al = db.search(table, 11, Integer.toString(key), false);
+        /* If none are found set the blank custom TableModel as the model for the invoice table */
+ /*  clean up and exit*/
+        if (al == null) {
+            return im;
+        }
 
-      
-       /* If none are found set the blank custom TableModel as the model for the invoice table */
-       /*  clean up and exit*/
-       if (al == null) {
-           return im;
-       }
+        /* Some entries were found so now we get a list of those invoices belonging to this contact */
+        t = db.createTableModel(table, al, false);
 
-       /* Some entries were found so now we get a list of those invoices belonging to this contact */
-       t = db.createTableModel(table, al, false);
+        boolean vd;
 
-       boolean vd;
-       
-       int rows = t.getRowCount();
-       
-       if (rows < 1) return im;
-       /* Populate our custom invoice list (TableModel) for this customer */
-       for (int r = 0; r < rows; r++){
-           
-           vd = (Boolean)t.getValueAt(r, 9);
-           if (!vd){
-                im.addRow(new Object [] {(Integer) t.getValueAt(r,0), (Long)t.getValueAt(r,2), (Boolean)t.getValueAt(r,8)} );
-           }
+        int rows = t.getRowCount();
 
-       }
-       return im;
+        if (rows < 1) {
+            return im;
+        }
+        /* Populate our custom invoice list (TableModel) for this customer */
+        for (int r = 0; r < rows; r++) {
+
+            vd = (Boolean) t.getValueAt(r, 9);
+            if (!vd) {
+                im.addRow(new Object[]{(Integer) t.getValueAt(r, 0), (Long) t.getValueAt(r, 2), (Boolean) t.getValueAt(r, 8)});
+            }
+
+        }
+        return im;
 
     }
 
-/*     Getters         */
-
+    /*     Getters         */
     public int getKey() {
 
-        return (Integer)conn[0];
+        return (Integer) conn[0];
     }
-public DefaultTableModel getShipToTable() {
 
-    this.retrieveShipToTable((Integer)conn[0]);
-    return (DefaultTableModel)shipToTable;
-}
+    public DefaultTableModel getShipToTable() {
+
+        this.retrieveShipToTable((Integer) conn[0]);
+        return (DefaultTableModel) shipToTable;
+    }
+
     public String getCompany() {
 
-        return (String)conn[1];
+        return (String) conn[1];
     }
+
     public String getFirstName() {
 
-        return (String)conn[2];
+        return (String) conn[2];
     }
+
     public String getLastName() {
 
-        return (String)conn[3];
+        return (String) conn[3];
     }
+
     public String getStreet() {
 
-        return (String)conn[4];
+        return (String) conn[4];
     }
+
     public String getAddr2() {
 
-        return (String)conn[5];
+        return (String) conn[5];
     }
+
     public String getCity() {
 
-        return (String)conn[6];
+        return (String) conn[6];
     }
+
     public String getState() {
 
-        return (String)conn[7];
+        return (String) conn[7];
     }
+
     public String getPostCode() {
 
-        return (String)conn[8];
+        return (String) conn[8];
     }
+
     public String getContact() {
 
-        return (String)conn[9];
+        return (String) conn[9];
     }
+
     public String getPhone() {
 
-        return (String)conn[10];
+        return (String) conn[10];
     }
+
     public String getFax() {
 
-        return (String)conn[11];
+        return (String) conn[11];
     }
+
     public String getEmail() {
 
-        return (String)conn[12];
+        return (String) conn[12];
     }
+
     public String getWWW() {
 
-        return (String)conn[13];
+        return (String) conn[13];
     }
+
     public String getMisc() {
 
-        return (String)conn[14];
+        return (String) conn[14];
     }
+
     public boolean isCustomer() {
 
-        return (Boolean)conn[15];
+        return (Boolean) conn[15];
     }
+
     public boolean isSupplier() {
 
-        return (Boolean)conn[16];
+        return (Boolean) conn[16];
     }
+
     public String getAlphaCountryCode() {
 
-        return (String)conn[17];
+        return (String) conn[17];
     }
+
     public boolean isTax1() {
 
-        return (Boolean)conn[18];
+        return (Boolean) conn[18];
     }
+
     public boolean isTax2() {
 
-       return (Boolean)conn[19];
+        return (Boolean) conn[19];
     }
 
     public ArrayList getShiptoList() {
         if (shiptos != null) {
             shiptos.trimToSize();
             return shiptos;
-        }else {
+        } else {
             return null;
 
         }
-        
 
     }
 
     /*    Setters     */
-
-
-
-
-    public void setCompany(String s){
+    public void setCompany(String s) {
         conn[1] = new String(s);
 
     }
-    public void setFirstName(String s){
+
+    public void setFirstName(String s) {
         conn[2] = new String(s);
 
     }
-    public void setLastName(String s){
+
+    public void setLastName(String s) {
         conn[3] = new String(s);
 
     }
-    public void setStreet(String s){
+
+    public void setStreet(String s) {
         conn[4] = new String(s);
 
     }
-    public void setAddr2(String s){
+
+    public void setAddr2(String s) {
         conn[5] = new String(s);
 
     }
-    public void setCity(String s){
+
+    public void setCity(String s) {
         conn[6] = new String(s);
 
     }
-    public void setState(String s){
+
+    public void setState(String s) {
         conn[7] = new String(s);
 
     }
-    public void setPostCode(String s){
+
+    public void setPostCode(String s) {
         conn[8] = new String(s);
 
     }
-    public void setContact(String s){
+
+    public void setContact(String s) {
         conn[9] = new String(s);
 
     }
-    public void setPhone(String s){
+
+    public void setPhone(String s) {
         conn[10] = new String(s);
 
     }
-    public void setFax(String s){
+
+    public void setFax(String s) {
         conn[11] = new String(s);
 
     }
-    public void setEmail(String s){
+
+    public void setEmail(String s) {
         conn[12] = new String(s);
 
     }
-    public void setWWW(String s){
+
+    public void setWWW(String s) {
         conn[13] = new String(s);
 
     }
-    public void setMisc(String s){
+
+    public void setMisc(String s) {
         conn[14] = new String(s);
 
     }
-    public void setCustomer(boolean b){
+
+    public void setCustomer(boolean b) {
         conn[15] = new Boolean(b);
 
     }
-    public void setSupplier(boolean b){
+
+    public void setSupplier(boolean b) {
         conn[16] = new Boolean(b);
 
     }
-    public void setAlphaCountryCode(String s){
+
+    public void setAlphaCountryCode(String s) {
         conn[17] = new String(s);
 
     }
-    public void setTax1(boolean b){
+
+    public void setTax1(boolean b) {
         conn[18] = new Boolean(b);
 
     }
-    public void setTax2(boolean b){
+
+    public void setTax2(boolean b) {
         conn[19] = new Boolean(b);
 
     }
 
-private DbEngine db;
-private Object [] conn = new Object[20];
-private Object [] connShip = null;
-private ArrayList shiptos = new ArrayList();
-private TableModel shipToTable = null;
+    private DbEngine db;
+    private Object[] conn = new Object[20];
+    private Object[] connShip = null;
+    private ArrayList shiptos = new ArrayList();
+    private TableModel shipToTable = null;
 
 }

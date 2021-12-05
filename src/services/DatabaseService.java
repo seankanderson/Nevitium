@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package services;
 
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
@@ -9,7 +5,6 @@ import com.j256.ormlite.table.TableUtils;
 import java.sql.SQLException;
 import models.Contact;
 import models.ContactAddress;
-import models.ContactPhone;
 import models.Inventory;
 import models.InventoryItemNote;
 import models.Invoice;
@@ -33,7 +28,21 @@ public class DatabaseService {
         }
         return connectionSource;
     }
-    public static void createTables() throws SQLException {
+    public static void createTables(boolean dropTablesFirst) throws SQLException {
+        
+        getConnection();
+        
+        if (dropTablesFirst) {
+            TableUtils.dropTable(connectionSource, Inventory.class, true);
+            TableUtils.dropTable(connectionSource, InventoryItemNote.class, true);
+            TableUtils.dropTable(connectionSource, Contact.class, true);
+            TableUtils.dropTable(connectionSource, ContactAddress.class, true);
+            TableUtils.dropTable(connectionSource, Invoice.class, true);
+            TableUtils.dropTable(connectionSource, InvoiceItem.class, true);
+            TableUtils.dropTable(connectionSource, InvoiceMessages.class, true);
+            TableUtils.dropTable(connectionSource, User.class, true);
+        }
+        
         TableUtils.createTableIfNotExists(getConnection(), Inventory.class); 
         TableUtils.clearTable(connectionSource, Inventory.class);
         TableUtils.createTableIfNotExists(getConnection(), InventoryItemNote.class); 
@@ -42,8 +51,6 @@ public class DatabaseService {
         TableUtils.clearTable(connectionSource, Contact.class);
         TableUtils.createTableIfNotExists(getConnection(), ContactAddress.class); 
         TableUtils.clearTable(connectionSource, ContactAddress.class);
-        TableUtils.createTableIfNotExists(getConnection(), ContactPhone.class); 
-        TableUtils.clearTable(connectionSource, ContactPhone.class);
         TableUtils.createTableIfNotExists(getConnection(), Invoice.class); 
         TableUtils.clearTable(connectionSource, Invoice.class);
         TableUtils.createTableIfNotExists(getConnection(), InvoiceItem.class); 

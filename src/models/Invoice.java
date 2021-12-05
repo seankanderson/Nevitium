@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package models;
 
 import com.j256.ormlite.field.DatabaseField;
@@ -29,6 +25,8 @@ public class Invoice extends BaseModel{
     private UUID customerId;
     @DatabaseField
     private boolean voided;
+    @DatabaseField
+    private boolean paid;
     @DatabaseField
     private String message;
     @DatabaseField
@@ -75,6 +73,14 @@ public class Invoice extends BaseModel{
 
     public void setVoided(boolean voided) {
         this.voided = voided;
+    }
+
+     public boolean isPaid() {
+        return paid;
+    }
+
+    public void setPaid(boolean paid) {
+        this.paid = paid;
     }
 
     public String getMessage() {

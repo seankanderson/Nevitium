@@ -48,4 +48,11 @@ public abstract class BaseService<T1 extends BaseDaoImpl<T2, Object>, T2 extends
         }
     }
     
+    public int delete(T2 item) throws SQLException {
+        if (item.getId() != null) {
+            return this.getDao().delete(item);
+        }else {
+            return 0;
+        }
+    }    
 }
