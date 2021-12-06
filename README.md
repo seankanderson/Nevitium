@@ -11,6 +11,8 @@ Developed over several years in collaboration with small business owners spannin
 Offered as 100% freeware with the goal of providing an alternative to QuickBooks for small businesses.  
 
 # Main Screen
+![image](https://user-images.githubusercontent.com/1112636/144917431-c11a1d11-15ef-4714-a4b8-7f79cfdc255e.png)
+
 ![image](https://user-images.githubusercontent.com/1112636/144695309-d5567598-987a-4c84-89ef-dedf8998c0d5.png)
 
 # PDF invoice example
