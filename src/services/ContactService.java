@@ -29,11 +29,7 @@ public class ContactService extends BaseService<ContactDao, Contact> {
     public List<Contact> getUnpaidCustomers() {
         return null;        
     }
-
-    public List<Contact> searchField(String fieldName, String forValue) throws SQLException {
-        return this.getDao().queryForEq(fieldName, forValue);
-    }
-    
+       
     @Override
     public ContactDao getDao() throws SQLException {
         return dao == null ? new ContactDao(connection) : dao;

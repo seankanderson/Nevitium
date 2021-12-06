@@ -23,27 +23,18 @@
             <url>src/businessmanager/Connections/MyConnectionsApp.java</url>
             <bookmark id="0">
                 <name/>
-                <line>161</line>
+                <line>169</line>
                 <key/>
             </bookmark>
         </file>
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/dev/Nevitium/src/businessmanager/Inventory/InventoryLabelsDialog.java</file>
-            <file>file:/C:/dev/Nevitium/src/dao/ContactDao.java</file>
-            <file>file:/C:/dev/Nevitium/src/businessmanager/InvoiceQuote/Invoice.java</file>
-            <file>file:/C:/dev/Nevitium/src/services/ContactService.java</file>
-            <file>file:/C:/dev/Nevitium/src/dao/ContactDaoInterface.java</file>
-            <file>file:/C:/dev/Nevitium/src/BaseServiceInterface.java</file>
-            <file>file:/C:/dev/Nevitium/src/services/InvoiceService.java</file>
-            <file>file:/C:/dev/Nevitium/src/dao/InvoiceDao.java</file>
-            <file>file:/C:/dev/Nevitium/src/businessmanager/Connections/ContactsTableModel.java</file>
             <file>file:/C:/dev/Nevitium/src/services/BaseService.java</file>
-            <file>file:/C:/dev/Nevitium/src/dao/InvoiceDaoInterface.java</file>
-            <file>file:/C:/dev/Nevitium/src/businessmanager/Common/TableView.java</file>
+            <file>file:/C:/dev/Nevitium/src/models/Invoice.java</file>
+            <file>file:/C:/dev/Nevitium/src/models/Contact.java</file>
             <file>file:/C:/dev/Nevitium/src/businessmanager/Connections/MyConnectionsApp.java</file>
-            <file>file:/C:/dev/Nevitium/src/businessmanager/Inventory/InventoryTableModel.java</file>
+            <file>file:/C:/dev/Nevitium/src/services/ContactService.java</file>
             <file>file:/C:/dev/Nevitium/src/businessmanager/Connections/ConnectionsDAO.java</file>
             <file>file:/C:/dev/Nevitium/src/services/InventoryService.java</file>
         </group>

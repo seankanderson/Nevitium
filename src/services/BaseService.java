@@ -11,6 +11,7 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import java.sql.SQLException;
 import java.util.List;
 import models.BaseModel;
+import models.Contact;
 
 /**
  *
@@ -54,5 +55,9 @@ public abstract class BaseService<T1 extends BaseDaoImpl<T2, Object>, T2 extends
         }else {
             return 0;
         }
-    }    
+    }  
+    
+    public List<T2> searchField(String fieldName, String forValue) throws SQLException {
+        return this.getDao().queryForEq(fieldName, forValue);
+    }
 }

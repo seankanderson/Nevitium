@@ -5,6 +5,7 @@ import com.j256.ormlite.table.TableUtils;
 import java.sql.SQLException;
 import models.Contact;
 import models.ContactAddress;
+import models.ContactJournal;
 import models.Inventory;
 import models.InventoryItemNote;
 import models.Invoice;
@@ -49,6 +50,8 @@ public class DatabaseService {
         TableUtils.clearTable(connectionSource, InventoryItemNote.class);
         TableUtils.createTableIfNotExists(getConnection(), Contact.class); 
         TableUtils.clearTable(connectionSource, Contact.class);
+         TableUtils.createTableIfNotExists(getConnection(), ContactJournal.class); 
+        TableUtils.clearTable(connectionSource, ContactJournal.class);
         TableUtils.createTableIfNotExists(getConnection(), ContactAddress.class); 
         TableUtils.clearTable(connectionSource, ContactAddress.class);
         TableUtils.createTableIfNotExists(getConnection(), Invoice.class); 

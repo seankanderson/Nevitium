@@ -55,5 +55,7 @@ public class Contact extends BaseModel {
     private boolean taxable2;
     @ForeignCollectionField(eager = false)
     private Collection<ContactAddress> addresses = new ArrayList();
+    @ForeignCollectionField(eager = false)
+    private Collection<ContactJournal> journals = new ArrayList();
         
 }

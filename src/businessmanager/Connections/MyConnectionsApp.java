@@ -5,7 +5,6 @@
  ** Copyright (c) Data Virtue 2006
  */
 package businessmanager.Connections;
-//import EDI.EDIResolver;
 
 import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
@@ -32,8 +31,9 @@ import java.awt.event.*;
 import java.awt.*;
 import java.net.URI;
 import java.sql.SQLException;
-import java.util.UUID;
 import models.Contact;
+import models.ContactJournal;
+import services.ContactJournalService;
 import services.ContactService;
 import services.ExceptionService;
 
@@ -50,6 +50,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     private final GlobalApplicationDaemon application;
     private Contact currentContact = new Contact();
     private ContactService contactService;
+    private ContactJournalService journalService;
 
     /**
      * Creates new form ConnectionsDialog
@@ -57,8 +58,11 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     public MyConnectionsApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon g, boolean select, boolean customers, boolean suppliers) {
 
         super(parent, modal);
+
         Injector injector = Guice.createInjector(new GuiceBindingModule());
         contactService = injector.getInstance(ContactService.class);
+        journalService = injector.getInstance(ContactJournalService.class);
+
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
 
@@ -87,7 +91,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         jTabbedPane1.setSelectedIndex(0); //select a tab to view by default
 
         int c = Tools.getStringInt(props.getProp("CONN COL"), 0);
-        searchFieldCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Company", "First Name", "Last Name", "Address1", "Address2", "City", "State", "Postal Code", "Contact", "Phone", "Fax", "Email", "Web Link"}));
+        searchFieldCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Company", "First Name", "Last Name", "Address1", "Address2", "City", "State", "Postal Code", "Contact", "Phone", "Fax", "Email", "Web Link"}));
         searchFieldCombo.setSelectedIndex(c);
 
         /* Limit chars availble in textfields */
@@ -121,8 +125,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         im.put(windowCloseStroke, windowCloseKey);
         am.put(windowCloseKey, windowCloseAction);
         /* End Close Dialog on Escape*/
-
-        fileList.setModel(journalList);
 
         if (customers && !suppliers) {
             custRadio.setSelected(true);
@@ -313,7 +315,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         tax1CheckBox.setSelected(false);
         tax2CheckBox.setSelected(false);
 
-        fileList.setModel(new javax.swing.DefaultListModel());
+        journalList.setModel(new javax.swing.DefaultListModel());
 
         journalTextArea.setText("");
 
@@ -344,7 +346,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         zipButton.setEnabled(enabled);
         saveButton.setEnabled(enabled);
         viewButton.setEnabled(enabled);
-        fileList.setEnabled(enabled);
+        journalList.setEnabled(enabled);
         journalTextArea.setEnabled(enabled);
 
         if (currentContact.getId() != null) {
@@ -415,7 +417,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         tax2CheckBox.setSelected(currentContact.isTaxable2());
 
         //populateInvoices(false);
-        //populateJournals();
+        populateJournals();
         keyLabel.setText(currentContact.getId().toString());  //show the user the key for the record
         this.setFieldsEnabled(true);
 
@@ -456,7 +458,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         /* the custom TableModel is assigned to the My Connections invoiceTable */
         //invoiceTable.setModel(connDAO.getInvoiceTableModel(table, key));
-
         if (invoiceTable.getRowCount() < 1) {
             invoiceReportButton.setEnabled(false);
             purchaseHistoryButton.setEnabled(false);
@@ -525,7 +526,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         if (!findField.getText().equals("")) {
 
             var searchField = (String) searchFieldCombo.getSelectedItem();
-            searchField = searchField.replace(" ","").toLowerCase();
+            searchField = searchField.replace(" ", "").toLowerCase();
             try {
                 var results = contactService.searchField(searchField, findField.getText());
                 if (results != null && results.size() > 0) {
@@ -545,108 +546,81 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     }
 
     private void export(String filename) {
-
-        //System.out.println(filename);
         ReportModel rm = new ReportModel(connTable.getModel());
         StringBuilder sb = new StringBuilder();
         int col_count = connTable.getModel().getColumnCount();
 
         /* Headers  */
         if (!new File(filename).exists()) {
-
             String[] headers = db.getFieldNames("conn");
-
             for (int i = 0; i < headers.length; i++) {
-
                 sb.append(headers[i]);
                 if (i < headers.length - 1) {
                     sb.append(',');
                 }
-
             }
-
             sb.append(System.getProperty("line.separator"));
-
         }
-
         /* Data  */
         do {
-
             for (int c = 0; c < col_count; c++) {
-
                 sb.append(rm.getValueAt(c).replace(',', ';'));
                 if (c < connTable.getModel().getColumnCount() - 1) {
                     sb.append(',');
                 }
-
             }
-
             sb.append(System.getProperty("line.separator"));
-
         } while (rm.next());
-
         DV.writeFile(filename, sb.toString(), true);
-
     }
 
+    private ContactJournal currentJournal;
+    private java.util.List<ContactJournal> currentJournals;
+
     private void newJournal() {
-
-        String date = DV.getShortDate().replace('/', '-');
-        String tmp;
-        int elements = journalList.getSize();
-
-        boolean match = false;
-        for (int e = 0; e < elements; e++) {
-            tmp = (String) journalList.getElementAt(e);
-            if (tmp.equals(date)) {
-                match = true;
-            }
+        try {
+            var journal = new ContactJournal();
+            journal.setContact(currentContact);
+            journal.setContent(new String());
+            journalService.save(journal);
+            populateJournals();
+        } catch (SQLException e) {
+            ExceptionService.showErrorDialog(this, e, "Error saving new journal");
         }
-
-        if (!match && currentContact.getId() != null) {
-
-            File jFile = new File(workingPath + "jrnls/" + Integer.toString(edit_key) + "/");
-
-            if (!jFile.exists()) {
-                jFile.mkdirs();
-            }
-
-            DV.writeFile(jFile.toString() + "/" + date, DV.getFullDate(), false);
-            journalList.insertElementAt(date, 0);
-
-        }
-
     }
 
     private void saveJournal() {
+        try {
+            int index = journalList.getSelectedIndex();
+            if (index > -1) {
+                var list = (ContactJournalListModel) journalList.getModel();
+                currentJournal.setContent(journalTextArea.getText());
 
-        int idx = fileList.getSelectedIndex();
-        fileList.setEnabled(true);
-
-        String text = journalTextArea.getText();
-
-        if (!text.equals("") && idx > -1) {
-
-            DV.writeFile(workingPath + "jrnls/" + Integer.toString(edit_key) + "/" + (String) journalList.getElementAt(idx), text, false);
-
-        } else {
-            journalTextArea.setText("");
+                journalService.save(currentJournal);
+            }
+        } catch (SQLException e) {
+            ExceptionService.showErrorDialog(this, e, "Error saving journal");
         }
-
     }
 
     private void getJournal() {
-
-        int sel = fileList.getSelectedIndex();
-
-        if (sel > -1) {
-
-            String file = (String) journalList.getElementAt(sel);
-
-            journalTextArea.setText(DV.readFile(workingPath + "jrnls/" + Integer.toString(edit_key) + "/" + file));
-
+        int index = journalList.getSelectedIndex();
+        if (index > -1) {
+            var list = (ContactJournalListModel) journalList.getModel();
+            currentJournal = list.getJournalAt(index);
+            journalTextArea.setText(currentJournal.getContent());
         }
+    }
 
+    private void populateJournals() {
+        try {
+            currentJournals = journalService.getJournalsForContact(currentContact.getId());
+            currentJournals = currentJournals != null ? currentJournals : new ArrayList();
+            journalList.setModel(new ContactJournalListModel(currentJournals));
+            journalTextArea.setText("");
+        } catch (SQLException e) {
+            ExceptionService.showErrorDialog(this, e, "Error getting journals");
+        }
     }
 
     public static void launch(String com, String target) {
@@ -686,34 +660,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             cityTextField.setText((String) zipinfo[2]);
             stateTextField.setText((String) zipinfo[3]);
         }
-
-    }
-
-    private void populateJournals() {
-
-        journalList = new javax.swing.DefaultListModel();
-
-        journalTextArea.setText("");
-
-        String path = workingPath + "jrnls/" + Integer.toString(edit_key) + "/";
-
-        File dir = new File(path);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        String[] files = dir.list();
-
-        for (int i = files.length - 1; i > -1; i--) {
-
-            journalList.addElement(files[i]);
-
-        }
-        if (files.length < 1) {
-            journalTextArea.setEnabled(false);
-        }
-
-        fileList.setModel(journalList);
 
     }
 
@@ -803,7 +749,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         jLabel1 = new javax.swing.JLabel();
         notesTextArea = new javax.swing.JTextField();
         jScrollPane3 = new javax.swing.JScrollPane();
-        fileList = new javax.swing.JList();
+        journalList = new javax.swing.JList();
         newButton = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         journalTextArea = new javax.swing.JTextPane();
@@ -1597,16 +1543,16 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             }
         });
 
-        fileList.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 255, 204)));
-        fileList.setToolTipText("Daily Journals");
-        fileList.setSelectionBackground(new java.awt.Color(204, 255, 255));
-        fileList.setSelectionForeground(new java.awt.Color(0, 51, 51));
-        fileList.addMouseListener(new java.awt.event.MouseAdapter() {
+        journalList.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 255, 204)));
+        journalList.setToolTipText("Daily Journals");
+        journalList.setSelectionBackground(new java.awt.Color(204, 255, 255));
+        journalList.setSelectionForeground(new java.awt.Color(0, 51, 51));
+        journalList.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                fileListMouseClicked(evt);
+                journalListMouseClicked(evt);
             }
         });
-        jScrollPane3.setViewportView(fileList);
+        jScrollPane3.setViewportView(journalList);
 
         newButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         newButton.setText("New");
@@ -1658,7 +1604,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
                                 .add(jLabel17))
                             .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 111, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 797, Short.MAX_VALUE)))
+                        .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 799, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         journalPanelLayout.setVerticalGroup(
@@ -1675,7 +1621,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
                             .add(jLabel17)
                             .add(newButton))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))
+                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 256, Short.MAX_VALUE))
                     .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -2004,10 +1950,10 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     private void journalTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_journalTextAreaFocusLost
 
-        if (!fileList.isEnabled()) {
+        if (!journalList.isEnabled()) {
 
             saveJournal();
-            fileList.requestFocus();
+            journalList.requestFocus();
 
         }
 
@@ -2015,7 +1961,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     }//GEN-LAST:event_journalTextAreaFocusLost
 
     private void journalTextAreaFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_journalTextAreaFocusGained
-        fileList.setEnabled(false);
+        journalList.setEnabled(false);
     }//GEN-LAST:event_journalTextAreaFocusGained
 
     private void connTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_connTableKeyReleased
@@ -2032,12 +1978,11 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     }//GEN-LAST:event_connTableKeyReleased
 
-    private void fileListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileListMouseClicked
+    private void journalListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_journalListMouseClicked
 
-        if (!fileList.isEnabled() && companyTextField.isEnabled()) {
+        if (!journalList.isEnabled() && companyTextField.isEnabled()) {
             saveJournal();
-            fileList.requestFocus();
-
+            journalList.requestFocus();
         }
 
         if (companyTextField.isEnabled()) {
@@ -2045,7 +1990,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         }
 
 
-    }//GEN-LAST:event_fileListMouseClicked
+    }//GEN-LAST:event_journalListMouseClicked
 
     private void newButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newButtonActionPerformed
 
@@ -2250,10 +2195,9 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             return;
         }
 
-        if (!checkDuplicates()) {
-            return;
-        }
-
+//        if (!checkDuplicates()) {
+//            return;
+//        }
         currentContact.setCompany(companyTextField.getText().trim());
         currentContact.setFirstName(firstTextField.getText().trim());
         currentContact.setLastName(lastTextField.getText().trim());
@@ -2475,7 +2419,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     private int edit_key = 0;
     private int[] vals = {0, 15, 14, 13, 12, 11, 10, 3, 3, 3, 3, 3, 6, 6}; //col view removal
     private java.awt.Frame parentWin;
-    private javax.swing.DefaultListModel journalList = new javax.swing.DefaultListModel();
     private DbEngine zip;
     private String nl = System.getProperty("line.separator");
     private Image winIcon;
@@ -2503,7 +2446,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     private javax.swing.JTextField emailTextField;
     private javax.swing.JButton exportButton;
     private javax.swing.JTextField faxTextField;
-    private javax.swing.JList fileList;
     private javax.swing.JToolBar filterToolbar;
     private javax.swing.JTextField findField;
     private javax.swing.JTextField firstTextField;
@@ -2542,6 +2484,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JToolBar jToolBar4;
+    private javax.swing.JList journalList;
     private javax.swing.JPanel journalPanel;
     private javax.swing.JTextPane journalTextArea;
     private javax.swing.JLabel keyLabel;
