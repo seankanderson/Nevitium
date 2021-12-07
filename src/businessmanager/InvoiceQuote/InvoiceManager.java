@@ -27,9 +27,9 @@ import java.awt.event.*;
  * @rights Copyright Data Virtue 2006, 2007 All Rights Reserved.
  */
 public class InvoiceManager extends javax.swing.JDialog {
-    private KeyCard accessKey;
-    private boolean debug = false;
-    private GlobalApplicationDaemon application;
+    private final KeyCard accessKey;
+    private final boolean debug = false;
+    private final GlobalApplicationDaemon application;
     private boolean searchResults = false;
     private String searchString = "";
     /**
@@ -432,7 +432,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         jTextArea1.setColumns(20);
         jTextArea1.setEditable(false);
-        jTextArea1.setFont(new java.awt.Font("OCR B MT", 0, 14));
+        jTextArea1.setFont(new java.awt.Font("OCR B MT", 0, 14)); // NOI18N
         jTextArea1.setRows(5);
         jScrollPane4.setViewportView(jTextArea1);
 
@@ -445,11 +445,11 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Posted Invoices", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        jScrollPane1.setFont(new java.awt.Font("Tahoma", 0, 12));
+        jScrollPane1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         jTable1.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
 
         jTable1.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.white, null));
-        jTable1.setFont(new java.awt.Font("Tahoma", 0, 14));
+        jTable1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -462,7 +462,6 @@ public class InvoiceManager extends javax.swing.JDialog {
             }
         ));
         jTable1.setToolTipText("Double-Click an Invoice to View or Print");
-        jTable1.setSelectionBackground(new java.awt.Color(204, 255, 255));
         jTable1.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
         jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -479,7 +478,7 @@ public class InvoiceManager extends javax.swing.JDialog {
         });
         jScrollPane1.setViewportView(jTable1);
 
-        searchField.setFont(new java.awt.Font("Courier New", 0, 18));
+        searchField.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
         searchField.setToolTipText("Find an invoice IN THIS FILTER only.");
         searchField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
@@ -709,7 +708,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
 
-        paymentTable.setFont(new java.awt.Font("Monospaced", 0, 13));
+        paymentTable.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
         paymentTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null}
@@ -727,7 +726,6 @@ public class InvoiceManager extends javax.swing.JDialog {
             }
         });
         paymentTable.setToolTipText("Invoice Activity");
-        paymentTable.setSelectionBackground(new java.awt.Color(204, 255, 255));
         paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, SwingConstants.RIGHT));
         jScrollPane3.setViewportView(paymentTable);
 

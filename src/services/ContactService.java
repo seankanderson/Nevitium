@@ -5,8 +5,6 @@ import dao.ContactDao;
 import java.sql.SQLException;
 import java.util.List;
 import models.Contact;
-import static models.ModelConstants.CUSTOMER;
-import static models.ModelConstants.VENDOR;
 
 /**
  *
@@ -19,11 +17,11 @@ public class ContactService extends BaseService<ContactDao, Contact> {
     }
     
     public List<Contact> getAllCustomers() throws SQLException {
-        return this.getDao().queryForEq(CUSTOMER, true);     
+        return this.getDao().queryForEq("isCustomer", true);     
     }
     
     public List<Contact> getAllVendors() throws SQLException {        
-        return this.getDao().queryForEq(VENDOR, true); 
+        return this.getDao().queryForEq("isVendor", true); 
     }
     
     public List<Contact> getUnpaidCustomers() {

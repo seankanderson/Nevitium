@@ -4,9 +4,9 @@
  * Created on July 4, 2006, 11:38 AM
  ** Copyright (c) Data Virtue 2006
  */
-
 package businessmanager.Config;
 //import EDI.EDIConfig;
+
 import RuntimeManagement.GlobalApplicationDaemon;
 import RuntimeManagement.KeyCard;
 import java.io.*;
@@ -14,19 +14,23 @@ import datavirtue.*;
 import java.awt.*;
 import javax.swing.*;
 import businessmanager.Common.*;
+
 /**
  *
- * @author  Sean K Anderson - Data Virtue
+ * @author Sean K Anderson - Data Virtue
  * @rights Copyright Data Virtue 2006, 2007 All Rights Reserved.
  */
 public class SettingsDialog extends javax.swing.JDialog {
-    
-       private DbEngine db;
-       private String workingPath;
-       private boolean debug = false;
-       private boolean safe = true;
-       private GlobalApplicationDaemon application;
-    /** Creates new form SettingsDialog */
+
+    private DbEngine db;
+    private String workingPath;
+    private boolean debug = false;
+    private boolean safe = true;
+    private GlobalApplicationDaemon application;
+
+    /**
+     * Creates new form SettingsDialog
+     */
     public SettingsDialog(java.awt.Frame parent, boolean modal,
             GlobalApplicationDaemon application, boolean safe, int tabIndex) {
         super(parent, modal);
@@ -35,34 +39,32 @@ public class SettingsDialog extends javax.swing.JDialog {
         this.application = application;
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
-
         initComponents();
-        //jLabel3.setVisible(false);
         
-        if (!safe){
+        if (!safe) {
             configEDIButton.setEnabled(false);
         }
-        
+
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
 
-        this.addWindowListener(new java.awt.event.WindowAdapter(){
-	public void windowClosing(java.awt.event.WindowEvent e){
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
 
-            int a = javax.swing.JOptionPane.showConfirmDialog(null, "Do you want to save any changes?","Save Settings?",  JOptionPane.YES_NO_OPTION);
-            if (a == 0){
-                saveSettings();
+                int a = javax.swing.JOptionPane.showConfirmDialog(null, "Do you want to save any changes?", "Save Settings?", JOptionPane.YES_NO_OPTION);
+                if (a == 0) {
+                    saveSettings();
 
-            }else {
-                ((JDialog)e.getSource()).dispose();
+                } else {
+                    ((JDialog) e.getSource()).dispose();
+                }
+
             }
-
-	}} );
+        });
 
         this.db = application.getDb();
         this.workingPath = application.getWorkingPath();
         accessKey = application.getKey_card();
-        
         this.addTab(0, "My Company", "/businessmanager/res/Aha-16/enabled/Globe.png");
         this.addTab(1, "Internet  ", "/businessmanager/res/Aha-16/enabled/Address book.png");
         this.addTab(2, "Backups   ", "/businessmanager/res/Aha-16/enabled/Archive.png");
@@ -72,632 +74,690 @@ public class SettingsDialog extends javax.swing.JDialog {
         this.addTab(6, "Inventory ", "/businessmanager/res/Aha-16/enabled/Book of records.png");
         this.addTab(7, "Output    ", "/businessmanager/res/Aha-16/enabled/Documents.png");
         this.addTab(8, "Info      ", "/businessmanager/res/Aha-16/enabled/Info.png");
-              
-        props = new Settings (workingPath + "settings.ini");
-        layoutPath.setText(workingPath+"layouts/");
+
+        props = new Settings(workingPath + "settings.ini");
+        layoutPath.setText(workingPath + "layouts/");
         iPrefixField.setDocument(new LimitedDocument(3));
         qPrefixField.setDocument(new LimitedDocument(3));
         jTabbedPane1.setSelectedIndex(tabIndex);
         init();
     }
-    
-    private void addTab(int index, String title, String iconRes) {
-        //jTabbedPane1.add(jTabbedPane1.getComponentAt(index));
 
+    private void addTab(int index, String title, String iconRes) {
         JLabel lbl = new JLabel(title);
         Icon icon = new ImageIcon(getClass().getResource(iconRes));
         lbl.setIcon(icon);
-
-        // Add some spacing between text and icon, and position text to the RHS.
+        
         lbl.setIconTextGap(5);
         lbl.setHorizontalTextPosition(JLabel.RIGHT);
         lbl.setHorizontalAlignment(JLabel.RIGHT);
         lbl.setFont(new Font("courier", 0, 12));
-        //lbl.setVerticalTextPosition(SwingConstants.CENTER);
         jTabbedPane1.setTabComponentAt(index, lbl);
-}
+    }
 
-    
-    private void init () {
-        
-    /*Float value = new Float(3.0f); 
-    Float min = new Float(0.0f);
-    Float max = new Float(4.0f); 
-    Float step = new Float(.1f); 
-    SpinnerNumberModel model = new SpinnerNumberModel(value, min, max, step); 
-    paperSpinner.setModel(model);
-    
-    
-    int fifty = model.getNumber().intValue(); */
- 
+    private void init() {
         paperSpinner.getModel().setValue(80);
-     
-        boolean exists = (new File(workingPath + "settings.ini")).exists();
-        
-        if (!exists) {
-        //build defaults first
-           /*
-            * jLabel28.setText(System.getProperty("os.name")+" "+System.getProperty("os.version")+" : "+ System.getProperty("sun.os.patch.level"));
-           jLabel30.setText(System.getProperty("java.runtime.name")+ " "+ System.getProperty("java.vm.version"));
-           jLabel31.setText( System.getProperty("user.dir"));
-           userLabel.setText(System.getProperty("user.name"));
-            *
-            */
-            
-            String usrdir = System.getProperty("user.dir");
-            
-            String home = System.getProperty("user.home")+fileSep;
-            String adobe = getAdobe();
-                                  
-            String drv = usrdir.substring( 0, usrdir.indexOf(fileSep) );
-            String os = System.getProperty("os.name").toLowerCase();
 
-            /* Windows Setup */
-            if (os.contains("windows")){
-                
-                home = System.getProperty("user.home") + fileSep + "My Documents" + fileSep;
-                
+        boolean settingsFileExists = (new File(workingPath + "settings.ini")).exists();
+
+        if (!settingsFileExists) {
+            createDefaultSettings();
+        }
+        loadSettings();
+    }
+
+    private void createDefaultSettings() {
+
+        String usrdir = System.getProperty("user.dir");
+
+        String home = System.getProperty("user.home") + fileSep;
+        String adobe = getAdobe();
+
+        String drv = usrdir.substring(0, usrdir.indexOf(fileSep));
+        String os = System.getProperty("os.name").toLowerCase();
+
+        /* Windows Setup */
+        if (os.contains("windows")) {
+
+            home = System.getProperty("user.home") + fileSep + "My Documents" + fileSep;
+
+        }
+
+        /* X Setup */
+        if (os.contains("nix") || os.contains("nux") || os.contains("mac")) {
+
+            home = System.getProperty("user.home") + fileSep;
+
+        }
+
+        props.setProp("REMOTE MESSAGE", "false");
+        props.setProp("SHOW TOOLBAR", "true");
+        /* themes */
+
+        String o = DV.getOS();
+
+        props.setProp("LAF", "DEFAULT");
+
+        if (o.equals("xp")) {
+            props.setProp("LAF", "DEFAULT");
+        }
+        if (o.equals("vista") || o.equals("7")) {
+            props.setProp("LAF", "DEFAULT");
+        }
+        if (o.equals("win")) {
+            props.setProp("LAF", "DEFAULT");
+        }
+        if (o.equals("x")) {//Linux or Unix
+            props.setProp("LAF", "DEFAULT");
+        }
+        if (o.equals("mac")) {
+            props.setProp("LAF", "DEFAULT");
+        }
+
+        if (debug) {
+            System.out.println("DV.getOS results: " + o);
+        }
+
+        props.setProp("CO NAME", "My Company");
+        props.setProp("CO ADDRESS", "1515 Acorn Drive");
+        props.setProp("CO CITY", "SomeCity, Ohio 45000");
+        props.setProp("CO PHONE", "513-555-7777");
+        props.setProp("CO OTHER", "");
+        props.setProp("FONT", "ROMAN");
+        props.setProp("FONT SIZE", "14");
+        props.setProp("FONT STYLE", "1");
+
+        props.setProp("ADDRESS STYLE", "US");
+        props.setProp("STATUS LIGHT", "true");
+
+        props.setProp("EMAIL SERVER", "");
+        props.setProp("EMAIL PORT", "");
+        props.setProp("SSL", "false");
+        props.setProp("EMAIL ADDRESS", "");
+        props.setProp("EMAIL USER", "");
+        props.setProp("EMAIL PWD", "");
+
+        props.setProp("LOGO", "");
+        props.setProp("SCREEN", "");
+
+        props.setProp("DATA FOLDER", workingPath);  //important
+
+        //makes adjustments for linux
+        props.setProp("PAYMENT URL", "");
+        props.setProp("PAYMENT WEB", "false");
+        props.setProp("CC PAYMENT", "false");
+        props.setProp("CHK PAYMENT", "false");
+
+        props.setProp("REPORT FOLDER", home + "1Nevitium_Reports");
+        props.setProp("QUOTE FOLDER", home + "1Nevitium_Quotes");
+        props.setProp("INVOICE FOLDER", home + "1Nevitium_Invoices");
+        props.setProp("ACROEXE", adobe);
+        boolean desktop = false;
+        if (os.contains("nix") || os.contains("nux") || os.contains("mac")) {
+            desktop = Desktop.isDesktopSupported();
+        }
+
+        props.setProp("INVOICE LAYOUT", "None");
+
+        props.setProp("DESKTOP SUPPORTED", Boolean.toString(desktop));//desktop mime integration JDK6
+
+        props.setProp("WATERMARK", "");
+        props.setProp("PRINT WM", "false");
+
+        props.setProp("BACKUP FOLDER", home);
+        props.setProp("SECONDARY BACKUP", "false");
+        props.setProp("SECONDARY FOLDER", "");
+
+        props.setProp("TAX1", ".07");
+        props.setProp("TAX2", ".00");
+
+        //Version 1.5
+        props.setProp("TAX1NAME", "Tax1");
+        props.setProp("TAX2NAME", "Tax2");
+
+        //version 1.5.7
+        props.setProp("SHOW TAX 1", "true");
+        props.setProp("SHOW TAX 2", "true");
+        props.setProp("VAT", "false");
+        props.setProp("CASHRND", "N/A");
+
+        props.setProp("ROLL WIDTH", "80");
+
+        props.setProp("INVOICE PREFIX", "I");
+        props.setProp("QUOTE PREFIX", "Q");
+
+        props.setProp("CR RATE", ".24");
+        props.setProp("GRACE", "30");
+        props.setProp("SCAN FIELD", "UPC");
+
+        props.setProp("INVOICE NAME", "I N V O I C E");
+        props.setProp("QUOTE NAME", "Q U O T E");
+
+        props.setProp("INCOLOR", "232,231,231");//light light grey
+        props.setProp("STCOLOR", "209,207,240");//light purple/blue
+
+        props.setProp("INK SAVER", "false");
+        props.setProp("MEASURE", "lbs");
+
+        props.setProp("BILLTO", "BILL TO:");
+        props.setProp("CATLINE", "false");
+        props.setProp("SYM", "$");
+        props.setProp("PRINT ZEROS", "true");
+
+        String iValue = "10000";
+        String qValue = "10000";
+        String tmp = "";
+
+        if (!new File(workingPath + "encode.char").exists()) {
+
+            int a = javax.swing.JOptionPane.showConfirmDialog(null, "Do you need support for non-English text?", "Character Encoding", JOptionPane.YES_NO_OPTION);
+            if (a == 0) {
+
+                DV.writeFile(workingPath + "encode.char", "UTF", false);
+
+            } else {
+                DV.writeFile(workingPath + "encode.char", "ASCII", false);
             }
-            
-            /* X Setup */
-            if (os.contains("nix") || os.contains("nux") || os.contains("mac")){
-                
-                home = System.getProperty("user.home")+ fileSep;
-                                
+        }
+        do {
+
+            tmp = javax.swing.JOptionPane.showInputDialog("Please provide a starting INVOICE # between 1000 and 50000", iValue);
+
+            if (tmp == null) {
+                iValue = "10000";
+            } else {
+                iValue = tmp.trim();
             }
-            
-            props.setProp("REMOTE MESSAGE", "false");
-            props.setProp("SHOW TOOLBAR", "true");
-            /* themes */
 
-           String o = DV.getOS();
+            if (DV.validIntString(iValue) && Integer.parseInt(iValue) < 50000 && Integer.parseInt(iValue) > 999) {
+                break;
+            } else {
+                continue;
+            }
 
-           props.setProp("LAF", "DEFAULT");
+        } while (true);
 
-           if (o.equals("xp")){
-                props.setProp("LAF", "DEFAULT");
-           }
-           if (o.equals("vista") || o.equals("7")){
-                props.setProp("LAF", "DEFAULT");
-           }
-           if (o.equals("win")){
-                props.setProp("LAF", "DEFAULT");
-           }
-           if (o.equals("x")){//Linux or Unix
-                props.setProp("LAF", "DEFAULT");
-           }
-           if (o.equals("mac")){
-                props.setProp("LAF", "DEFAULT");
-           }
+        props.setProp("NEXT NUMBER", iValue);
 
-         
+        do { //setup starting quote number
 
-           if (debug) System.out.println("DV.getOS results: " + o);
+            tmp = javax.swing.JOptionPane.showInputDialog("Please provide a starting QUOTE # between 1000 and 50000", qValue);
 
-           props.setProp("CO NAME", "My Company");
-           props.setProp("CO ADDRESS","1515 Acorn Drive");
-           props.setProp("CO CITY", "SomeCity, Ohio 45000" );
-           props.setProp("CO PHONE", "513-555-7777" );
-           props.setProp("CO OTHER", "");
-           props.setProp("FONT", "ROMAN");
-           props.setProp("FONT SIZE", "14");
-           props.setProp("FONT STYLE", "1");
-           
-           props.setProp("ADDRESS STYLE", "US");
-           props.setProp("STATUS LIGHT", "true");
+            if (tmp == null) {
+                qValue = "10000";
+            } else {
+                qValue = tmp.trim();
+            }
 
-           props.setProp("EMAIL SERVER", "");
-           props.setProp("EMAIL PORT", "");
-           props.setProp("SSL", "false");
-           props.setProp("EMAIL ADDRESS", "");
-           props.setProp("EMAIL USER","");
-           props.setProp("EMAIL PWD", "");
+            if (DV.validIntString(qValue) && Integer.parseInt(qValue) < 50000 && Integer.parseInt(iValue) > 999) {
+                break;
+            } else {
+                continue;
+            }
 
-           props.setProp("LOGO", "");
-           props.setProp("SCREEN", "");
-           
-           props.setProp("DATA FOLDER", workingPath );  //important
-           
-           //makes adjustments for linux
-           props.setProp("PAYMENT URL", "");
-           props.setProp("PAYMENT WEB", "false");
-           props.setProp("CC PAYMENT", "false");
-           props.setProp("CHK PAYMENT", "false");
+        } while (true);
 
-           props.setProp("REPORT FOLDER", home + "1Nevitium_Reports");
-           props.setProp("QUOTE FOLDER", home + "1Nevitium_Quotes");
-           props.setProp("INVOICE FOLDER", home + "1Nevitium_Invoices");
-           props.setProp("ACROEXE", adobe );
-           boolean desktop = false;
-           if (os.contains("nix") || os.contains("nux") || os.contains("mac")){
-                desktop = Desktop.isDesktopSupported();
-           }
-           
-           props.setProp("INVOICE LAYOUT", "None");
-           
-           props.setProp("DESKTOP SUPPORTED", Boolean.toString(desktop));//desktop mime integration JDK6
-           
-           props.setProp("WATERMARK", "");
-           props.setProp("PRINT WM", "false");
-           
-           props.setProp("BACKUP FOLDER", home );
-           props.setProp("SECONDARY BACKUP", "false" );
-           props.setProp("SECONDARY FOLDER", "" );
-           
-                     
-           props.setProp("TAX1", ".07" );
-           props.setProp("TAX2", ".00" );
-           
-           //Version 1.5
-           props.setProp("TAX1NAME", "Tax1");
-           props.setProp("TAX2NAME", "Tax2");
+        props.setProp("NEXT QUOTE", qValue);
 
-           //version 1.5.7
-           props.setProp("SHOW TAX 1", "true");
-           props.setProp("SHOW TAX 2", "true");
-           props.setProp("VAT", "false");
-           props.setProp("CASHRND", "N/A");  
+        //Version 1.5
+        props.setProp("POS", "false");
 
-           props.setProp("ROLL WIDTH", "80");
-           
-           props.setProp("INVOICE PREFIX", "I" );
-           props.setProp("QUOTE PREFIX", "Q");
-           
-           props.setProp("CR RATE", ".24" );
-           props.setProp("GRACE", "30");
-           props.setProp("SCAN FIELD","UPC");
-                    
-           props.setProp("INVOICE NAME", "I N V O I C E");
-           props.setProp("QUOTE NAME", "Q U O T E");
+        props.setProp("PROCESSPAYMENT", "true");
 
-           props.setProp("INCOLOR","232,231,231");//light light grey
-           props.setProp("STCOLOR","209,207,240");//light purple/blue
-           
-           props.setProp("INK SAVER", "false");
-           props.setProp("MEASURE", "lbs");
-           
-           props.setProp("BILLTO","BILL TO:");
-           props.setProp("CATLINE", "false");
-           props.setProp("SYM", "$");
-           props.setProp("PRINT ZEROS", "true");
+        props.setProp("INVENTORY SEARCH", "UPC");
+        props.setProp("MARKUP", "2.5");
+        props.setProp("IGNOREQTY", "false");
 
-           String iValue = "10000";
-           String qValue = "10000";
-           String tmp = "";
-           
-           if (!new File(workingPath + "encode.char").exists()){
-                
-               int a = javax.swing.JOptionPane.showConfirmDialog(null, "Do you need support for non-English text?","Character Encoding",  JOptionPane.YES_NO_OPTION);
-                if (a == 0){
-            
-                    DV.writeFile(workingPath + "encode.char", "UTF", false);
-            
-                }else {
-                    DV.writeFile(workingPath + "encode.char", "ASCII", false);
-                }
-                }
-           do {                
-               
-                tmp = javax.swing.JOptionPane.showInputDialog("Please provide a starting INVOICE # between 1000 and 50000", iValue);
-                
-                if (tmp == null) iValue = "10000";
-                else iValue = tmp.trim();
-                                              
-               if (DV.validIntString(iValue) && Integer.parseInt(iValue) < 50000 && Integer.parseInt(iValue) > 999) break;
-               else continue;
-           
-           } while (true);
-           
-           props.setProp("NEXT NUMBER", iValue);
-
-           do { //setup starting quote number
-
-
-                tmp = javax.swing.JOptionPane.showInputDialog("Please provide a starting QUOTE # between 1000 and 50000", qValue);
-
-                if (tmp == null) qValue = "10000";
-                else qValue = tmp.trim();
-
-               if (DV.validIntString(qValue) && Integer.parseInt(qValue) < 50000 && Integer.parseInt(iValue) > 999) break;
-               else continue;
-
-           } while (true);
-
-
-           props.setProp("NEXT QUOTE", qValue);
-
-           //Version 1.5
-           props.setProp("POS", "false");
-           
-           props.setProp("PROCESSPAYMENT", "true"); 
-           
-           props.setProp("INVENTORY SEARCH", "UPC");
-           props.setProp("MARKUP", "2.5");
-           props.setProp("IGNOREQTY", "false");
-        }   
-
-
-//Load all settings   
-        
+    }
+    
+    private void loadSettings() {
         this.enumerateLayoutFiles(invoiceComboBox, "layout.invoice", props.getProp("INVOICE LAYOUT"));
-        
+
         messageBox.setSelected(DV.parseBool(props.getProp("REMOTE MESSAGE"), false));
 
         showToolbar.setSelected(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
         /* Themes */
         String LAF = DV.readFile("theme.ini");
-        LAF=LAF.trim();
-        if (LAF.equals("com.jtattoo.plaf.acryl.AcrylLookAndFeel")) themeCombo.setSelectedItem("Acrylic");
-        if (LAF.equals("com.jtattoo.plaf.aero.AeroLookAndFeel")) themeCombo.setSelectedItem("Aero");
-        if (LAF.equals("com.jtattoo.plaf.aluminium.AluminiumLookAndFeel")) themeCombo.setSelectedItem("Aluminum");
-        if (LAF.equals("com.jtattoo.plaf.bernstein.BernsteinLookAndFeel")) themeCombo.setSelectedItem("Bernstein");
-        if (LAF.equals("com.jtattoo.plaf.fast.FastLookAndFeel")) themeCombo.setSelectedItem("Fast");
-        if (LAF.equals("com.jtattoo.plaf.graphite.GraphiteLookAndFeel")) themeCombo.setSelectedItem("Graphite");
-        if (LAF.equals("com.jtattoo.plaf.hifi.HiFiLookAndFeel")) themeCombo.setSelectedItem("HiFi");
-        if (LAF.equals("com.jtattoo.plaf.luna.LunaLookAndFeel")) themeCombo.setSelectedItem("Luna");
-        if (LAF.equals("com.jtattoo.plaf.mcwin.McWinLookAndFeel")) themeCombo.setSelectedItem("McWin");
-        if (LAF.equals("com.jtattoo.plaf.mint.MintLookAndFeel")) themeCombo.setSelectedItem("Mint");
-        if (LAF.equals("com.jtattoo.plaf.noire.NoireLookAndFeel")) themeCombo.setSelectedItem("Noire");
-        if (LAF.equals("com.jtattoo.plaf.smart.SmartLookAndFeel")) themeCombo.setSelectedItem("Smart");
-        if (LAF.equals("DEFAULT")) themeCombo.setSelectedItem("DEFAULT");
-        
-        coField.setText(props.getProp("CO NAME" ));
-           addressField.setText(props.getProp("CO ADDRESS"));
-           cityField.setText(props.getProp("CO CITY"));
-           phoneField.setText(props.getProp("CO PHONE"));
-           otherField.setText(props.getProp("CO OTHER"));
-           
-           String zone = props.getProp("ADDRESS STYLE");
-           if (zone.equals("US")) countryCombo.setSelectedItem("US");
-           if (zone.equals("CA")) countryCombo.setSelectedItem("CA");
-           if (zone.equals("AU")) countryCombo.setSelectedItem("AU");
-           if (zone.equals("UK")) countryCombo.setSelectedItem("UK");
-           if (zone.equals("IN")) countryCombo.setSelectedItem("IN");
-           if (zone.equals("ZA")) countryCombo.setSelectedItem("ZA");
-           if (zone.equals("NZ")) countryCombo.setSelectedItem("NZ");
-           if (zone.equals("PH")) countryCombo.setSelectedItem("PH");
-           
-           taxIDField.setText(props.getProp("TAXID"));
-           displayTaxIDCheckBox.setSelected(Tools.getStringBool(props.getProp("DISPLAYTAXID")));
-           
-          /* email settings */
-           smtpServer.setText(props.getProp("EMAIL SERVER"));
-           smtpPortField.setText(props.getProp("EMAIL PORT"));
-           SSLBox.setSelected(DV.parseBool(props.getProp("SSL"), false));
-           emailAddressField.setText(props.getProp("EMAIL ADDRESS"));
-           emailUserName.setText(props.getProp("EMAIL USER"));
-           emailPassword.setText(props.getProp("EMAIL PWD"));
-
-
-           statusBox.setSelected(Tools.getStringBool(props.getProp("STATUS LIGHT")));
-           //Version 1.5
-           /* Company Font  - TODO: check for parse error*/
-           try {
-           String fontName = props.getProp("FONT");
-           int fontStyle = Integer.parseInt(props.getProp("FONT STYLE"));
-           int fontSize = Integer.parseInt(props.getProp("FONT SIZE"));
-           companyFont = new java.awt.Font(fontName, fontStyle, fontSize);
-           //fontLabel.setFont(companyFont);
-           coField.setFont(companyFont);
-           }catch (Exception e){
-               
-               DV.writeFile("error.log", "Error parsing Font from the settings.ini file.",true);
-               companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
-               
-           }
-           logoField.setText(props.getProp("LOGO"));
-           screenPicField.setText(props.getProp("SCREEN"));
-           
-           dataFolderField.setText(props.getProp("DATA FOLDER"));
-           
-           reportFolderField.setText(props.getProp("REPORT FOLDER"));
-           quoteFolderField.setText(props.getProp("QUOTE FOLDER"));
-           invoiceFolderField.setText(props.getProp("INVOICE FOLDER"));
-          
-           acroField.setText(props.getProp("ACROEXE"));
-           desktopPDFBox.setSelected(DV.parseBool(props.getProp("DESKTOP SUPPORTED"), false));
-
-           paymentField.setText(props.getProp("PAYMENT URL"));
-           paymentWebBox.setSelected(Tools.getStringBool(props.getProp("WEB PAYMENT")));
-           ccPaymentBox.setSelected(Tools.getStringBool(props.getProp("CC PAYMENT")));
-           checkPaymentBox.setSelected(Tools.getStringBool(props.getProp("CHK PAYMENT")));
-           
-           watermarkField.setText(props.getProp("WATERMARK"));
-           waterBox.setSelected(DV.parseBool(props.getProp("PRINT WM"), false));
-           
-          
-           
-           backupField.setText(props.getProp( "BACKUP FOLDER"));
-           secondaryCheckBox.setSelected( DV.parseBool(props.getProp("SECONDARY BACKUP"), false));
-           secondaryField.setText(props.getProp("SECONDARY FOLDER"));
-           
-           //secCheckBox.setSelected( Boolean.parseBoolean( props.getProp("SECURITY") ));
-           
-           tax1Field.setText(props.getProp("TAX1"));
-           tax2Field.setText(props.getProp( "TAX2"));
-           
-           //Version 1.5
-           tax1NameField.setText(props.getProp("TAX1NAME"));
-           tax2NameField.setText(props.getProp("TAX2NAME"));
-           
-           //version 1.5.7
-           showTax1Box.setSelected(DV.parseBool(props.getProp("SHOW TAX 1"),true));
-           showTax2Box.setSelected(DV.parseBool(props.getProp("SHOW TAX 2"),true));
-           
-           String rounding = props.getProp("CASHRND");
-           
-           roundingCombo.setSelectedItem("N/A");
-           if (rounding.equals(".05")) roundingCombo.setSelectedItem(".05");
-           if (rounding.equals(".10")) roundingCombo.setSelectedItem(".10");
-           
-           try {
-           paperSpinner.getModel().setValue(Integer.parseInt(props.getProp("ROLL WIDTH")));
-           
-           }catch (Exception e) {
-               
-               paperSpinner.getModel().setValue(80);  //Default
-               
-           }
-           
-           updateInches();
-           
-           iPrefixField.setText(props.getProp("INVOICE PREFIX"));
-           qPrefixField.setText(props.getProp("QUOTE PREFIX"));
-
-           crField.setText(props.getProp("CR RATE"));
-           //default invoice scan field setting
-           String t = props.getProp("SCAN FIELD");
-           
-           if (t.equals("UPC")) {
-                            
-               upcRadio.setSelected(true);
-               //
-           }else {
-               
-               //upcRadio.setSelected(false);
-               codeRadio2.setSelected(true);
-               
-           }           
-           
-           graceField.setText(props.getProp("GRACE"));
-           
-           posBox.setSelected(DV.parseBool(props.getProp("POS"), false));
-           
-           paymentBox.setSelected(DV.parseBool(props.getProp("PROCESSPAYMENT"), true));
-           
-           inkCheckBox.setSelected(DV.parseBool(props.getProp("INK SAVER"), true));
-
-           invoiceColorField.setBackground(Tools.stringToColor(props.getProp("INCOLOR")));
-           stColorField.setBackground(Tools.stringToColor(props.getProp("STCOLOR")));
-           
-           String weight = props.getProp("MEASURE");
-           if (weight.equals("lbs")) lbsRadio.setSelected(true);
-           else kgsRadio.setSelected(true);
-           
-          
-           invoiceNameField.setText(props.getProp("INVOICE NAME"));
-           quoteNameField.setText(props.getProp("QUOTE NAME"));
-
-           billToTextField.setText(props.getProp("BILLTO"));
-           catLineCheckBox.setSelected(DV.parseBool(props.getProp("CATLINE"), false));
-           
-           String currency = props.getProp("SYM");
-           //Version 1.5
-           currencyField.setText(currency);
-           
-           boolean print_zeros = Tools.getStringBool(props.getProp("PRINT ZEROS"));
-           printZerosCheckBox.setSelected(print_zeros);
-           
-           //default inventory search field setting
-           t = props.getProp("INVENTORY SEARCH");
-          
-           markupField.setText(props.getProp("MARKUP"));
-
-           quantityCheckBox.setSelected(DV.parseBool(props.getProp("IGNOREQTY"), false));
-           
-           jLabel28.setText(System.getProperty("os.name")+" "+System.getProperty("os.version")+" : "+ System.getProperty("sun.os.patch.level"));
-           jLabel30.setText(System.getProperty("java.runtime.name")+ " "+ System.getProperty("java.vm.version"));
-           jLabel31.setText( System.getProperty("user.dir"));
-           userLabel.setText(System.getProperty("user.name"));
-           //System.getProperty("user.home")
-           //lockPicLabel.setVisible(secCheckBox.isSelected());
-           
-    }
-       
-    private void updateInches() {
-        
-        float inches = (Integer)paperSpinner.getModel().getValue() * 0.0393700787f;
-        inchLabel.setText(DV.money(inches));
-        
-    }
-    private void enumerateLayoutFiles(JComboBox combo, String filter, String key){
-        File layoutPath = new File(workingPath+"/layouts/");
-        String [] files = layoutPath.list();
-        if (files == null || files.length < 1) return;
-        combo.addItem("None");
-        for (int i = 0; i < files.length; i++){
-            if (files[i].toLowerCase().contains(filter)) combo.addItem(files[i]);
+        LAF = LAF.trim();
+        if (LAF.equals("com.jtattoo.plaf.acryl.AcrylLookAndFeel")) {
+            themeCombo.setSelectedItem("Acrylic");
         }
+        if (LAF.equals("com.jtattoo.plaf.aero.AeroLookAndFeel")) {
+            themeCombo.setSelectedItem("Aero");
+        }
+        if (LAF.equals("com.jtattoo.plaf.aluminium.AluminiumLookAndFeel")) {
+            themeCombo.setSelectedItem("Aluminum");
+        }
+        if (LAF.equals("com.jtattoo.plaf.bernstein.BernsteinLookAndFeel")) {
+            themeCombo.setSelectedItem("Bernstein");
+        }
+        if (LAF.equals("com.jtattoo.plaf.fast.FastLookAndFeel")) {
+            themeCombo.setSelectedItem("Fast");
+        }
+        if (LAF.equals("com.jtattoo.plaf.graphite.GraphiteLookAndFeel")) {
+            themeCombo.setSelectedItem("Graphite");
+        }
+        if (LAF.equals("com.jtattoo.plaf.hifi.HiFiLookAndFeel")) {
+            themeCombo.setSelectedItem("HiFi");
+        }
+        if (LAF.equals("com.jtattoo.plaf.luna.LunaLookAndFeel")) {
+            themeCombo.setSelectedItem("Luna");
+        }
+        if (LAF.equals("com.jtattoo.plaf.mcwin.McWinLookAndFeel")) {
+            themeCombo.setSelectedItem("McWin");
+        }
+        if (LAF.equals("com.jtattoo.plaf.mint.MintLookAndFeel")) {
+            themeCombo.setSelectedItem("Mint");
+        }
+        if (LAF.equals("com.jtattoo.plaf.noire.NoireLookAndFeel")) {
+            themeCombo.setSelectedItem("Noire");
+        }
+        if (LAF.equals("com.jtattoo.plaf.smart.SmartLookAndFeel")) {
+            themeCombo.setSelectedItem("Smart");
+        }
+        if (LAF.equals("DEFAULT")) {
+            themeCombo.setSelectedItem("DEFAULT");
+        }
+
+        coField.setText(props.getProp("CO NAME"));
+        addressField.setText(props.getProp("CO ADDRESS"));
+        cityField.setText(props.getProp("CO CITY"));
+        phoneField.setText(props.getProp("CO PHONE"));
+        otherField.setText(props.getProp("CO OTHER"));
+
+        String zone = props.getProp("ADDRESS STYLE");
+        if (zone.equals("US")) {
+            countryCombo.setSelectedItem("US");
+        }
+        if (zone.equals("CA")) {
+            countryCombo.setSelectedItem("CA");
+        }
+        if (zone.equals("AU")) {
+            countryCombo.setSelectedItem("AU");
+        }
+        if (zone.equals("UK")) {
+            countryCombo.setSelectedItem("UK");
+        }
+        if (zone.equals("IN")) {
+            countryCombo.setSelectedItem("IN");
+        }
+        if (zone.equals("ZA")) {
+            countryCombo.setSelectedItem("ZA");
+        }
+        if (zone.equals("NZ")) {
+            countryCombo.setSelectedItem("NZ");
+        }
+        if (zone.equals("PH")) {
+            countryCombo.setSelectedItem("PH");
+        }
+
+        taxIDField.setText(props.getProp("TAXID"));
+        displayTaxIDCheckBox.setSelected(Tools.getStringBool(props.getProp("DISPLAYTAXID")));
+
+        /* email settings */
+        smtpServer.setText(props.getProp("EMAIL SERVER"));
+        smtpPortField.setText(props.getProp("EMAIL PORT"));
+        SSLBox.setSelected(DV.parseBool(props.getProp("SSL"), false));
+        emailAddressField.setText(props.getProp("EMAIL ADDRESS"));
+        emailUserName.setText(props.getProp("EMAIL USER"));
+        emailPassword.setText(props.getProp("EMAIL PWD"));
+
+        statusBox.setSelected(Tools.getStringBool(props.getProp("STATUS LIGHT")));
+        //Version 1.5
+        /* Company Font  - TODO: check for parse error*/
+        try {
+            String fontName = props.getProp("FONT");
+            int fontStyle = Integer.parseInt(props.getProp("FONT STYLE"));
+            int fontSize = Integer.parseInt(props.getProp("FONT SIZE"));
+            companyFont = new java.awt.Font(fontName, fontStyle, fontSize);
+            //fontLabel.setFont(companyFont);
+            coField.setFont(companyFont);
+        } catch (Exception e) {
+
+            DV.writeFile("error.log", "Error parsing Font from the settings.ini file.", true);
+            companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
+
+        }
+        logoField.setText(props.getProp("LOGO"));
+        screenPicField.setText(props.getProp("SCREEN"));
+
+        dataFolderField.setText(props.getProp("DATA FOLDER"));
+
+        reportFolderField.setText(props.getProp("REPORT FOLDER"));
+        quoteFolderField.setText(props.getProp("QUOTE FOLDER"));
+        invoiceFolderField.setText(props.getProp("INVOICE FOLDER"));
+
+        acroField.setText(props.getProp("ACROEXE"));
+        desktopPDFBox.setSelected(DV.parseBool(props.getProp("DESKTOP SUPPORTED"), false));
+
+        paymentField.setText(props.getProp("PAYMENT URL"));
+        paymentWebBox.setSelected(Tools.getStringBool(props.getProp("WEB PAYMENT")));
+        ccPaymentBox.setSelected(Tools.getStringBool(props.getProp("CC PAYMENT")));
+        checkPaymentBox.setSelected(Tools.getStringBool(props.getProp("CHK PAYMENT")));
+
+        watermarkField.setText(props.getProp("WATERMARK"));
+        waterBox.setSelected(DV.parseBool(props.getProp("PRINT WM"), false));
+
+        backupField.setText(props.getProp("BACKUP FOLDER"));
+        secondaryCheckBox.setSelected(DV.parseBool(props.getProp("SECONDARY BACKUP"), false));
+        secondaryField.setText(props.getProp("SECONDARY FOLDER"));
+
+        //secCheckBox.setSelected( Boolean.parseBoolean( props.getProp("SECURITY") ));
+        tax1Field.setText(props.getProp("TAX1"));
+        tax2Field.setText(props.getProp("TAX2"));
+
+        //Version 1.5
+        tax1NameField.setText(props.getProp("TAX1NAME"));
+        tax2NameField.setText(props.getProp("TAX2NAME"));
+
+        //version 1.5.7
+        showTax1Box.setSelected(DV.parseBool(props.getProp("SHOW TAX 1"), true));
+        showTax2Box.setSelected(DV.parseBool(props.getProp("SHOW TAX 2"), true));
+
+        String rounding = props.getProp("CASHRND");
+
+        roundingCombo.setSelectedItem("N/A");
+        if (rounding.equals(".05")) {
+            roundingCombo.setSelectedItem(".05");
+        }
+        if (rounding.equals(".10")) {
+            roundingCombo.setSelectedItem(".10");
+        }
+
+        try {
+            paperSpinner.getModel().setValue(Integer.parseInt(props.getProp("ROLL WIDTH")));
+
+        } catch (Exception e) {
+
+            paperSpinner.getModel().setValue(80);  //Default
+
+        }
+
+        updateInches();
+
+        iPrefixField.setText(props.getProp("INVOICE PREFIX"));
+        qPrefixField.setText(props.getProp("QUOTE PREFIX"));
+
+        crField.setText(props.getProp("CR RATE"));
+        //default invoice scan field setting
+        String t = props.getProp("SCAN FIELD");
+
+        if (t.equals("UPC")) {
+
+            upcRadio.setSelected(true);
+            //
+        } else {
+
+            //upcRadio.setSelected(false);
+            codeRadio2.setSelected(true);
+
+        }
+
+        graceField.setText(props.getProp("GRACE"));
+
+        posBox.setSelected(DV.parseBool(props.getProp("POS"), false));
+
+        paymentBox.setSelected(DV.parseBool(props.getProp("PROCESSPAYMENT"), true));
+
+        inkCheckBox.setSelected(DV.parseBool(props.getProp("INK SAVER"), true));
+
+        invoiceColorField.setBackground(Tools.stringToColor(props.getProp("INCOLOR")));
+        stColorField.setBackground(Tools.stringToColor(props.getProp("STCOLOR")));
+
+        String weight = props.getProp("MEASURE");
+        if (weight.equals("lbs")) {
+            lbsRadio.setSelected(true);
+        } else {
+            kgsRadio.setSelected(true);
+        }
+
+        invoiceNameField.setText(props.getProp("INVOICE NAME"));
+        quoteNameField.setText(props.getProp("QUOTE NAME"));
+
+        billToTextField.setText(props.getProp("BILLTO"));
+        catLineCheckBox.setSelected(DV.parseBool(props.getProp("CATLINE"), false));
+
+        String currency = props.getProp("SYM");
+        //Version 1.5
+        currencyField.setText(currency);
+
+        boolean print_zeros = Tools.getStringBool(props.getProp("PRINT ZEROS"));
+        printZerosCheckBox.setSelected(print_zeros);
+
+        //default inventory search field setting
+        t = props.getProp("INVENTORY SEARCH");
+
+        markupField.setText(props.getProp("MARKUP"));
+
+        quantityCheckBox.setSelected(DV.parseBool(props.getProp("IGNOREQTY"), false));
+
+        jLabel28.setText(System.getProperty("os.name") + " " + System.getProperty("os.version") + " : " + System.getProperty("sun.os.patch.level"));
+        jLabel30.setText(System.getProperty("java.runtime.name") + " " + System.getProperty("java.vm.version"));
+        jLabel31.setText(System.getProperty("user.dir"));
+        userLabel.setText(System.getProperty("user.name"));
         
+    }
+
+    private void updateInches() {
+
+        float inches = (Integer) paperSpinner.getModel().getValue() * 0.0393700787f;
+        inchLabel.setText(DV.money(inches));
+
+    }
+
+    private void enumerateLayoutFiles(JComboBox combo, String filter, String key) {
+        File layoutPath = new File(workingPath + "/layouts/");
+        String[] files = layoutPath.list();
+        if (files == null || files.length < 1) {
+            return;
+        }
+        combo.addItem("None");
+        for (int i = 0; i < files.length; i++) {
+            if (files[i].toLowerCase().contains(filter)) {
+                combo.addItem(files[i]);
+            }
+        }
+
         combo.setSelectedItem(props.getProp(key));
     }
-    
-    private void saveSettings () {
-    
-           //set Control Settings properties 
 
-        
-        
-              props.setProp("SHOW TOOLBAR", Tools.getBoolString(showToolbar.isSelected()));
-        
-              String LAF = "Plastic3D";
-              LAF = (String)themeCombo.getSelectedItem();
-              props.setProp("LAF", LAF);
-              String themeClass = "Acrylic";
-              if (LAF.equals("Acrylic")) themeClass = "com.jtattoo.plaf.acryl.AcrylLookAndFeel";
-              if (LAF.equals("Aero")) themeClass = "com.jtattoo.plaf.aero.AeroLookAndFeel";
-              if (LAF.equals("Aluminum")) themeClass = "com.jtattoo.plaf.aluminium.AluminiumLookAndFeel";
-              if (LAF.equals("Bernstein")) themeClass = "com.jtattoo.plaf.bernstein.BernsteinLookAndFeel";
-              if (LAF.equals("Fast")) themeClass = "com.jtattoo.plaf.fast.FastLookAndFeel";
-              if (LAF.equals("Graphite")) themeClass = "com.jtattoo.plaf.graphite.GraphiteLookAndFeel";
-              if (LAF.equals("HiFi")) themeClass = "com.jtattoo.plaf.hifi.HiFiLookAndFeel ";
-              if (LAF.equals("Luna")) themeClass = "com.jtattoo.plaf.luna.LunaLookAndFeel";
-              if (LAF.equals("McWin")) themeClass = "com.jtattoo.plaf.mcwin.McWinLookAndFeel";
-              if (LAF.equals("Mint")) themeClass = "com.jtattoo.plaf.mint.MintLookAndFeel";
-              if (LAF.equals("Noire")) themeClass = "com.jtattoo.plaf.noire.NoireLookAndFeel";
-              if (LAF.equals("Smart")) themeClass = "com.jtattoo.plaf.smart.SmartLookAndFeel";
-              if (LAF.equals("DEFAULT")) themeClass = "DEFAULT";
+    private void saveSettings() {
 
-             // System.out.println(themeClass);
+        //set Control Settings properties 
+        props.setProp("SHOW TOOLBAR", Tools.getBoolString(showToolbar.isSelected()));
 
-              DV.writeFile("theme.ini", themeClass, false);
+        String LAF = "Plastic3D";
+        LAF = (String) themeCombo.getSelectedItem();
+        props.setProp("LAF", LAF);
+        String themeClass = "Acrylic";
+        if (LAF.equals("Acrylic")) {
+            themeClass = "com.jtattoo.plaf.acryl.AcrylLookAndFeel";
+        }
+        if (LAF.equals("Aero")) {
+            themeClass = "com.jtattoo.plaf.aero.AeroLookAndFeel";
+        }
+        if (LAF.equals("Aluminum")) {
+            themeClass = "com.jtattoo.plaf.aluminium.AluminiumLookAndFeel";
+        }
+        if (LAF.equals("Bernstein")) {
+            themeClass = "com.jtattoo.plaf.bernstein.BernsteinLookAndFeel";
+        }
+        if (LAF.equals("Fast")) {
+            themeClass = "com.jtattoo.plaf.fast.FastLookAndFeel";
+        }
+        if (LAF.equals("Graphite")) {
+            themeClass = "com.jtattoo.plaf.graphite.GraphiteLookAndFeel";
+        }
+        if (LAF.equals("HiFi")) {
+            themeClass = "com.jtattoo.plaf.hifi.HiFiLookAndFeel ";
+        }
+        if (LAF.equals("Luna")) {
+            themeClass = "com.jtattoo.plaf.luna.LunaLookAndFeel";
+        }
+        if (LAF.equals("McWin")) {
+            themeClass = "com.jtattoo.plaf.mcwin.McWinLookAndFeel";
+        }
+        if (LAF.equals("Mint")) {
+            themeClass = "com.jtattoo.plaf.mint.MintLookAndFeel";
+        }
+        if (LAF.equals("Noire")) {
+            themeClass = "com.jtattoo.plaf.noire.NoireLookAndFeel";
+        }
+        if (LAF.equals("Smart")) {
+            themeClass = "com.jtattoo.plaf.smart.SmartLookAndFeel";
+        }
+        if (LAF.equals("DEFAULT")) {
+            themeClass = "DEFAULT";
+        }
 
-              props.setProp("REMOTE MESSAGE", Boolean.toString(messageBox.isSelected()));
-              
-           props.setProp("CO NAME", coField.getText());
-            props.setProp("CO ADDRESS", addressField.getText());
-                props.setProp("CO CITY", cityField.getText());
-                props.setProp("CO OTHER", otherField.getText().trim());    
-                props.setProp("CO PHONE", phoneField.getText());
-                    
-                /*  Co FONT  */
-                companyFont = coField.getFont();
-                    props.setProp("FONT", companyFont.getFamily());
-                    props.setProp("FONT STYLE", Integer.toString(companyFont.getStyle()));
-                    props.setProp("FONT SIZE", Integer.toString(companyFont.getSize()));
+        // System.out.println(themeClass);
+        DV.writeFile("theme.ini", themeClass, false);
 
-                    String zone = "US";
-                    zone = (String)countryCombo.getSelectedItem();
-                    props.setProp("ADDRESS STYLE", zone);
-                    props.setProp("TAXID",taxIDField.getText());
-                    props.setProp("DISPLAYTAXID", Tools.getBoolString(displayTaxIDCheckBox.isSelected()));
-                    
-                     props.setProp("EMAIL SERVER", smtpServer.getText());
-                     props.setProp("EMAIL PORT", smtpPortField.getText());
-                     props.setProp("SSL", Boolean.toString(SSLBox.isSelected()));
-                     props.setProp("EMAIL ADDRESS", emailAddressField.getText());
-                     props.setProp("EMAIL USER",emailUserName.getText());
-                     props.setProp("EMAIL PWD", emailPassword.getText());
-                    
+        props.setProp("REMOTE MESSAGE", Boolean.toString(messageBox.isSelected()));
 
-                    props.setProp("STATUS LIGHT", Tools.getBoolString(statusBox.isSelected()));
+        props.setProp("CO NAME", coField.getText());
+        props.setProp("CO ADDRESS", addressField.getText());
+        props.setProp("CO CITY", cityField.getText());
+        props.setProp("CO OTHER", otherField.getText().trim());
+        props.setProp("CO PHONE", phoneField.getText());
 
-                        props.setProp("LOGO", logoField.getText());
-           
-                        props.setProp("SCREEN", screenPicField.getText());
-                        
-           props.setProp("DATA FOLDER", DV.verifyPath ( dataFolderField.getText() ));
-           
-           props.setProp("REPORT FOLDER", DV.verifyPath ( reportFolderField.getText() ));
-           props.setProp("QUOTE FOLDER", DV.verifyPath(quoteFolderField.getText()));
-           props.setProp("INVOICE FOLDER", DV.verifyPath ( invoiceFolderField.getText() ));
-           
-           props.setProp("ACROEXE", acroField.getText());
-           props.setProp("DESKTOP SUPPORTED", Boolean.toString(desktopPDFBox.isSelected()));
-           props.setProp("PAYMENT URL", paymentField.getText());
-           props.setProp("WEB PAYMENT", Tools.getBoolString(paymentWebBox.isSelected()));
-           props.setProp("CC PAYMENT", Tools.getBoolString(ccPaymentBox.isSelected()));
-           props.setProp("CHK PAYMENT", Tools.getBoolString(checkPaymentBox.isSelected()));
+        /*  Co FONT  */
+        companyFont = coField.getFont();
+        props.setProp("FONT", companyFont.getFamily());
+        props.setProp("FONT STYLE", Integer.toString(companyFont.getStyle()));
+        props.setProp("FONT SIZE", Integer.toString(companyFont.getSize()));
 
-           props.setProp("WATERMARK", watermarkField.getText());
-           props.setProp("PRINT WM", Boolean.toString(waterBox.isSelected()));
-           
-           
-           props.setProp("BACKUP FOLDER",DV.verifyPath ( backupField.getText() ));
-           props.setProp("SECONDARY BACKUP",DV.convertToString(secondaryCheckBox.isSelected()));
-           props.setProp("SECONDARY FOLDER",DV.verifyPath (secondaryField.getText() ));
-           
-          
-           props.setProp( "TAX1", tax1Field.getText());
-           props.setProp( "TAX2", tax2Field.getText());
-           
-           //1.5.7
-           props.setProp("SHOW TAX 1", DV.convertToString(showTax1Box.isSelected()));
-           props.setProp("SHOW TAX 2", DV.convertToString(showTax2Box.isSelected()));
-           String cashrnd = (String)roundingCombo.getSelectedItem();
-           props.setProp("CASHRND", cashrnd);
-           
-           if (tax1NameField.getText().equals("VAT") || tax1NameField.getText().equals("GST")){
-                props.setProp("VAT", "true");
-           }else {
-               props.setProp("VAT", "false");
-           }
+        String zone = "US";
+        zone = (String) countryCombo.getSelectedItem();
+        props.setProp("ADDRESS STYLE", zone);
+        props.setProp("TAXID", taxIDField.getText());
+        props.setProp("DISPLAYTAXID", Tools.getBoolString(displayTaxIDCheckBox.isSelected()));
 
+        props.setProp("EMAIL SERVER", smtpServer.getText());
+        props.setProp("EMAIL PORT", smtpPortField.getText());
+        props.setProp("SSL", Boolean.toString(SSLBox.isSelected()));
+        props.setProp("EMAIL ADDRESS", emailAddressField.getText());
+        props.setProp("EMAIL USER", emailUserName.getText());
+        props.setProp("EMAIL PWD", emailPassword.getText());
 
-           props.setProp("TAX1NAME", tax1NameField.getText());
-           props.setProp("TAX2NAME", tax2NameField.getText());
-           
-           props.setProp("ROLL WIDTH", Integer.toString((Integer)paperSpinner.getModel().getValue()));
-           
-           
-           props.setProp("INVOICE PREFIX",DV.chop(iPrefixField.getText().trim(), 3));
-           props.setProp("QUOTE PREFIX",DV.chop(qPrefixField.getText().trim(), 3));
+        props.setProp("STATUS LIGHT", Tools.getBoolString(statusBox.isSelected()));
 
-           props.setProp( "CR RATE", crField.getText());
-           
-           //default invoice scan field 
-           if (upcRadio.isSelected()) {
-               
-               props.setProp("SCAN FIELD", "UPC");
-           }    
-           
-           if (codeRadio2.isSelected()) {
-               
-               props.setProp("SCAN FIELD", "CODE");
-           }    
-           
-           if (descRadio.isSelected()) {
-               
-               props.setProp("SCAN FIELD", "DESC");
-           }    
-           
-           
-           props.setProp("GRACE", graceField.getText());
-           
-           //Version 1.5
-           props.setProp("POS", DV.convertToString(posBox.isSelected()));
-           
-           props.setProp("PROCESSPAYMENT", DV.convertToString(paymentBox.isSelected()));
-             
-           props.setProp("INK SAVER", Boolean.toString(inkCheckBox.isSelected()));
-           
-           if (lbsRadio.isSelected()) props.setProp("MEASURE", "lbs");
-           else props.setProp("MEASURE", "kgs");
-              
-           
-           props.setProp("INVOICE NAME", invoiceNameField.getText().trim());
-           props.setProp("QUOTE NAME", quoteNameField.getText().trim());
-           
-           props.setProp("BILLTO", billToTextField.getText());
-           props.setProp("CATLINE", Tools.getBoolString(catLineCheckBox.isSelected()));
-           
-           String currency = currencyField.getText().trim();
-           //only allow a single character for currency
-           if (currency.equals("")) currency = "$";
-           if (currency.length() > 3) currency = currency.substring(0,3);
-           props.setProp("SYM", currency);
-           
-           props.setProp("INVOICE LAYOUT", (String)invoiceComboBox.getSelectedItem());           
-           
-           props.setProp("PRINT ZEROS", Tools.getBoolString(printZerosCheckBox.isSelected()));
-           
-           String inColor = Tools.colorToString(invoiceColorField.getBackground());
-           String stColor = Tools.colorToString(stColorField.getBackground());
-           props.setProp("INCOLOR", inColor);
-           props.setProp("STCOLOR", stColor);
-          
-           props.setProp("MARKUP", markupField.getText());
-           props.setProp("IGNOREQTY", Boolean.toString(quantityCheckBox.isSelected()));
-           
-           this.dispose();
-       
-}
-   
-   
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+        props.setProp("LOGO", logoField.getText());
+
+        props.setProp("SCREEN", screenPicField.getText());
+
+        props.setProp("DATA FOLDER", DV.verifyPath(dataFolderField.getText()));
+
+        props.setProp("REPORT FOLDER", DV.verifyPath(reportFolderField.getText()));
+        props.setProp("QUOTE FOLDER", DV.verifyPath(quoteFolderField.getText()));
+        props.setProp("INVOICE FOLDER", DV.verifyPath(invoiceFolderField.getText()));
+
+        props.setProp("ACROEXE", acroField.getText());
+        props.setProp("DESKTOP SUPPORTED", Boolean.toString(desktopPDFBox.isSelected()));
+        props.setProp("PAYMENT URL", paymentField.getText());
+        props.setProp("WEB PAYMENT", Tools.getBoolString(paymentWebBox.isSelected()));
+        props.setProp("CC PAYMENT", Tools.getBoolString(ccPaymentBox.isSelected()));
+        props.setProp("CHK PAYMENT", Tools.getBoolString(checkPaymentBox.isSelected()));
+
+        props.setProp("WATERMARK", watermarkField.getText());
+        props.setProp("PRINT WM", Boolean.toString(waterBox.isSelected()));
+
+        props.setProp("BACKUP FOLDER", DV.verifyPath(backupField.getText()));
+        props.setProp("SECONDARY BACKUP", DV.convertToString(secondaryCheckBox.isSelected()));
+        props.setProp("SECONDARY FOLDER", DV.verifyPath(secondaryField.getText()));
+
+        props.setProp("TAX1", tax1Field.getText());
+        props.setProp("TAX2", tax2Field.getText());
+
+        //1.5.7
+        props.setProp("SHOW TAX 1", DV.convertToString(showTax1Box.isSelected()));
+        props.setProp("SHOW TAX 2", DV.convertToString(showTax2Box.isSelected()));
+        String cashrnd = (String) roundingCombo.getSelectedItem();
+        props.setProp("CASHRND", cashrnd);
+
+        if (tax1NameField.getText().equals("VAT") || tax1NameField.getText().equals("GST")) {
+            props.setProp("VAT", "true");
+        } else {
+            props.setProp("VAT", "false");
+        }
+
+        props.setProp("TAX1NAME", tax1NameField.getText());
+        props.setProp("TAX2NAME", tax2NameField.getText());
+
+        props.setProp("ROLL WIDTH", Integer.toString((Integer) paperSpinner.getModel().getValue()));
+
+        props.setProp("INVOICE PREFIX", DV.chop(iPrefixField.getText().trim(), 3));
+        props.setProp("QUOTE PREFIX", DV.chop(qPrefixField.getText().trim(), 3));
+
+        props.setProp("CR RATE", crField.getText());
+
+        //default invoice scan field 
+        if (upcRadio.isSelected()) {
+
+            props.setProp("SCAN FIELD", "UPC");
+        }
+
+        if (codeRadio2.isSelected()) {
+
+            props.setProp("SCAN FIELD", "CODE");
+        }
+
+        if (descRadio.isSelected()) {
+
+            props.setProp("SCAN FIELD", "DESC");
+        }
+
+        props.setProp("GRACE", graceField.getText());
+
+        //Version 1.5
+        props.setProp("POS", DV.convertToString(posBox.isSelected()));
+
+        props.setProp("PROCESSPAYMENT", DV.convertToString(paymentBox.isSelected()));
+
+        props.setProp("INK SAVER", Boolean.toString(inkCheckBox.isSelected()));
+
+        if (lbsRadio.isSelected()) {
+            props.setProp("MEASURE", "lbs");
+        } else {
+            props.setProp("MEASURE", "kgs");
+        }
+
+        props.setProp("INVOICE NAME", invoiceNameField.getText().trim());
+        props.setProp("QUOTE NAME", quoteNameField.getText().trim());
+
+        props.setProp("BILLTO", billToTextField.getText());
+        props.setProp("CATLINE", Tools.getBoolString(catLineCheckBox.isSelected()));
+
+        String currency = currencyField.getText().trim();
+        //only allow a single character for currency
+        if (currency.equals("")) {
+            currency = "$";
+        }
+        if (currency.length() > 3) {
+            currency = currency.substring(0, 3);
+        }
+        props.setProp("SYM", currency);
+
+        props.setProp("INVOICE LAYOUT", (String) invoiceComboBox.getSelectedItem());
+
+        props.setProp("PRINT ZEROS", Tools.getBoolString(printZerosCheckBox.isSelected()));
+
+        String inColor = Tools.colorToString(invoiceColorField.getBackground());
+        String stColor = Tools.colorToString(stColorField.getBackground());
+        props.setProp("INCOLOR", inColor);
+        props.setProp("STCOLOR", stColor);
+
+        props.setProp("MARKUP", markupField.getText());
+        props.setProp("IGNOREQTY", Boolean.toString(quantityCheckBox.isSelected()));
+
+        this.dispose();
+
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -737,6 +797,23 @@ public class SettingsDialog extends javax.swing.JDialog {
         screenLogoBrowse = new javax.swing.JButton();
         jLabel34 = new javax.swing.JLabel();
         jLabel44 = new javax.swing.JLabel();
+        EDIPanel = new javax.swing.JPanel();
+        messageBox = new javax.swing.JCheckBox();
+        jPanel19 = new javax.swing.JPanel();
+        jLabel42 = new javax.swing.JLabel();
+        jLabel57 = new javax.swing.JLabel();
+        jLabel58 = new javax.swing.JLabel();
+        jLabel59 = new javax.swing.JLabel();
+        smtpServer = new javax.swing.JTextField();
+        emailAddressField = new javax.swing.JTextField();
+        emailUserName = new javax.swing.JTextField();
+        emailPassword = new javax.swing.JPasswordField();
+        testEmailButton = new javax.swing.JButton();
+        jLabel60 = new javax.swing.JLabel();
+        smtpPortField = new javax.swing.JTextField();
+        SSLBox = new javax.swing.JCheckBox();
+        jLabel35 = new javax.swing.JLabel();
+        configEDIButton = new javax.swing.JButton();
         backupPanel = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
@@ -869,23 +946,6 @@ public class SettingsDialog extends javax.swing.JDialog {
         userLabel = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         showToolbar = new javax.swing.JCheckBox();
-        EDIPanel = new javax.swing.JPanel();
-        messageBox = new javax.swing.JCheckBox();
-        jPanel19 = new javax.swing.JPanel();
-        jLabel42 = new javax.swing.JLabel();
-        jLabel57 = new javax.swing.JLabel();
-        jLabel58 = new javax.swing.JLabel();
-        jLabel59 = new javax.swing.JLabel();
-        smtpServer = new javax.swing.JTextField();
-        emailAddressField = new javax.swing.JTextField();
-        emailUserName = new javax.swing.JTextField();
-        emailPassword = new javax.swing.JPasswordField();
-        testEmailButton = new javax.swing.JButton();
-        jLabel60 = new javax.swing.JLabel();
-        smtpPortField = new javax.swing.JTextField();
-        SSLBox = new javax.swing.JCheckBox();
-        jLabel35 = new javax.swing.JLabel();
-        configEDIButton = new javax.swing.JButton();
         saveButton = new javax.swing.JButton();
         jLabel50 = new javax.swing.JLabel();
 
@@ -970,14 +1030,14 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .add(countryCombo, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(jLabel54))
                     .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, cityField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cityField)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel17Layout.createSequentialGroup()
                             .add(phoneField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 149, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                             .add(fontButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, coField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 202, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, coField)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, addressField)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, otherField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, otherField)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel17Layout.createSequentialGroup()
                             .add(taxIDField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1106,6 +1166,159 @@ public class SettingsDialog extends javax.swing.JDialog {
         );
 
         jTabbedPane1.addTab("My Company", new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Globe.png")), companyInfoPanel); // NOI18N
+
+        messageBox.setText("Show Remote Message (Grabs a small message from datavirtue.com)");
+        messageBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        messageBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                messageBoxActionPerformed(evt);
+            }
+        });
+
+        jPanel19.setBorder(javax.swing.BorderFactory.createTitledBorder(" Email Settings (Send Documents) "));
+
+        jLabel42.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel42.setText("SMTP Server:");
+
+        jLabel57.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel57.setText("My Address:");
+
+        jLabel58.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel58.setText("SMTP User Name:");
+
+        jLabel59.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel59.setText("SMTP Password:");
+
+        smtpServer.setToolTipText("This is the mail server's address. (Port 25)");
+
+        emailAddressField.setToolTipText("Your address known to the mail server. Must correspond to the user name and password.");
+
+        emailUserName.setToolTipText("Your user name for your account on the mail server.");
+        emailUserName.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                emailUserNameActionPerformed(evt);
+            }
+        });
+
+        emailPassword.setToolTipText("The password for your email account on the mail server.");
+
+        testEmailButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/RRZE/wifi16.png"))); // NOI18N
+        testEmailButton.setText("Send Test Message");
+        testEmailButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                testEmailButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel60.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel60.setText("Port");
+
+        smtpPortField.setText("25");
+
+        SSLBox.setText("SSL");
+        SSLBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SSLBoxActionPerformed(evt);
+            }
+        });
+
+        jLabel35.setText("The test message may be rejected by your email service because of an attachment.");
+
+        org.jdesktop.layout.GroupLayout jPanel19Layout = new org.jdesktop.layout.GroupLayout(jPanel19);
+        jPanel19.setLayout(jPanel19Layout);
+        jPanel19Layout.setHorizontalGroup(
+            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel19Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel59, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel58, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel57, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel42, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(emailAddressField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
+                    .add(emailUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel19Layout.createSequentialGroup()
+                        .add(smtpServer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jLabel60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 37, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(smtpPortField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel19Layout.createSequentialGroup()
+                        .add(emailPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 141, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(SSLBox)
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jPanel19Layout.createSequentialGroup()
+                        .add(testEmailButton)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jLabel35, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel19Layout.setVerticalGroup(
+            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel19Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel42)
+                    .add(smtpServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(smtpPortField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel60))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel57)
+                    .add(emailAddressField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel58)
+                    .add(emailUserName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel59)
+                    .add(emailPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(SSLBox))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(testEmailButton)
+                    .add(jLabel35)))
+        );
+
+        configEDIButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-24/enabled/Data transmission.png"))); // NOI18N
+        configEDIButton.setText("Configure EDI");
+        configEDIButton.setToolTipText("Configure EDI to support multiple users and/or locations.");
+        configEDIButton.setEnabled(false);
+        configEDIButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                configEDIButtonActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout EDIPanelLayout = new org.jdesktop.layout.GroupLayout(EDIPanel);
+        EDIPanel.setLayout(EDIPanelLayout);
+        EDIPanelLayout.setHorizontalGroup(
+            EDIPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(EDIPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(EDIPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel19, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(messageBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)
+                    .add(configEDIButton))
+                .addContainerGap())
+        );
+        EDIPanelLayout.setVerticalGroup(
+            EDIPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(EDIPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(messageBox)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(configEDIButton)
+                .addContainerGap(230, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Internet", new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Address book.png")), EDIPanel); // NOI18N
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(" Backups "));
 
@@ -1600,7 +1813,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(jPanel14Layout.createSequentialGroup()
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                             .add(graceField)
-                            .add(crField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE))
+                            .add(crField))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel25)
@@ -1608,7 +1821,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(jPanel14Layout.createSequentialGroup()
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                             .add(org.jdesktop.layout.GroupLayout.LEADING, tax2Field)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, tax1Field, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE))
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, tax1Field))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(showTax2Box)
@@ -2341,159 +2554,6 @@ public class SettingsDialog extends javax.swing.JDialog {
 
             jTabbedPane1.addTab("Info", new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Info.png")), infoPanel); // NOI18N
 
-            messageBox.setText("Show Remote Message (Grabs a small message from datavirtue.com)");
-            messageBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-            messageBox.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    messageBoxActionPerformed(evt);
-                }
-            });
-
-            jPanel19.setBorder(javax.swing.BorderFactory.createTitledBorder(" Email Settings (Send Documents) "));
-
-            jLabel42.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-            jLabel42.setText("SMTP Server:");
-
-            jLabel57.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-            jLabel57.setText("My Address:");
-
-            jLabel58.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-            jLabel58.setText("SMTP User Name:");
-
-            jLabel59.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-            jLabel59.setText("SMTP Password:");
-
-            smtpServer.setToolTipText("This is the mail server's address. (Port 25)");
-
-            emailAddressField.setToolTipText("Your address known to the mail server. Must correspond to the user name and password.");
-
-            emailUserName.setToolTipText("Your user name for your account on the mail server.");
-            emailUserName.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    emailUserNameActionPerformed(evt);
-                }
-            });
-
-            emailPassword.setToolTipText("The password for your email account on the mail server.");
-
-            testEmailButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/RRZE/wifi16.png"))); // NOI18N
-            testEmailButton.setText("Send Test Message");
-            testEmailButton.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    testEmailButtonActionPerformed(evt);
-                }
-            });
-
-            jLabel60.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-            jLabel60.setText("Port");
-
-            smtpPortField.setText("25");
-
-            SSLBox.setText("SSL");
-            SSLBox.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    SSLBoxActionPerformed(evt);
-                }
-            });
-
-            jLabel35.setText("The test message may be rejected by your email service because of an attachment.");
-
-            org.jdesktop.layout.GroupLayout jPanel19Layout = new org.jdesktop.layout.GroupLayout(jPanel19);
-            jPanel19.setLayout(jPanel19Layout);
-            jPanel19Layout.setHorizontalGroup(
-                jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(jPanel19Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel59, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel58, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel57, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel42, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                    .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(emailAddressField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
-                        .add(emailUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel19Layout.createSequentialGroup()
-                            .add(smtpServer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(jLabel60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 37, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(smtpPortField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(jPanel19Layout.createSequentialGroup()
-                            .add(emailPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 141, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                            .add(SSLBox)
-                            .add(0, 0, Short.MAX_VALUE))
-                        .add(jPanel19Layout.createSequentialGroup()
-                            .add(testEmailButton)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(jLabel35, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addContainerGap())
-            );
-            jPanel19Layout.setVerticalGroup(
-                jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(jPanel19Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel42)
-                        .add(smtpServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(smtpPortField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jLabel60))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                    .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel57)
-                        .add(emailAddressField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                    .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel58)
-                        .add(emailUserName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                    .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel59)
-                        .add(emailPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(SSLBox))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 6, Short.MAX_VALUE)
-                    .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(testEmailButton)
-                        .add(jLabel35)))
-            );
-
-            configEDIButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-24/enabled/Data transmission.png"))); // NOI18N
-            configEDIButton.setText("Configure EDI");
-            configEDIButton.setToolTipText("Configure EDI to support multiple users and/or locations.");
-            configEDIButton.setEnabled(false);
-            configEDIButton.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    configEDIButtonActionPerformed(evt);
-                }
-            });
-
-            org.jdesktop.layout.GroupLayout EDIPanelLayout = new org.jdesktop.layout.GroupLayout(EDIPanel);
-            EDIPanel.setLayout(EDIPanelLayout);
-            EDIPanelLayout.setHorizontalGroup(
-                EDIPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(EDIPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(EDIPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(jPanel19, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(messageBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)
-                        .add(configEDIButton))
-                    .addContainerGap())
-            );
-            EDIPanelLayout.setVerticalGroup(
-                EDIPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(EDIPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(messageBox)
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                    .add(jPanel19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                    .add(configEDIButton)
-                    .addContainerGap(230, Short.MAX_VALUE))
-            );
-
-            jTabbedPane1.addTab("Internet", new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Address book.png")), EDIPanel); // NOI18N
-
             saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Floppy.png"))); // NOI18N
             saveButton.setText("Close/Save");
             saveButton.setToolTipText("Click to save and exit.");
@@ -2537,272 +2597,298 @@ public class SettingsDialog extends javax.swing.JDialog {
         }// </editor-fold>//GEN-END:initComponents
 
     private void checkUpdatesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkUpdatesButtonActionPerformed
-    
+
         checkForUpdates();
-        
+
     }//GEN-LAST:event_checkUpdatesButtonActionPerformed
-private void checkForUpdates() {
-        
+    private void checkForUpdates() {
+
         String localString = DV.readFile("ver.inf");
-        
-        String siteData="";
-        
+
+        String siteData = "";
+
         siteData = DVNET.HTTPGetFile("http://www.datavirtue.com/nevitium/update/nevupdate.html", "Problem retreiving update status.", false);
-        if (!siteData.contains("ERR:")){
-            float currentVersion=0.0f;
-            float localVersion=0.0f;
+        if (!siteData.contains("ERR:")) {
+            float currentVersion = 0.0f;
+            float localVersion = 0.0f;
             try {
-                
+
                 currentVersion = Float.parseFloat(siteData);
-                
+
             } catch (NumberFormatException ex) {
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "There was a problem processing the remote update data. >>"+siteData);
+                javax.swing.JOptionPane.showMessageDialog(null,
+                        "There was a problem processing the remote update data. >>" + siteData);
             }
-          
-            
+
             try {
-                
+
                 localVersion = Float.parseFloat(localString);
-                
+
             } catch (NumberFormatException ex) {
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "There was a problem processing the local version data. >>"+localString);
+                javax.swing.JOptionPane.showMessageDialog(null,
+                        "There was a problem processing the local version data. >>" + localString);
             }
-            
-            if (localVersion < currentVersion){
+
+            if (localVersion < currentVersion) {
                 String nl = System.getProperty("line.separator");
                 javax.swing.JOptionPane.showMessageDialog(null,
-                    "Your Version: "+localVersion + "     Current Release: "+currentVersion+nl+
-                        "Visit datavirtue.com to download the latest version.");
-                
-            }else {
-                
-                javax.swing.JOptionPane.showMessageDialog(null,"No updates needed. Visit the website for Hot Builds.");
+                        "Your Version: " + localVersion + "     Current Release: " + currentVersion + nl
+                        + "Visit datavirtue.com to download the latest version.");
+
+            } else {
+
+                javax.swing.JOptionPane.showMessageDialog(null, "No updates needed. Visit the website for Hot Builds.");
             }
-        }   
+        }
     }
     private void paperSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_paperSpinnerStateChanged
-        
+
         updateInches();
-        
+
     }//GEN-LAST:event_paperSpinnerStateChanged
 
     private void screenLogoBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_screenLogoBrowseActionPerformed
-        
+
         JFileChooser fileChooser = DV.getFileChooser(screenPicField.getText());
-            
+
         File curFile = fileChooser.getSelectedFile();
-         if (curFile == null) return;
-        if (curFile != null ) screenPicField.setText( curFile.toString() );
-        if (!curFile.toString().toLowerCase().contains(".gif")  &&
-                !curFile.toString().toLowerCase().contains(".jpg") &&
-                !curFile.toString().toLowerCase().contains(".png")) screenPicField.setText("");
-        
-        
-        
+        if (curFile == null) {
+            return;
+        }
+        if (curFile != null) {
+            screenPicField.setText(curFile.toString());
+        }
+        if (!curFile.toString().toLowerCase().contains(".gif")
+                && !curFile.toString().toLowerCase().contains(".jpg")
+                && !curFile.toString().toLowerCase().contains(".png")) {
+            screenPicField.setText("");
+        }
+
+
     }//GEN-LAST:event_screenLogoBrowseActionPerformed
 
     private void stColorFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_stColorFieldMouseClicked
-        
+
         ColorChooser colorDialog = new ColorChooser(null, true);
         colorDialog.setColor(stColorField.getBackground());
         colorDialog.setVisible(true);
         stColorField.setBackground(colorDialog.getColor());
         stColorField.setText("Statement Color");
-        
+
         colorDialog.dispose();
-        
-        
+
+
 }//GEN-LAST:event_stColorFieldMouseClicked
 
     private void invoiceColorFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_invoiceColorFieldMouseClicked
-        
+
         ColorChooser colorDialog = new ColorChooser(null, true);
         colorDialog.setColor(invoiceColorField.getBackground());
         colorDialog.setVisible(true);
         invoiceColorField.setBackground(colorDialog.getColor());
         invoiceColorField.setText("Invoice Color");
         colorDialog.dispose();
-        
+
 }//GEN-LAST:event_invoiceColorFieldMouseClicked
 
     private void secButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_secButtonActionPerformed
-        if (accessKey.isMaster()){
+        if (accessKey.isMaster()) {
             new businessmanager.SecurityManager(null, true, db).setVisible(true);
-        }else {
+        } else {
             accessKey.showMessage("Security");
         }
 
     }//GEN-LAST:event_secButtonActionPerformed
 
     private void pdfRevertButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pdfRevertButtonActionPerformed
-        
+
         acroField.setText(props.getProp("ACROEXE"));
         pdfRevertButton.setEnabled(false);
-        
+
     }//GEN-LAST:event_pdfRevertButtonActionPerformed
 
     private void pdfAutoFindButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pdfAutoFindButtonActionPerformed
-        
-          acroField.setText(getAdobe());  
+
+        acroField.setText(getAdobe());
         pdfRevertButton.setEnabled(true);
-        
+
     }//GEN-LAST:event_pdfAutoFindButtonActionPerformed
 
     private String getAdobe() {
-        
+
         String usrdir = System.getProperty("user.dir");
-                      
-            String adobe=".";
-                                  
-            String drv = usrdir.substring( 0, usrdir.indexOf(fileSep) );
-            
-            if (System.getProperty("os.name").contains("Windows")){
-                                                
-                adobe = drv + "\\Program Files\\Adobe\\";
-                
-                if (new File(adobe).exists()){
-                
-                    File ad = new File(adobe);
-                
-                    String [] ls = ad.list();
-                if (ls.length > 1){
-                    int lnk [] = DV.whichContains(ls, "Acrobat");
-                
+
+        String adobe = ".";
+
+        String drv = usrdir.substring(0, usrdir.indexOf(fileSep));
+
+        if (System.getProperty("os.name").contains("Windows")) {
+
+            adobe = drv + "\\Program Files\\Adobe\\";
+
+            if (new File(adobe).exists()) {
+
+                File ad = new File(adobe);
+
+                String[] ls = ad.list();
+                if (ls.length > 1) {
+                    int lnk[] = DV.whichContains(ls, "Acrobat");
+
                     int w = 0;
                     String tmp;
                     float v = 1.0f;
-                
-                    for (int i = 0; i < lnk.length; i++){
-                    
-                      tmp = ls[i].substring(ls[i].length()-3);
-                      
-                      if (DV.validFloatString(tmp)){
-                        
-                            if (Float.valueOf(tmp) > v ) {
-                            
+
+                    for (int i = 0; i < lnk.length; i++) {
+
+                        tmp = ls[i].substring(ls[i].length() - 3);
+
+                        if (DV.validFloatString(tmp)) {
+
+                            if (Float.valueOf(tmp) > v) {
+
                                 v = Float.valueOf(tmp);
                                 w = i;
-                            }     
-                        
+                            }
+
                         }
-                   
+
                     }
-                                
-                    if (w == 0);
-                    else adobe = adobe + ls[w]+ "\\Reader\\AcroRd32.exe";
-                
-                }else adobe = adobe + ls[0]+ "\\Reader\\AcroRd32.exe";
-                      
+
+                    if (w == 0); else {
+                        adobe = adobe + ls[w] + "\\Reader\\AcroRd32.exe";
+                    }
+
+                } else {
+                    adobe = adobe + ls[0] + "\\Reader\\AcroRd32.exe";
                 }
-                
-            }//end Windows setup
-            
-            if (System.getProperty("os.name").contains("nux")){
-                               
-                adobe = "evince";
-                                
+
             }
-            
-            return adobe;
-                
-        
+
+        }//end Windows setup
+
+        if (System.getProperty("os.name").contains("nux")) {
+
+            adobe = "evince";
+
+        }
+
+        return adobe;
+
     }
-    
-    
+
+
     private void jLabel12MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel12MouseClicked
         DV.launchURL("http://" + jLabel12.getText());
     }//GEN-LAST:event_jLabel12MouseClicked
 
     private void jLabel13MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel13MouseClicked
-        
+
         DV.launchURL("mailto:" + jLabel13.getText());
-        
+
     }//GEN-LAST:event_jLabel13MouseClicked
 
     private void watermarkBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_watermarkBrowseActionPerformed
-            
+
         JFileChooser fileChooser = DV.getFileChooser(logoField.getText());
-            
+
         File curFile = fileChooser.getSelectedFile();
-       
-         if (curFile == null) return;
-        if (curFile != null ) watermarkField.setText( curFile.toString() );
-        if (!curFile.toString().contains(".gif")  && !curFile.toString().contains(".jpg") && !curFile.toString().contains(".bmp")) logoField.setText("");
-        
-        
-        
+
+        if (curFile == null) {
+            return;
+        }
+        if (curFile != null) {
+            watermarkField.setText(curFile.toString());
+        }
+        if (!curFile.toString().contains(".gif") && !curFile.toString().contains(".jpg") && !curFile.toString().contains(".bmp")) {
+            logoField.setText("");
+        }
+
+
     }//GEN-LAST:event_watermarkBrowseActionPerformed
 
     private void logoBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoBrowseActionPerformed
-            
+
         JFileChooser fileChooser = DV.getFileChooser(logoField.getText());
-            
+
         File curFile = fileChooser.getSelectedFile();
-         if (curFile == null) return;
-        if (curFile != null ) logoField.setText( curFile.toString() );
-        if (!curFile.toString().toLowerCase().contains(".gif")  &&
-                !curFile.toString().toLowerCase().contains(".jpg") &&
-                !curFile.toString().toLowerCase().contains(".png")) logoField.setText("");
-        
-        
+        if (curFile == null) {
+            return;
+        }
+        if (curFile != null) {
+            logoField.setText(curFile.toString());
+        }
+        if (!curFile.toString().toLowerCase().contains(".gif")
+                && !curFile.toString().toLowerCase().contains(".jpg")
+                && !curFile.toString().toLowerCase().contains(".png")) {
+            logoField.setText("");
+        }
+
+
     }//GEN-LAST:event_logoBrowseActionPerformed
 
     private void acroBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acroBrowseButtonActionPerformed
-        
+
         JFileChooser fileChooser = DV.getFileChooser(acroField.getText());
-            
+
         File curFile = fileChooser.getSelectedFile();
-        if (curFile != null ) acroField.setText( curFile.toString() );
-        
+        if (curFile != null) {
+            acroField.setText(curFile.toString());
+        }
+
         pdfRevertButton.setEnabled(true);
-        
+
     }//GEN-LAST:event_acroBrowseButtonActionPerformed
 
     private void reportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reportButtonActionPerformed
         JFileChooser fileChooser = DV.getDirChooser(reportFolderField.getText(), parentWin);
-            
+
         File curFile = fileChooser.getSelectedFile();
-        if (curFile != null ) reportFolderField.setText( DV.verifyPath(curFile.toString()) );
+        if (curFile != null)
+            reportFolderField.setText(DV.verifyPath(curFile.toString()));
     }//GEN-LAST:event_reportButtonActionPerformed
 
     private void invoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceButtonActionPerformed
-        
+
         JFileChooser fileChooser = DV.getDirChooser(invoiceFolderField.getText(), parentWin);
-            
+
         File curFile = fileChooser.getSelectedFile();
-        if (curFile != null ) invoiceFolderField.setText( DV.verifyPath(curFile.toString()) );
-        
+        if (curFile != null) {
+            invoiceFolderField.setText(DV.verifyPath(curFile.toString()));
+        }
+
     }//GEN-LAST:event_invoiceButtonActionPerformed
-   
-    
+
+
     private void secondaryCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_secondaryCheckBoxActionPerformed
         updateSecondary();
     }//GEN-LAST:event_secondaryCheckBoxActionPerformed
-private void updateSecondary () {
-    
-    secondaryField.setEnabled(secondaryCheckBox.isSelected());
-    secondaryButton.setEnabled(secondaryCheckBox.isSelected());
-    
-}
+    private void updateSecondary() {
+
+        secondaryField.setEnabled(secondaryCheckBox.isSelected());
+        secondaryButton.setEnabled(secondaryCheckBox.isSelected());
+
+    }
 
     private void backupFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backupFolderButtonActionPerformed
-        
+
         JFileChooser fileChooser = DV.getDirChooser(backupField.getText(), parentWin);
-            
+
         File curFile = fileChooser.getSelectedFile();
-        if (curFile != null ) backupField.setText( DV.verifyPath(curFile.toString()) );
-        
+        if (curFile != null) {
+            backupField.setText(DV.verifyPath(curFile.toString()));
+        }
+
     }//GEN-LAST:event_backupFolderButtonActionPerformed
 
     private void secondaryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_secondaryButtonActionPerformed
-        
+
         JFileChooser fileChooser = DV.getDirChooser(secondaryField.getText(), parentWin);
-            File curFile = fileChooser.getSelectedFile();
-            if (curFile != null ) secondaryField.setText( DV.verifyPath(curFile.toString()) );
-       
-        
+        File curFile = fileChooser.getSelectedFile();
+        if (curFile != null) {
+            secondaryField.setText(DV.verifyPath(curFile.toString()));
+        }
+
+
     }//GEN-LAST:event_secondaryButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
@@ -2813,9 +2899,11 @@ private void updateSecondary () {
         JFileChooser fileChooser = DV.getFileChooser(paymentField.getText());
 
         File curFile = fileChooser.getSelectedFile();
-        if (curFile != null ) paymentField.setText( curFile.toString() );
+        if (curFile != null) {
+            paymentField.setText(curFile.toString());
+        }
         checkForApp();
-       
+
     }//GEN-LAST:event_paymentBrowseButtonActionPerformed
 
     private void paymentFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_paymentFieldFocusLost
@@ -2823,11 +2911,11 @@ private void updateSecondary () {
     }//GEN-LAST:event_paymentFieldFocusLost
 
     private void paymentFieldMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_paymentFieldMouseEntered
-        checkForApp();       
+        checkForApp();
     }//GEN-LAST:event_paymentFieldMouseEntered
 
     private void paymentFieldMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_paymentFieldMouseExited
-        checkForApp();   
+        checkForApp();
     }//GEN-LAST:event_paymentFieldMouseExited
 
     private void paymentWebBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paymentWebBoxActionPerformed
@@ -2840,7 +2928,7 @@ private void updateSecondary () {
 
     private void fontButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fontButtonActionPerformed
 
-        FontDialog fd = new FontDialog(null,true,coField.getFont());
+        FontDialog fd = new FontDialog(null, true, coField.getFont());
         fd.setVisible(true);
         java.awt.Font f = fd.getChosenFont();
         //fontLabel.setFont(f);
@@ -2871,7 +2959,8 @@ private void updateSecondary () {
         JFileChooser fileChooser = DV.getDirChooser(quoteFolderField.getText(), parentWin);
 
         File curFile = fileChooser.getSelectedFile();
-        if (curFile != null ) invoiceFolderField.setText( DV.verifyPath(curFile.toString()) );
+        if (curFile != null)
+            invoiceFolderField.setText(DV.verifyPath(curFile.toString()));
     }//GEN-LAST:event_quoteButtonActionPerformed
 
     private void messageBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_messageBoxActionPerformed
@@ -2899,21 +2988,20 @@ private void updateSecondary () {
         email.setText("Nevitium Email Test Successful!  Visit datavirtue.com for updates and support.");
         email.setAttachment("ver.inf");
         email.sendEmail();
-        
+
     }//GEN-LAST:event_testEmailButtonActionPerformed
 
     private void desktopPDFBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_desktopPDFBoxActionPerformed
-        if (desktopPDFBox.isSelected()){
+        if (desktopPDFBox.isSelected()) {
             System.out.println(Desktop.getDesktop().toString());
-            if(!Desktop.isDesktopSupported()){
-                javax.swing.JOptionPane.showMessageDialog
-                        (null, Desktop.getDesktop().toString()+" is not supported.");
+            if (!Desktop.isDesktopSupported()) {
+                javax.swing.JOptionPane.showMessageDialog(null, Desktop.getDesktop().toString() + " is not supported.");
                 desktopPDFBox.setSelected(false);
                 return;
             }
 
             acroField.setEnabled(false);
-        }else {
+        } else {
             acroField.setEnabled(true);
         }
     }//GEN-LAST:event_desktopPDFBoxActionPerformed
@@ -2939,42 +3027,40 @@ private void invoiceFolderFieldActionPerformed(java.awt.event.ActionEvent evt) {
 }//GEN-LAST:event_invoiceFolderFieldActionPerformed
 
     private void configEDIButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configEDIButtonActionPerformed
-       // new EDIConfig(null, true, application);
+        // new EDIConfig(null, true, application);
     }//GEN-LAST:event_configEDIButtonActionPerformed
 
     private void changeHandCursor() {
         saveCursor();
-        Cursor c = new Cursor ( Cursor.HAND_CURSOR );
+        Cursor c = new Cursor(Cursor.HAND_CURSOR);
         jTabbedPane1.setCursor(c);
     }
 
-    private void revertCursor(){
+    private void revertCursor() {
 
-        if (defaultCursor == null){            
-            defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);            
+        if (defaultCursor == null) {
+            defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
         }
         jTabbedPane1.setCursor(defaultCursor);
     }
 
-    private void saveCursor(){
-       defaultCursor = jTabbedPane1.getCursor();
+    private void saveCursor() {
+        defaultCursor = jTabbedPane1.getCursor();
     }
 
-
-
-
-    private void checkForApp(){
+    private void checkForApp() {
         String app = paymentField.getText();
         app = app.toLowerCase();
-        if (app.endsWith(".exe") || app.endsWith(".app") || !app.contains(".")) paymentWebBox.setSelected(false);
-        
+        if (app.endsWith(".exe") || app.endsWith(".app") || !app.contains(".")) {
+            paymentWebBox.setSelected(false);
+        }
+
     }
-    
-    
+
     private java.awt.Frame parentWin;
     private java.awt.Font companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
     private KeyCard accessKey;
-    private Settings props; 
+    private Settings props;
     private String fileSep = System.getProperty("file.separator");
     private String nl = System.getProperty("line.separator");
     private Cursor defaultCursor;
@@ -3168,5 +3254,5 @@ private void invoiceFolderFieldActionPerformed(java.awt.event.ActionEvent evt) {
     private javax.swing.JButton watermarkBrowse;
     private javax.swing.JTextField watermarkField;
     // End of variables declaration//GEN-END:variables
-    
+
 }

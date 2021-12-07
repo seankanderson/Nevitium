@@ -24,8 +24,7 @@ public class ReturnMessageThread extends Thread {
     public void run(){
         if (debug) System.out.println("Running Message Thread");
         String message="";
-        message = DVNET.HTTPGetFile(URL,
-            "Please visit datavirtue.com for updates and support.", false);
+        message = DVNET.HTTPGetFile(URL, "Please visit datavirtue.com for updates and support.", false);
         textField.setText(message);
         
             if (textField.getText().contains("No Internet")){

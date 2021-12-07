@@ -122,14 +122,7 @@ public class ControlCenter extends javax.swing.JFrame {
         setBG();
 
         dbsys.setOptimized(true);
-        
-        /* EDI TEST */
-       /* Object [] record = dbsys.getRecord("conn", 1);
-        EDIDAO edi = new EDIDAO(application);
-        edi.startStream();
-        edi.addData("conn", record);
-        edi.endStream();*/
-        //edi.sendEmail();
+    
     }
 
     private void getUnicodeProperty(String path){
@@ -171,7 +164,7 @@ public class ControlCenter extends javax.swing.JFrame {
             }
         if (get){
             /* Thread Example */
-            ReturnMessageThread rm = new ReturnMessageThread("http://www.datavirtue.com/nevitium/update/nevstat.txt",
+            ReturnMessageThread rm = new ReturnMessageThread("http://datavirtue.com/nevitium/update/nevstat.txt",
                     remoteMessageBox, internetStatus);
             rm.start();
             

@@ -911,7 +911,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         iTable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         iTable.setToolTipText("Click a row and press F9 to receive.");
-        iTable.setSelectionBackground(new java.awt.Color(204, 255, 255));
         iTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
         iTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
