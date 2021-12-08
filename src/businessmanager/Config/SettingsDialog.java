@@ -14,6 +14,10 @@ import datavirtue.*;
 import java.awt.*;
 import javax.swing.*;
 import businessmanager.Common.*;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import di.GuiceBindingModule;
+import services.AppSettingsService;
 
 /**
  *
@@ -27,9 +31,15 @@ public class SettingsDialog extends javax.swing.JDialog {
     private boolean debug = false;
     private boolean safe = true;
     private GlobalApplicationDaemon application;
-
+    private final AppSettingsService settingsService;
     /**
      * Creates new form SettingsDialog
+     * 
+     * Local startup.conf remembers connection and company information 
+     * 
+     * other application configuration eneties store the properties relevent to them
+     * 
+     * 
      */
     public SettingsDialog(java.awt.Frame parent, boolean modal,
             GlobalApplicationDaemon application, boolean safe, int tabIndex) {
@@ -40,6 +50,8 @@ public class SettingsDialog extends javax.swing.JDialog {
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
+        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        settingsService = injector.getInstance(AppSettingsService.class);
         
         if (!safe) {
             configEDIButton.setEnabled(false);
@@ -50,15 +62,12 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-
                 int a = javax.swing.JOptionPane.showConfirmDialog(null, "Do you want to save any changes?", "Save Settings?", JOptionPane.YES_NO_OPTION);
                 if (a == 0) {
                     saveSettings();
-
                 } else {
                     ((JDialog) e.getSource()).dispose();
                 }
-
             }
         });
 
@@ -108,6 +117,8 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     private void createDefaultSettings() {
 
+        //settingsService.
+        
         String usrdir = System.getProperty("user.dir");
 
         String home = System.getProperty("user.home") + fileSep;

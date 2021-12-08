@@ -9,7 +9,6 @@
  ** Copyright (c) Data Virtue 2006
  *
  */
-
 package businessmanager;
 
 import com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme;
