@@ -13,12 +13,3 @@ public class InternetSettings {
     boolean showRemoteMessage = true;
 }
 
-@Getter @Setter
-class EmailSettings {
-    private String serverAddress;
-    private String serverPort;
-    private String returnAddress;
-    private String serverUsername;
-    private String serverPassword;
-    private boolean useSSL;
-}

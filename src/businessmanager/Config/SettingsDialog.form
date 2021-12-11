@@ -251,19 +251,19 @@
                                       <Component id="jLabel54" alignment="0" min="-2" max="-2" attributes="1"/>
                                   </Group>
                                   <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                                      <Component id="cityField" alignment="0" max="32767" attributes="3"/>
+                                      <Component id="cityStateZipField" alignment="0" max="32767" attributes="3"/>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="phoneField" min="-2" pref="149" max="-2" attributes="2"/>
                                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                          <Component id="fontButton" max="32767" attributes="1"/>
+                                          <Component id="companyFontButton" max="32767" attributes="1"/>
                                       </Group>
-                                      <Component id="coField" alignment="0" max="32767" attributes="3"/>
-                                      <Component id="addressField" alignment="0" max="32767" attributes="3"/>
-                                      <Component id="otherField" alignment="0" max="32767" attributes="3"/>
+                                      <Component id="companyNameField" alignment="0" max="32767" attributes="3"/>
+                                      <Component id="address2Field" alignment="0" max="32767" attributes="3"/>
+                                      <Component id="address1Field" alignment="0" max="32767" attributes="3"/>
                                       <Group type="102" alignment="0" attributes="1">
-                                          <Component id="taxIDField" min="-2" pref="86" max="-2" attributes="1"/>
+                                          <Component id="taxIdField" min="-2" pref="86" max="-2" attributes="1"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="displayTaxIDCheckBox" max="32767" attributes="0"/>
+                                          <Component id="showTaxIdCheckBox" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -277,28 +277,28 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel16" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="coField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="companyNameField" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="otherField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="address1Field" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="addressField" min="-2" max="-2" attributes="0"/>
+                              <Component id="address2Field" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cityField" min="-2" max="-2" attributes="0"/>
+                              <Component id="cityStateZipField" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel19" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="phoneField" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="fontButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="companyFontButton" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="taxIDField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="taxIdField" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel39" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="displayTaxIDCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="showTaxIdCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="jLabel54" min="-2" max="-2" attributes="0"/>
@@ -328,26 +328,26 @@
                         <Property name="text" type="java.lang.String" value="Phone"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="coField">
+                    <Component class="javax.swing.JTextField" name="companyNameField">
                     </Component>
-                    <Component class="javax.swing.JTextField" name="otherField">
+                    <Component class="javax.swing.JTextField" name="address1Field">
                     </Component>
-                    <Component class="javax.swing.JTextField" name="addressField">
+                    <Component class="javax.swing.JTextField" name="address2Field">
                     </Component>
-                    <Component class="javax.swing.JTextField" name="cityField">
+                    <Component class="javax.swing.JTextField" name="cityStateZipField">
                     </Component>
                     <Component class="javax.swing.JTextField" name="phoneField">
                     </Component>
-                    <Component class="javax.swing.JButton" name="fontButton">
+                    <Component class="javax.swing.JButton" name="companyFontButton">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Font"/>
                         <Property name="toolTipText" type="java.lang.String" value="Set the font formatting for invoices."/>
                       </Properties>
                       <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fontButtonActionPerformed"/>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="companyFontButtonActionPerformed"/>
                       </Events>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="taxIDField">
+                    <Component class="javax.swing.JTextField" name="taxIdField">
                       <Properties>
                         <Property name="toolTipText" type="java.lang.String" value="This is used to store and display a Tax ID on invoices for compliance."/>
                       </Properties>
@@ -358,7 +358,7 @@
                         <Property name="text" type="java.lang.String" value="Tax ID"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JCheckBox" name="displayTaxIDCheckBox">
+                    <Component class="javax.swing.JCheckBox" name="showTaxIdCheckBox">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Tax ID on Invoice"/>
                       </Properties>
@@ -461,7 +461,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jPanel19" alignment="0" max="32767" attributes="0"/>
-                          <Component id="messageBox" alignment="0" pref="732" max="32767" attributes="0"/>
+                          <Component id="showRemoteMessageCheckbox" alignment="0" pref="732" max="32767" attributes="0"/>
                           <Component id="configEDIButton" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -472,7 +472,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="messageBox" min="-2" max="-2" attributes="0"/>
+                      <Component id="showRemoteMessageCheckbox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jPanel19" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -483,7 +483,7 @@
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JCheckBox" name="messageBox">
+            <Component class="javax.swing.JCheckBox" name="showRemoteMessageCheckbox">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Show Remote Message (Grabs a small message from datavirtue.com)"/>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
@@ -493,7 +493,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="messageBoxActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showRemoteMessageCheckboxActionPerformed"/>
               </Events>
             </Component>
             <Container class="javax.swing.JPanel" name="jPanel19">
@@ -521,16 +521,16 @@
                               <Component id="emailAddressField" pref="611" max="32767" attributes="0"/>
                               <Component id="emailUserName" alignment="0" pref="611" max="32767" attributes="0"/>
                               <Group type="102" alignment="1" attributes="0">
-                                  <Component id="smtpServer" pref="520" max="32767" attributes="0"/>
+                                  <Component id="emailServerField" pref="520" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="jLabel60" min="-2" pref="37" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="smtpPortField" min="-2" pref="46" max="-2" attributes="0"/>
+                                  <Component id="emailPortField" min="-2" pref="46" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" attributes="0">
                                   <Component id="emailPassword" min="-2" pref="141" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Component id="SSLBox" min="-2" max="-2" attributes="0"/>
+                                  <Component id="emailSslCheckbox" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
@@ -549,8 +549,8 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel42" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="smtpServer" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="smtpPortField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="emailServerField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="emailPortField" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel60" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -567,7 +567,7 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel59" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="emailPassword" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="SSLBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="emailSslCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
@@ -603,7 +603,7 @@
                     <Property name="text" type="java.lang.String" value="SMTP Password:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="smtpServer">
+                <Component class="javax.swing.JTextField" name="emailServerField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="This is the mail server&apos;s address. (Port 25)"/>
                   </Properties>
@@ -643,17 +643,17 @@
                     <Property name="text" type="java.lang.String" value="Port"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="smtpPortField">
+                <Component class="javax.swing.JTextField" name="emailPortField">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="25"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="SSLBox">
+                <Component class="javax.swing.JCheckBox" name="emailSslCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="SSL"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="SSLBoxActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="emailSslCheckboxActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel35">
@@ -734,8 +734,8 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="dataFolderField" alignment="0" pref="621" max="32767" attributes="1"/>
                               <Component id="secondaryCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="secondaryField" alignment="0" pref="621" max="32767" attributes="0"/>
-                              <Component id="backupField" alignment="0" pref="621" max="32767" attributes="1"/>
+                              <Component id="secondaryBackupFolderField" alignment="0" pref="621" max="32767" attributes="0"/>
+                              <Component id="backupFolderField" alignment="0" pref="621" max="32767" attributes="1"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -752,13 +752,13 @@
                           <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="backupFolderButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="backupField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="backupFolderField" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="secondaryCheckBox" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="secondaryField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="secondaryBackupFolderField" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="secondaryButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
@@ -792,7 +792,7 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="backupFolderButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JTextField" name="backupField">
+                <Component class="javax.swing.JTextField" name="backupFolderField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="This folder will be presented as the primary backup folder."/>
                   </Properties>
@@ -824,7 +824,7 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="secondaryButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JTextField" name="secondaryField">
+                <Component class="javax.swing.JTextField" name="secondaryBackupFolderField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="Nevitium will always attempt to backup here without prompting."/>
                   </Properties>
@@ -889,10 +889,10 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
                                           <Component id="logButton" alignment="0" pref="173" max="32767" attributes="1"/>
-                                          <Component id="secButton" alignment="0" pref="173" max="32767" attributes="1"/>
+                                          <Component id="manageUsersButton" alignment="0" pref="173" max="32767" attributes="1"/>
                                       </Group>
                                       <Component id="jLabel17" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="statusBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="showStatusIconCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace min="-2" pref="239" max="-2" attributes="0"/>
                               </Group>
@@ -904,7 +904,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="secButton" min="-2" max="-2" attributes="0"/>
+                          <Component id="manageUsersButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="logButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace pref="37" max="32767" attributes="1"/>
@@ -912,14 +912,14 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jSeparator5" min="-2" pref="10" max="-2" attributes="0"/>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="statusBox" min="-2" max="-2" attributes="0"/>
+                          <Component id="showStatusIconCheckbox" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
               </Layout>
               <SubComponents>
-                <Component class="javax.swing.JButton" name="secButton">
+                <Component class="javax.swing.JButton" name="manageUsersButton">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/businessmanager/res/onebit_25.gif"/>
@@ -931,7 +931,7 @@
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="secButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="manageUsersButtonActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="logButton">
@@ -956,7 +956,7 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="statusBox">
+                <Component class="javax.swing.JCheckBox" name="showStatusIconCheckbox">
                   <Properties>
                     <Property name="selected" type="boolean" value="true"/>
                     <Property name="text" type="java.lang.String" value="Show status icon on the main screen"/>
@@ -1043,12 +1043,12 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="inkCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="paymentBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="inkSaverCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="processPaymentWhenPostingCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="paperSpinner" min="-2" pref="50" max="-2" attributes="0"/>
+                                  <Component id="posPrinterPaperWidthSpinner" min="-2" pref="50" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="inchLabel" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -1057,13 +1057,13 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="upcRadio" min="-2" max="-2" attributes="0"/>
+                                  <Component id="defaultScanUpcRadio" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="codeRadio2" min="-2" max="-2" attributes="0"/>
+                                  <Component id="defaultScanCodeRadio" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="descRadio" min="-2" max="-2" attributes="0"/>
+                                  <Component id="defaultScanDescriptionRadio" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="posBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="posModeBox" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace pref="47" max="32767" attributes="0"/>
                       </Group>
@@ -1073,21 +1073,21 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="inkCheckBox" min="-2" max="-2" attributes="0"/>
+                          <Component id="inkSaverCheckbox" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="paymentBox" min="-2" max="-2" attributes="0"/>
+                          <Component id="processPaymentWhenPostingCheckbox" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel26" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="upcRadio" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="codeRadio2" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="descRadio" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="defaultScanUpcRadio" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="defaultScanCodeRadio" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="defaultScanDescriptionRadio" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
-                          <Component id="posBox" min="-2" max="-2" attributes="0"/>
+                          <Component id="posModeBox" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="paperSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="posPrinterPaperWidthSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="inchLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel49" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1098,7 +1098,7 @@
                 </DimensionLayout>
               </Layout>
               <SubComponents>
-                <Component class="javax.swing.JCheckBox" name="inkCheckBox">
+                <Component class="javax.swing.JCheckBox" name="inkSaverCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Ink Saver"/>
                     <Property name="toolTipText" type="java.lang.String" value="Ink Saver prevents color on documents except for logo."/>
@@ -1109,7 +1109,7 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="paymentBox">
+                <Component class="javax.swing.JCheckBox" name="processPaymentWhenPostingCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Process Payment When Posting"/>
                     <Property name="toolTipText" type="java.lang.String" value="Auto selects the Take Payment check box on the invoice."/>
@@ -1125,7 +1125,7 @@
                     <Property name="text" type="java.lang.String" value="Default Scan Field:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JRadioButton" name="upcRadio">
+                <Component class="javax.swing.JRadioButton" name="defaultScanUpcRadio">
                   <Properties>
                     <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                       <ComponentRef name="buttonGroup2"/>
@@ -1139,7 +1139,7 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JRadioButton" name="codeRadio2">
+                <Component class="javax.swing.JRadioButton" name="defaultScanCodeRadio">
                   <Properties>
                     <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                       <ComponentRef name="buttonGroup2"/>
@@ -1152,7 +1152,7 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="posBox">
+                <Component class="javax.swing.JCheckBox" name="posModeBox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="POS Mode"/>
                     <Property name="toolTipText" type="java.lang.String" value="Assumes the receipt printer is your default printer and changes the invoice screen."/>
@@ -1163,14 +1163,14 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JSpinner" name="paperSpinner">
+                <Component class="javax.swing.JSpinner" name="posPrinterPaperWidthSpinner">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                       <Font name="Courier" size="14" style="0"/>
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="paperSpinnerStateChanged"/>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="posPrinterPaperWidthSpinnerStateChanged"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel1">
@@ -1188,7 +1188,7 @@
                     <Property name="text" type="java.lang.String" value="Inches"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JRadioButton" name="descRadio">
+                <Component class="javax.swing.JRadioButton" name="defaultScanDescriptionRadio">
                   <Properties>
                     <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                       <ComponentRef name="buttonGroup2"/>
@@ -1278,7 +1278,7 @@
                           <Group type="102" alignment="1" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="stColorField" alignment="0" pref="250" max="32767" attributes="1"/>
+                                  <Component id="statementColorField" alignment="0" pref="250" max="32767" attributes="1"/>
                                   <Component id="invoiceColorField" alignment="0" pref="250" max="32767" attributes="1"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -1291,7 +1291,7 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="invoiceColorField" min="-2" max="-2" attributes="0"/>
                               <EmptySpace pref="9" max="32767" attributes="0"/>
-                              <Component id="stColorField" min="-2" max="-2" attributes="0"/>
+                              <Component id="statementColorField" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -1304,14 +1304,15 @@
                       </Properties>
                       <Events>
                         <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="invoiceColorFieldMouseClicked"/>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="invoiceColorFieldActionPerformed"/>
                       </Events>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="stColorField">
+                    <Component class="javax.swing.JTextField" name="statementColorField">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Statement Color"/>
                       </Properties>
                       <Events>
-                        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="stColorFieldMouseClicked"/>
+                        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="statementColorFieldMouseClicked"/>
                       </Events>
                     </Component>
                   </SubComponents>
@@ -1343,11 +1344,11 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="iPrefixField" alignment="0" pref="90" max="32767" attributes="1"/>
+                              <Component id="invoicePrefixField" alignment="0" pref="90" max="32767" attributes="1"/>
                               <Component id="invoiceNameField" alignment="0" pref="90" max="32767" attributes="1"/>
                               <Component id="tax2NameField" alignment="1" pref="90" max="32767" attributes="1"/>
                               <Component id="tax1NameField" pref="90" max="32767" attributes="1"/>
-                              <Component id="qPrefixField" pref="90" max="32767" attributes="0"/>
+                              <Component id="quotePrefixField" pref="90" max="32767" attributes="0"/>
                               <Component id="quoteNameField" alignment="0" pref="90" max="32767" attributes="0"/>
                               <Component id="billToTextField" alignment="0" pref="90" max="32767" attributes="0"/>
                           </Group>
@@ -1375,7 +1376,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="iPrefixField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="invoicePrefixField" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
@@ -1385,7 +1386,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="qPrefixField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="quotePrefixField" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel46" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -1429,7 +1430,7 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="invoiceNameField">
                 </Component>
-                <Component class="javax.swing.JTextField" name="iPrefixField">
+                <Component class="javax.swing.JTextField" name="invoicePrefixField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="Invoice numbers are stored with a max 8 characters this is included"/>
                   </Properties>
@@ -1440,7 +1441,7 @@
                     <Property name="text" type="java.lang.String" value="Invoice Prefix"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="qPrefixField">
+                <Component class="javax.swing.JTextField" name="quotePrefixField">
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel46">
                   <Properties>
@@ -1497,8 +1498,8 @@
                               <Component id="jLabel62" alignment="0" pref="391" max="32767" attributes="1"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                      <Component id="graceField" max="32767" attributes="1"/>
-                                      <Component id="crField" alignment="0" max="32767" attributes="1"/>
+                                      <Component id="interestGracePeriodField" max="32767" attributes="1"/>
+                                      <Component id="interestRateField" alignment="0" max="32767" attributes="1"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
@@ -1517,7 +1518,7 @@
                                       <Component id="showTax1Box" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
-                              <Component id="roundingCombo" alignment="0" min="-2" pref="82" max="-2" attributes="0"/>
+                              <Component id="cashRoundingCombo" alignment="0" min="-2" pref="82" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1541,19 +1542,19 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel25" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="crField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="interestRateField" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel10" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel24" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="graceField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="interestGracePeriodField" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel23" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jLabel62" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="roundingCombo" min="-2" max="-2" attributes="0"/>
+                          <Component id="cashRoundingCombo" min="-2" max="-2" attributes="0"/>
                           <EmptySpace pref="77" max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -1588,7 +1589,7 @@
                     <Property name="text" type="java.lang.String" value="(Interest Rate"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="crField">
+                <Component class="javax.swing.JTextField" name="interestRateField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="Simple Interest"/>
                   </Properties>
@@ -1604,7 +1605,7 @@
                     <Property name="text" type="java.lang.String" value="Grace Period"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="graceField">
+                <Component class="javax.swing.JTextField" name="interestGracePeriodField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="Amount of days before interest is charged on balances."/>
                   </Properties>
@@ -1629,7 +1630,7 @@
                     <Property name="text" type="java.lang.String" value="Round cash sales to nearest:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JComboBox" name="roundingCombo">
+                <Component class="javax.swing.JComboBox" name="cashRoundingCombo">
                   <Properties>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                       <StringArray count="3">
@@ -1691,8 +1692,8 @@
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="invoiceComboBox" alignment="0" min="-2" pref="197" max="-2" attributes="0"/>
-                              <Component id="layoutPath" alignment="0" pref="625" max="32767" attributes="0"/>
+                              <Component id="invoiceLayoutComboBox" alignment="0" min="-2" pref="197" max="-2" attributes="0"/>
+                              <Component id="layoutPathField" alignment="0" pref="625" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1704,11 +1705,11 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="layoutPathLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="layoutPath" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="layoutPathField" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="invoiceComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="invoiceLayoutComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel61" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
@@ -1729,7 +1730,7 @@
                     <Property name="text" type="java.lang.String" value="Invoice Layout"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JComboBox" name="invoiceComboBox">
+                <Component class="javax.swing.JComboBox" name="invoiceLayoutComboBox">
                   <Properties>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                       <StringArray count="0"/>
@@ -1738,7 +1739,7 @@
                     <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="layoutPath">
+                <Component class="javax.swing.JTextField" name="layoutPathField">
                   <Properties>
                     <Property name="editable" type="boolean" value="false"/>
                   </Properties>
@@ -1979,15 +1980,15 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="waterBox" min="-2" max="-2" attributes="0"/>
+                                  <Component id="useWatermarkOnReportsCheckbox" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="jLabel43" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="watermarkField" alignment="1" max="32767" attributes="1"/>
-                                  <Component id="reportFolderField" alignment="0" max="32767" attributes="1"/>
-                                  <Component id="quoteFolderField" alignment="0" pref="564" max="32767" attributes="1"/>
-                                  <Component id="invoiceFolderField" alignment="0" max="32767" attributes="1"/>
+                                  <Component id="watermarkImagePathField" alignment="1" max="32767" attributes="1"/>
+                                  <Component id="reportOutputFolderField" alignment="0" max="32767" attributes="1"/>
+                                  <Component id="quoteOutputFolderField" alignment="0" pref="564" max="32767" attributes="1"/>
+                                  <Component id="invoiceOutputFolderField" alignment="0" max="32767" attributes="1"/>
                               </Group>
                           </Group>
                           <EmptySpace pref="77" max="32767" attributes="0"/>
@@ -2000,26 +2001,26 @@
                           <EmptySpace max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="invoiceButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="invoiceFolderField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="invoiceOutputFolderField" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="quoteButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="quoteFolderField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="quoteOutputFolderField" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="reportButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="reportFolderField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="reportOutputFolderField" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="watermarkBrowse" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="watermarkField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="watermarkImagePathField" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="waterBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="useWatermarkOnReportsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel43" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
@@ -2042,12 +2043,12 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="invoiceButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JTextField" name="invoiceFolderField">
+                <Component class="javax.swing.JTextField" name="invoiceOutputFolderField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="this is where the Invoices are sent (.pdf)"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="invoiceFolderFieldActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="invoiceOutputFolderFieldActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="quoteButton">
@@ -2064,7 +2065,7 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="quoteButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JTextField" name="quoteFolderField">
+                <Component class="javax.swing.JTextField" name="quoteOutputFolderField">
                 </Component>
                 <Component class="javax.swing.JButton" name="reportButton">
                   <Properties>
@@ -2080,7 +2081,7 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="reportButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JTextField" name="reportFolderField">
+                <Component class="javax.swing.JTextField" name="reportOutputFolderField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="This is where the reports are saved (.pdf)"/>
                   </Properties>
@@ -2099,12 +2100,12 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="watermarkBrowseActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JTextField" name="watermarkField">
+                <Component class="javax.swing.JTextField" name="watermarkImagePathField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="Leave this blank to remove watermark from reports"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="waterBox">
+                <Component class="javax.swing.JCheckBox" name="useWatermarkOnReportsCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Use Watermark in Reports"/>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
@@ -2138,28 +2139,28 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="acroBrowseButton" min="-2" max="-2" attributes="1"/>
+                                  <Component id="pdfBinPathBrowseButton" min="-2" max="-2" attributes="1"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="pdfAutoFindButton" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="pdfRevertButton" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                                  <Component id="desktopPDFBox" min="-2" max="-2" attributes="0"/>
+                                  <Component id="useSystemDefaultPdfReaderCheckbox" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                                  <Component id="acroField" alignment="0" max="32767" attributes="1"/>
+                                  <Component id="pdfReaderBinField" alignment="0" max="32767" attributes="1"/>
                                   <Group type="102" alignment="0" attributes="1">
-                                      <Component id="paymentBrowseButton" min="-2" max="-2" attributes="0"/>
+                                      <Component id="paymentSystemBinPathBrowseButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="jLabel53" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="ccPaymentBox" min="-2" max="-2" attributes="0"/>
+                                      <Component id="usePaymentSystemForCardsCheckbox" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="checkPaymentBox" min="-2" max="-2" attributes="0"/>
+                                      <Component id="usePaymentSystemForChecksCheckbox" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="32767" attributes="0"/>
-                                      <Component id="paymentWebBox" min="-2" pref="207" max="-2" attributes="0"/>
+                                      <Component id="paymentSystemIsWebCheckbox" min="-2" pref="207" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="paymentField" alignment="0" min="-2" pref="598" max="-2" attributes="1"/>
+                                  <Component id="paymentSystemUriField" alignment="0" min="-2" pref="598" max="-2" attributes="1"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -2172,19 +2173,19 @@
                           <EmptySpace pref="25" max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel47" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="acroField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="pdfReaderBinField" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="acroBrowseButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="pdfBinPathBrowseButton" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="pdfAutoFindButton" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="pdfRevertButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="desktopPDFBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="useSystemDefaultPdfReaderCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                                  <Component id="paymentField" min="-2" max="-2" attributes="0"/>
+                                  <Component id="paymentSystemUriField" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="1" attributes="0">
                                   <EmptySpace min="-2" pref="51" max="-2" attributes="0"/>
@@ -2193,11 +2194,11 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="paymentBrowseButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="paymentSystemBinPathBrowseButton" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel53" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="ccPaymentBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="checkPaymentBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="paymentWebBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="usePaymentSystemForCardsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="usePaymentSystemForChecksCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="paymentSystemIsWebCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -2211,33 +2212,33 @@
                     <Property name="text" type="java.lang.String" value="Pmt Sys:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="paymentField">
+                <Component class="javax.swing.JTextField" name="paymentSystemUriField">
                   <Properties>
                     <Property name="toolTipText" type="java.lang.String" value="Link to an application OR a website to process payments (Ex. PC Charge Pro)"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="paymentFieldMouseEntered"/>
-                    <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="paymentFieldMouseExited"/>
-                    <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="paymentFieldFocusLost"/>
-                    <EventHandler event="keyTyped" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="paymentFieldKeyTyped"/>
+                    <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="paymentSystemUriFieldFocusLost"/>
+                    <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="paymentSystemUriFieldMouseEntered"/>
+                    <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="paymentSystemUriFieldMouseExited"/>
+                    <EventHandler event="keyTyped" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="paymentSystemUriFieldKeyTyped"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="paymentWebBox">
+                <Component class="javax.swing.JCheckBox" name="paymentSystemIsWebCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Web Based"/>
                     <Property name="toolTipText" type="java.lang.String" value="Launches the URL in your web browser"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="paymentWebBoxActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="paymentSystemIsWebCheckboxActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JButton" name="paymentBrowseButton">
+                <Component class="javax.swing.JButton" name="paymentSystemBinPathBrowseButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Browse"/>
                     <Property name="toolTipText" type="java.lang.String" value="Browse to a payment application on your system"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="paymentBrowseButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="paymentSystemBinPathBrowseButtonActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel53">
@@ -2245,19 +2246,22 @@
                     <Property name="text" type="java.lang.String" value="Use For:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="ccPaymentBox">
+                <Component class="javax.swing.JCheckBox" name="usePaymentSystemForCardsCheckbox">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Credit/Debit Card - EFT"/>
+                    <Property name="text" type="java.lang.String" value="Card Payments"/>
                     <Property name="toolTipText" type="java.lang.String" value="Enable to automatically select the payment system check box in the payment window"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="usePaymentSystemForCardsCheckboxActionPerformed"/>
+                  </Events>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="checkPaymentBox">
+                <Component class="javax.swing.JCheckBox" name="usePaymentSystemForChecksCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Check"/>
                     <Property name="toolTipText" type="java.lang.String" value="Enable to automatically select the payment system check box in the payment window"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="checkPaymentBoxActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="usePaymentSystemForChecksCheckboxActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel47">
@@ -2265,19 +2269,19 @@
                     <Property name="text" type="java.lang.String" value="PDF Reader: "/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="acroField">
+                <Component class="javax.swing.JTextField" name="pdfReaderBinField">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="C:\u005cProgram Files\u005cAdobe\u005c" containsInvalidXMLChars="true"/>
                     <Property name="toolTipText" type="java.lang.String" value="You need to specify this to View reports."/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JButton" name="acroBrowseButton">
+                <Component class="javax.swing.JButton" name="pdfBinPathBrowseButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Browse"/>
                     <Property name="toolTipText" type="java.lang.String" value="Browse and select a PDF reader program."/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="acroBrowseButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pdfBinPathBrowseButtonActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="pdfAutoFindButton">
@@ -2305,13 +2309,13 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pdfRevertButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="desktopPDFBox">
+                <Component class="javax.swing.JCheckBox" name="useSystemDefaultPdfReaderCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Use System Default"/>
                     <Property name="toolTipText" type="java.lang.String" value="Nevitium will use the default application associated with pdf files."/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="desktopPDFBoxActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useSystemDefaultPdfReaderCheckboxActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>
@@ -2390,11 +2394,11 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" attributes="0">
-                                          <Component id="themeCombo" min="-2" pref="130" max="-2" attributes="1"/>
+                                          <Component id="themeComboBox" min="-2" pref="130" max="-2" attributes="1"/>
                                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                           <Component id="jLabel63" pref="440" max="32767" attributes="0"/>
                                       </Group>
-                                      <Component id="showToolbar" min="-2" max="-2" attributes="1"/>
+                                      <Component id="showToolbarCheckbox" min="-2" max="-2" attributes="1"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -2425,13 +2429,13 @@
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel18" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="themeCombo" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="themeComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel63" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="showToolbar" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="showToolbarCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace pref="117" max="32767" attributes="0"/>
                       </Group>
@@ -2444,7 +2448,7 @@
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                       <Font name="Tahoma" size="11" style="1"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Nevitium Invoice Manager 1.5.8.7 HotBuild Maint-Release - 01 July 2013"/>
+                    <Property name="text" type="java.lang.String" value="Nevitium Invoice Manager 1.5.8.7"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel12">
@@ -2477,7 +2481,7 @@
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel14">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Copyright Data Virtue 2007-2013 - All Rights Reserved."/>
+                    <Property name="text" type="java.lang.String" value="Copyright Data Virtue 2007-2022 - All Rights Reserved."/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel15">
@@ -2485,7 +2489,7 @@
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                       <Font name="Courier New" size="12" style="0"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Developed with Java SE 1.6 &amp; NetBeans IDE 7.2"/>
+                    <Property name="text" type="java.lang.String" value="Programmed in Java Swing"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel3">
@@ -2524,7 +2528,7 @@
                     <Property name="text" type="java.lang.String" value="Select Theme:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JComboBox" name="themeCombo">
+                <Component class="javax.swing.JComboBox" name="themeComboBox">
                   <Properties>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                       <StringArray count="13">
@@ -2681,7 +2685,7 @@
                     <Property name="text" type="java.lang.String" value="Show Toolbar:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="showToolbar">
+                <Component class="javax.swing.JCheckBox" name="showToolbarCheckbox">
                   <Properties>
                     <Property name="selected" type="boolean" value="true"/>
                   </Properties>

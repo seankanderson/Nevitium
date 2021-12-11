@@ -13,5 +13,6 @@ public class InventorySettings {
     private String weightUnit = "lbs"; // kgs
     private boolean ignoreQuantityWarnings = false;
     private boolean addCategoryLineToInvoiceItems = false;
+    private String defaultInventorySearchField = "upc";
     
 }

@@ -546,7 +546,7 @@ public static String generateReorderReport (DbEngine dbsys, Settings props) {
  
  public static String veiwPDF (String acro, String file, Settings props) {
      boolean desktop = DV.parseBool(props.getProp("DESKTOP SUPPORTED"), true);
-     if (Desktop.isDesktopSupported() && desktop){
+     if (Desktop.isDesktopSupported() && desktop){         
          if (Desktop.getDesktop().isSupported(Desktop.Action.OPEN)){
                 try {
                     File f = new File(file);

@@ -34,4 +34,9 @@ public class InvoiceSettings {
     
     private String currencySymbol = "$";
     private boolean printZeros = false;
+    
+    private long nextInvoiceNumber;
+    private long nextQuoteNumber;
+    
+    
 }

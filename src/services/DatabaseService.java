@@ -3,7 +3,7 @@ package services;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import java.sql.SQLException;
-import models.AppSettings;
+import models.AppConfig;
 import models.Contact;
 import models.ContactAddress;
 import models.ContactJournal;
@@ -43,7 +43,7 @@ public class DatabaseService {
             TableUtils.dropTable(connectionSource, InvoiceItem.class, true);
             TableUtils.dropTable(connectionSource, InvoiceMessages.class, true);
             TableUtils.dropTable(connectionSource, User.class, true);
-            TableUtils.dropTable(connectionSource, AppSettings.class, true);
+            //TableUtils.dropTable(connectionSource, AppConfig.class, true);
         }
         
         TableUtils.createTableIfNotExists(getConnection(), Inventory.class); 
@@ -64,7 +64,7 @@ public class DatabaseService {
         TableUtils.clearTable(connectionSource, InvoiceMessages.class);
         TableUtils.createTableIfNotExists(getConnection(), User.class); 
         TableUtils.clearTable(connectionSource, User.class);   
-        TableUtils.createTableIfNotExists(getConnection(), AppSettings.class); 
-        TableUtils.clearTable(connectionSource, AppSettings.class);    
+        TableUtils.createTableIfNotExists(getConnection(), AppConfig.class); 
+        //TableUtils.clearTable(connectionSource, AppConfig.class);    
     }
 }

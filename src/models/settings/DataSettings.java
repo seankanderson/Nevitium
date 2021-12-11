@@ -7,9 +7,11 @@ import lombok.Setter;
  *
  * @author SeanAnderson
  */
-@Getter @Setter
+@Getter
+@Setter
 public class DataSettings {
-   private String dataPath;
-   private String primaryBackupPath;
-   private String secondaryBackupPath;
+
+    private String primaryBackupPath;
+    private String secondaryBackupPath;
+    private boolean disableBackupFeatures = true;
 }
