@@ -32,7 +32,7 @@ import services.ExceptionService;
 /**
  *
  * @author Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006-2022 All Rights Reserved.
+ * @copyright Copyright Data Virtue 2006-2022 All Rights Reserved.
  */
 public class SettingsDialog extends javax.swing.JDialog {
 

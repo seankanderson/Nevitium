@@ -3,7 +3,7 @@ package services;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import java.sql.SQLException;
-import models.AppConfig;
+import models.KeyValueStore;
 import models.Contact;
 import models.ContactAddress;
 import models.ContactJournal;
@@ -64,7 +64,7 @@ public class DatabaseService {
         TableUtils.clearTable(connectionSource, InvoiceMessages.class);
         TableUtils.createTableIfNotExists(getConnection(), User.class); 
         TableUtils.clearTable(connectionSource, User.class);   
-        TableUtils.createTableIfNotExists(getConnection(), AppConfig.class); 
+        TableUtils.createTableIfNotExists(getConnection(), KeyValueStore.class); 
         //TableUtils.clearTable(connectionSource, AppConfig.class);    
     }
 }

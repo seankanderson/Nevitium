@@ -1,21 +1,21 @@
 package services;
 
 import com.google.gson.Gson;
-import com.j256.ormlite.stmt.PreparedUpdate;
 import com.j256.ormlite.stmt.UpdateBuilder;
 import dao.AppSettingsDao;
 import java.sql.SQLException;
-import models.AppConfig;
+import models.KeyValueStore;
+import models.BaseModel;
 import models.settings.AppSettings;
 
 /**
  *
  * @author SeanAnderson
  */
-public class AppSettingsService extends BaseService<AppSettingsDao, AppConfig> {
+public class AppSettingsService extends BaseService<AppSettingsDao, KeyValueStore> {
 
     private AppSettings settings;
-
+    private KeyValueStore keyValue = new KeyValueStore();
     public void setAppSettings(AppSettings appSettings) throws SQLException {
         settings = appSettings;
         this.saveSettings();
@@ -33,7 +33,7 @@ public class AppSettingsService extends BaseService<AppSettingsDao, AppConfig> {
     public AppSettings getSettings() throws SQLException {
 
         return settings == null
-                ? this.getSaved(AppSettings.class)
+                ? this.getSaved()
                 : settings;
 
 //        settings.setBackups(this.getSaved(DataSettings.class));
@@ -45,22 +45,18 @@ public class AppSettingsService extends BaseService<AppSettingsDao, AppConfig> {
     }
 
     public void saveSettings() throws SQLException {
-        var keyValuePair = new AppConfig();
-        keyValuePair.setKey(AppSettings.class.getSimpleName());
+        
         var gson = new Gson();
-        keyValuePair.setValue(gson.toJson(settings));
-
-        if (doSettingsExist()) {
-
-            UpdateBuilder<AppConfig, Object> ub = this.getDao().updateBuilder();
-            ub.updateColumnValue("value", keyValuePair.getValue());
-            ub.where().eq("key", keyValuePair.getKey());            
-            int updated = ub.update();
+        
+        keyValue.setKey(AppSettings.class.getSimpleName());
+        keyValue.setValue(gson.toJson(settings));
+        if (keyValue.getId() != null) {
+            int updated = this.getDao().update(keyValue);
             if (updated != 1) {
-                throw new SQLException(keyValuePair.getKey() + " was not updated " + updated);
+                throw new SQLException(keyValue.getKey() + " was not updated " + updated);
             }
         } else {
-            this.getDao().create(keyValuePair);
+            this.getDao().create(keyValue);
         }
     }
 
@@ -69,12 +65,16 @@ public class AppSettingsService extends BaseService<AppSettingsDao, AppConfig> {
         return dao == null ? new AppSettingsDao(connection) : dao;
     }
 
-    private <T> T getSaved(Class type) throws SQLException {
-        var results = this.getDao().queryForEq("key", type.getSimpleName());
+    private AppSettings getSaved() throws SQLException {
+        
+        var results = this.getDao()
+                .queryForEq("key", AppSettings.class.getSimpleName());
+        
         if (results != null && !results.isEmpty()) {
-            var json = results.get(0).getValue();
-            var gson = new Gson();
-            return (T) gson.fromJson(json, type);
+            keyValue = results.get(0);
+            var json = keyValue.getValue();
+            this.settings = new Gson().fromJson(json, AppSettings.class);
+            return settings;            
         } else {
             return null;
         }

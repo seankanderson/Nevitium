@@ -12,10 +12,8 @@ import lombok.Setter;
  */
 @Getter @Setter
 @DatabaseTable(tableName = "app_config")
-public class AppConfig extends BaseModel {
+public class KeyValueStore extends BaseModel {
     
-    
-    private UUID id;
     @DatabaseField(canBeNull = false, unique = true)
     private String key;
     @DatabaseField(columnDefinition = "CLOB(10K)")
