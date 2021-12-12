@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.3" maxVersion="1.3" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <Properties>
@@ -7,6 +7,7 @@
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -68,7 +69,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="1" attributes="0">
-                      <Component id="defaultBox" alignment="1" min="-2" max="-2" attributes="0"/>
+                      <Component id="useDefaultCheckSettingsBox" alignment="1" min="-2" max="-2" attributes="0"/>
                       <Group type="102" alignment="1" attributes="0">
                           <Group type="103" groupAlignment="1" attributes="0">
                               <Group type="103" alignment="1" groupAlignment="0" attributes="0">
@@ -80,63 +81,29 @@
                                                       <Group type="103" alignment="1" groupAlignment="0" attributes="0">
                                                           <Group type="103" alignment="1" groupAlignment="0" attributes="0">
                                                               <Group type="103" alignment="1" groupAlignment="0" attributes="0">
-                                                                  <Group type="102" alignment="1" attributes="0">
-                                                                      <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-                                                                      <EmptySpace max="-2" attributes="0"/>
-                                                                  </Group>
-                                                                  <Group type="102" alignment="0" attributes="0">
-                                                                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                                                                      <EmptySpace max="-2" attributes="0"/>
-                                                                  </Group>
+                                                                  <Component id="jLabel2" alignment="1" min="-2" max="-2" attributes="0"/>
+                                                                  <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                                                               </Group>
-                                                              <Group type="102" alignment="0" attributes="0">
-                                                                  <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
-                                                                  <EmptySpace max="-2" attributes="0"/>
-                                                              </Group>
+                                                              <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
                                                           </Group>
-                                                          <Group type="102" alignment="0" attributes="0">
-                                                              <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
-                                                              <EmptySpace max="-2" attributes="0"/>
-                                                          </Group>
+                                                          <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       </Group>
-                                                      <Group type="102" alignment="0" attributes="0">
-                                                          <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                                                          <EmptySpace max="-2" attributes="0"/>
-                                                      </Group>
+                                                      <Component id="jLabel5" alignment="0" min="-2" max="-2" attributes="0"/>
                                                   </Group>
-                                                  <Group type="102" alignment="0" attributes="0">
-                                                      <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                                                      <EmptySpace max="-2" attributes="0"/>
-                                                  </Group>
+                                                  <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
                                               </Group>
-                                              <Group type="102" alignment="0" attributes="0">
-                                                  <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                                                  <EmptySpace max="-2" attributes="0"/>
-                                              </Group>
+                                              <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
                                           </Group>
-                                          <Group type="102" alignment="0" attributes="0">
-                                              <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                          </Group>
+                                          <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <Component id="jLabel11" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                      </Group>
+                                      <Component id="jLabel11" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                  </Group>
+                                  <Component id="jLabel12" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Group type="102" alignment="1" attributes="0">
-                                  <Group type="103" groupAlignment="1" attributes="0">
-                                      <Component id="jLabel10" alignment="1" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel9" alignment="1" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
-                              </Group>
+                              <Component id="jLabel10" alignment="1" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel9" alignment="1" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="1" max="-2" attributes="0">
                               <Component id="sigY" alignment="0" max="32767" attributes="1"/>
                               <Component id="sigX" alignment="0" max="32767" attributes="1"/>
@@ -221,16 +188,16 @@
                       <Component id="sigY" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                  <Component id="defaultBox" min="-2" max="-2" attributes="0"/>
+                  <Component id="useDefaultCheckSettingsBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace pref="74" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
       </Layout>
       <SubComponents>
-        <Component class="javax.swing.JCheckBox" name="defaultBox">
+        <Component class="javax.swing.JCheckBox" name="useDefaultCheckSettingsBox">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Ignore These"/>
+            <Property name="text" type="java.lang.String" value="Use Default"/>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo">
                 <EmptyBorder bottom="0" left="0" right="0" top="0"/>
@@ -241,7 +208,7 @@
             </Property>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="defaultBoxActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useDefaultCheckSettingsBoxActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel2">
@@ -349,13 +316,13 @@
                       <Component id="jLabel13" alignment="0" pref="189" max="32767" attributes="0"/>
                       <Group type="102" alignment="1" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jComboBox1" alignment="0" pref="128" max="32767" attributes="1"/>
-                              <Component id="jComboBox2" alignment="0" pref="128" max="32767" attributes="1"/>
+                              <Component id="payeeFontCombo" alignment="0" pref="128" max="32767" attributes="1"/>
+                              <Component id="checkFontCombo" alignment="0" pref="128" max="32767" attributes="1"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Component id="docFontSpin" max="32767" attributes="1"/>
-                              <Component id="toFontSpin" alignment="0" pref="55" max="32767" attributes="1"/>
+                              <Component id="checkFontSizeSpinner" max="32767" attributes="1"/>
+                              <Component id="payeeFontSizeSpinner" alignment="0" max="32767" attributes="1"/>
                           </Group>
                       </Group>
                   </Group>
@@ -370,15 +337,15 @@
                   <Component id="jLabel13" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="jComboBox1" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="toFontSpin" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="payeeFontCombo" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="payeeFontSizeSpinner" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="jLabel14" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="jComboBox2" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="docFontSpin" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="checkFontCombo" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="checkFontSizeSpinner" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
@@ -386,7 +353,7 @@
         </DimensionLayout>
       </Layout>
       <SubComponents>
-        <Component class="javax.swing.JComboBox" name="jComboBox2">
+        <Component class="javax.swing.JComboBox" name="checkFontCombo">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
               <StringArray count="3">
@@ -397,7 +364,7 @@
             </Property>
           </Properties>
         </Component>
-        <Component class="javax.swing.JComboBox" name="jComboBox1">
+        <Component class="javax.swing.JComboBox" name="payeeFontCombo">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
               <StringArray count="3">
@@ -418,12 +385,12 @@
             <Property name="text" type="java.lang.String" value="Check Font"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JSpinner" name="toFontSpin">
+        <Component class="javax.swing.JSpinner" name="payeeFontSizeSpinner">
           <Properties>
             <Property name="toolTipText" type="java.lang.String" value="Font Size"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JSpinner" name="docFontSpin">
+        <Component class="javax.swing.JSpinner" name="checkFontSizeSpinner">
           <Properties>
             <Property name="toolTipText" type="java.lang.String" value="Font Size"/>
           </Properties>
@@ -450,7 +417,7 @@
                       <Component id="applyButton" alignment="1" pref="189" max="32767" attributes="0"/>
                       <Component id="browseButton" alignment="1" pref="189" max="32767" attributes="0"/>
                       <Component id="jLabel15" alignment="0" pref="189" max="32767" attributes="0"/>
-                      <Component id="printBox" alignment="0" pref="189" max="32767" attributes="0"/>
+                      <Component id="printSignatureBox" alignment="0" pref="189" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -466,7 +433,7 @@
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Component id="browseButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="printBox" min="-2" max="-2" attributes="0"/>
+                  <Component id="printSignatureBox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="warnLabel" min="-2" pref="22" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="45" max="-2" attributes="0"/>
@@ -513,7 +480,7 @@
             <Property name="horizontalAlignment" type="int" value="0"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JCheckBox" name="printBox">
+        <Component class="javax.swing.JCheckBox" name="printSignatureBox">
           <Properties>
             <Property name="selected" type="boolean" value="true"/>
             <Property name="text" type="java.lang.String" value="Print Signature"/>

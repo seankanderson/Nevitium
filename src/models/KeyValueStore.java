@@ -2,7 +2,6 @@ package models;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +10,7 @@ import lombok.Setter;
  * @author SeanAnderson
  */
 @Getter @Setter
-@DatabaseTable(tableName = "app_config")
+@DatabaseTable(tableName = "key_value_store")
 public class KeyValueStore extends BaseModel {
     
     @DatabaseField(canBeNull = false, unique = true)

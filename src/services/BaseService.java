@@ -26,7 +26,7 @@ public abstract class BaseService<T1 extends BaseDaoImpl<T2, Object>, T2 extends
     protected JdbcConnectionSource connection;
     protected T1 dao;
     
-    public JdbcConnectionSource getDatabaseConnection() {
+    protected JdbcConnectionSource getDatabaseConnection() {
         JdbcConnectionSource conn;
         try {
              conn = DatabaseService.getConnection();

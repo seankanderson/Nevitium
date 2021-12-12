@@ -3,6 +3,7 @@
  *
  * Created on July 4, 2006, 11:38 AM
  ** Copyright (c) Data Virtue 2006
+ * revised Dec 2022 
  */
 package businessmanager.Config;
 
@@ -52,7 +53,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         initComponents();
         Injector injector = Guice.createInjector(new GuiceBindingModule());
         settingsService = injector.getInstance(AppSettingsService.class);
-
+        settingsService.setObjectType(AppSettings.class);
         if (!safe) {
             configEDIButton.setEnabled(false);
         }
@@ -111,9 +112,8 @@ public class SettingsDialog extends javax.swing.JDialog {
         posPrinterPaperWidthSpinner.getModel().setValue(80);
         ///boolean settingsFileExists = (new File(workingPath + "settings.ini")).exists();
         try {
-
-            var settings = settingsService.getSettings();
-
+            var settings = settingsService.getObject();
+            
             if (settings == null) {
                 createNewDefaultSettings();
             }
@@ -124,11 +124,10 @@ public class SettingsDialog extends javax.swing.JDialog {
         }
     }
 
-    private void createNewDefaultSettings() throws SQLException {
-
-        settingsService.setAppSettings(new AppSettings());
-        var settings = settingsService.getSettings();
-
+    private void createNewDefaultSettings() throws SQLException {        
+        settingsService.set(new AppSettings());
+        var settings = settingsService.getObject();
+                
         settings.setCompany(new CompanySettings());
         settings.setInternet(new InternetSettings());
         settings.getInternet().setEmailSettings(new EmailSettings());
@@ -246,13 +245,13 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         invoice.setNextInvoiceNumber(Integer.parseInt(iValue));
         invoice.setNextQuoteNumber(Integer.parseInt(qValue));
-        settingsService.saveSettings();
+        settingsService.save();
     }
 
     private void loadSettings() throws SQLException {
         //this.enumerateLayoutFiles(invoiceComboBox, "layout.invoice", props.getProp("INVOICE LAYOUT"));
 
-        var settings = settingsService.getSettings();
+        var settings = settingsService.getObject();
 
         var internet = settings.getInternet();
         showRemoteMessageCheckbox.setSelected(internet.isShowRemoteMessage());
@@ -631,7 +630,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     private void saveSettings() {
         try {
-            var settings = settingsService.getSettings();
+            var settings = settingsService.getObject();
 
             if (settings == null) {
                 ExceptionService.showErrorDialog(this, null, "Settings were not loaded properly");
@@ -716,7 +715,7 @@ public class SettingsDialog extends javax.swing.JDialog {
             output.setWatermarkImage(null);
             output.setUserWatermarkInReports(this.useWatermarkOnReportsCheckbox.isSelected());
 
-            settingsService.saveSettings();
+            settingsService.save();
         } catch (SQLException e) {
             ExceptionService.showErrorDialog(this, e, "Error saving settings");
         }

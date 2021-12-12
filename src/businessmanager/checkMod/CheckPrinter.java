@@ -9,30 +9,22 @@
 
 package businessmanager.checkMod;
 import datavirtue.*;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
-import java.awt.font.LineBreakMeasurer;
-import java.awt.font.TextAttribute;
-import java.awt.font.TextLayout;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.print.Book;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterJob;
-import java.text.AttributedString;
-import java.util.Vector;
-import java.awt.image.*;
 import java.awt.*;
 import java.awt.font.*;
 import java.awt.print.Paper;
-import javax.swing.*;
 import java.awt.Toolkit;
+import java.text.NumberFormat;
+import java.util.Locale;
+import services.FormatService;
 
 /**
  *
@@ -86,6 +78,50 @@ public class CheckPrinter {
     
     private java.awt.Font docFont = new Font("helvetica", Font.PLAIN, 12); //thisis the font for number, amount and date
     private java.awt.Font toFont = new Font("helvetica", Font.PLAIN, 10); // this is the font for the payee and amount spelling
+    
+    private java.util.ArrayList checkStubs;
+    
+    public void add(CheckStub chk){
+        
+        //checkStubs.add(chk);
+        book.append(new CheckPrinterPage(chk, docFont, toFont, this, printAddress, printNumber, signature), pgFormat);
+        
+    }
+    
+    public void go(){
+        
+           /* Print the Book */
+        PrinterJob printJob = PrinterJob.getPrinterJob();
+
+        printJob.setPageable(book);  //contains all pgFormats
+
+        
+        boolean doJob = true;
+
+        if (prompt){
+
+            doJob = printJob.printDialog();
+
+        }
+
+        if (doJob) {
+
+            try {
+
+
+                printJob.print();
+
+             }catch (Exception PrintException) {
+
+                PrintException.printStackTrace();
+
+             }
+
+        }
+
+        
+    }
+    
     
     public void setDocFont (java.awt.Font f) {
         
@@ -225,48 +261,6 @@ public class CheckPrinter {
         
     }
     
-    private java.util.ArrayList checkStubs;
-    
-    public void add(CheckStub chk){
-        
-        //checkStubs.add(chk);
-        book.append(new CheckPrinterPage(chk, docFont, toFont, this, printAddress, printNumber, signature), pgFormat);
-        
-    }
-    
-    public void go(){
-        
-           /* Print the Book */
-        PrinterJob printJob = PrinterJob.getPrinterJob();
-
-        printJob.setPageable(book);  //contains all pgFormats
-
-        
-        boolean doJob = true;
-
-        if (prompt){
-
-            doJob = printJob.printDialog();
-
-        }
-
-        if (doJob) {
-
-            try {
-
-
-                printJob.print();
-
-             }catch (Exception PrintException) {
-
-                PrintException.printStackTrace();
-
-             }
-
-        }
-
-        
-    }
     
         
     
@@ -275,23 +269,27 @@ public class CheckPrinter {
 
 class CheckPrinterPage implements Printable {  
 
-    /** Creates a new instance of DymoLabel */
-    public CheckPrinterPage(CheckStub stub, Font docFont, Font toFont, 
-            CheckPrinter chkprn, boolean printAddress, boolean chkNum, 
+    public CheckPrinterPage(
+            CheckStub stub,  // get payee and amount info here  (and address)
+            Font docFont, 
+            Font toFont, 
+            CheckPrinter chkprn, // get settings from here
+            boolean printAddress, 
+            boolean chkNum, 
             boolean signature) {
 
         this.docFont = docFont;
         this.toFont = toFont;
-        this.cp = chkprn;
-        chk = stub;
+        this.checkPrinter = chkprn;
+        this.check = stub;
         this.chkNum = chkNum;
         this.signature = signature;
         this.printAddress = printAddress;
         
     }
 
-    private CheckPrinter cp;
-    private CheckStub chk;
+    private CheckPrinter checkPrinter;
+    private CheckStub check;
     private Font docFont;
     private Font toFont;
 
@@ -319,25 +317,26 @@ class CheckPrinterPage implements Printable {
       
       //g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
      
-      g2d.drawString (chk.getDate(), cp.getDateDim().height , cp.getDateDim().width);
+      g2d.drawString (check.getDate(), checkPrinter.getDateDim().height , checkPrinter.getDateDim().width);
 
-      if (chkNum) g2d.drawString (chk.getNumber(), cp.getNumberDim().height , cp.getNumberDim().width);
+      if (chkNum) g2d.drawString (check.getNumber(), checkPrinter.getNumberDim().height , checkPrinter.getNumberDim().width);
            
-      g2d.drawString (chk.getAmount(), cp.getAmountDim().height , cp.getAmountDim().width);
+      g2d.drawString (check.getAmount(), checkPrinter.getAmountDim().height , checkPrinter.getAmountDim().width);
        
-      g2d.drawString (f.convertDollars(Float.parseFloat(chk.getAmount())), cp.getSpellDim().height , cp.getSpellDim().width);
+      var amount = FormatService.parseFloat(check.getAmount());
+      g2d.drawString (f.convertDollars(amount), checkPrinter.getSpellDim().height , checkPrinter.getSpellDim().width);
       
-      g2d.drawString(chk.getMemo(), cp.getMemoDim().height, cp.getMemoDim().width);
+      g2d.drawString(check.getMemo(), checkPrinter.getMemoDim().height, checkPrinter.getMemoDim().width);
       
       //payee stub
-      g2d.drawString(chk.getMemo()+DV.addSpace("", 40, ' ')+chk.getAmount(), 36,324);
+      g2d.drawString(check.getMemo()+DV.addSpace("", 40, ' ')+check.getAmount(), 36,324);
  
       
       
       //keeper stub
-      g2d.drawString(chk.getMemo()+DV.addSpace("", 40, ' ')+chk.getAmount(), 36,685);
+      g2d.drawString(check.getMemo()+DV.addSpace("", 40, ' ')+check.getAmount(), 36,685);
       
-      g2d.drawString (chk.getPayee(), 36 , 580);  //expand for address
+      g2d.drawString (check.getPayee(), 36 , 580);  //expand for address
       
       g2d.setFont(toFont);
 
@@ -347,36 +346,36 @@ class CheckPrinterPage implements Printable {
 
       int fh = (int)lm.getHeight();
 
-      int y = cp.getPayToDim().width;
-      if (chk.getAddr2().length() > 0) y = y - (fh / 2);
-      if (chk.getRegion().length() > 0) y = y - (fh / 2);
+      int y = checkPrinter.getPayToDim().width;
+      if (check.getAddr2() != null && check.getAddr2().length() > 0) y = y - (fh / 2);
+      if (check.getRegion() != null && check.getRegion().length() > 0) y = y - (fh / 2);
 
-      g2d.drawString (chk.getPayee(), cp.getPayToDim().height , y);
+      g2d.drawString (check.getPayee(), checkPrinter.getPayToDim().height , y);
          
-      if (printAddress){
+      if (check != null && printAddress){
           
             y += fh;
-            g2d.drawString (chk.getStreet(),
-                    cp.getPayToDim().height , y);
+            g2d.drawString (check.getStreet(),
+                    checkPrinter.getPayToDim().height , y);
 
             
             y+=fh;
 
-            if (!chk.getAddr2().equals("")){
-                g2d.drawString (chk.getAddr2(),
-                        cp.getPayToDim().height, y);
+            if (!check.getAddr2().equals("")){
+                g2d.drawString (check.getAddr2(),
+                        checkPrinter.getPayToDim().height, y);
                 y+=fh; //+2
             }
             
-            if(!chk.getRegion().equals("")){
-                g2d.drawString (chk.getRegion(),
-                        cp.getPayToDim().height, y);
+            if(!check.getRegion().equals("")){
+                g2d.drawString (check.getRegion(),
+                        checkPrinter.getPayToDim().height, y);
                 y += fh; //+3
             }
 
-            if(!chk.getCity().equals("")){
-                g2d.drawString (chk.getCity(),
-                        cp.getPayToDim().height, y);
+            if(!check.getCity().equals("")){
+                g2d.drawString (check.getCity(),
+                        checkPrinter.getPayToDim().height, y);
                 y+=fh;
             }
 
@@ -384,18 +383,20 @@ class CheckPrinterPage implements Printable {
       
       /* Print image  */
       
-      if (cp.canPrintSig()) {
+      if (checkPrinter.canPrintSig()) {
           
-          String path = cp.getSignatureImage();
+          String path = checkPrinter.getSignatureImage();
           Toolkit tools = Toolkit.getDefaultToolkit();
           
         
-          g2d.drawImage(tools.getImage(path),cp.getSigDim().height, cp.getSigDim().width,null);
+          g2d.drawImage(tools.getImage(path),checkPrinter.getSigDim().height, checkPrinter.getSigDim().width,null);
           
       }
       
       return (PAGE_EXISTS);
     }
+    
+    private String formatTo;
 }
 
 

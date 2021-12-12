@@ -3,226 +3,157 @@
  *
  * Created on July 13, 2007, 1:10 PM
  */
-
 package businessmanager.checkMod;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import datavirtue.*;
+import di.GuiceBindingModule;
+import java.awt.Point;
 import javax.swing.*;
+import models.settings.CheckSettings;
+import services.CheckSettingsService;
+import services.ExceptionService;
+import java.sql.SQLException;
 
 /**
  *
- * @author  Data Virtue
+ * @author Data Virtue
  */
 public class CheckPrintSettingsDialog extends javax.swing.JDialog {
-    
-    private int date_x;
-    private int date_y;
-    private int payee_x;
-    private int payee_y;
-    private int amount_x;
-    private int amount_y;
-    private int spell_x;
-    private int spell_y;
-    private int memo_x;
-    private int memo_y;
-    private int sig_x;
-    private int sig_y;
-    
-    private boolean printSig = true;
-    
-    /** Creates new form CheckPrintSettingsDialog */
-    public CheckPrintSettingsDialog(java.awt.Frame parent, boolean modal, String path) {
+
+    private CheckSettingsService checkSettings;
+
+    /**
+     * Creates new form CheckPrintSettingsDialog
+     */
+    public CheckPrintSettingsDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        workingPath = path;
+
+        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        checkSettings = injector.getInstance(CheckSettingsService.class);
+        checkSettings.setObjectType(CheckSettings.class);
+
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
-        
-        docFontSpin.getModel().setValue(new Integer(12));
-        toFontSpin.getModel().setValue(new Integer(12));
-        
-        checkSettings();
+
+        checkFontSizeSpinner.getModel().setValue(12);
+        payeeFontSizeSpinner.getModel().setValue(12);
+
+        loadCheckSettings();
         this.setVisible(true);
-        
+
     }
-    private String workingPath = "";
-    
-    private void checkSettings() {
-        
-        
-        
-        if (!new java.io.File(workingPath + "checks.ini").exists()){
-        
-        
-        //plug in defaults
-        Settings set = new Settings(workingPath + "checks.ini");
-        set.setProp("DATEX", "490");
-        set.setProp("DATEY", "65");
-        set.setProp("PAYEEX", "65");
-        set.setProp("PAYEEY", "90");
-        set.setProp("AMTX", "495");
-        set.setProp("AMTY", "105");
-        set.setProp("SPELLX", "26");
-        set.setProp("SPELLY", "142");
-        set.setProp("MEMOX", "51");
-        set.setProp("MEMOY", "206");
-        set.setProp("SIGX", "380");
-        set.setProp("SIGY", "145");
-        set.setProp("DEF", "true");
-        
-        set.setProp("DOCFONT", "helvetica");
-        set.setProp("DOCPS", "12");
-        
-        set.setProp("TOFONT", "helvetica");
-        set.setProp("TOPS", "12");
-        
-        
-        
-        set = null;
-        
+
+    private void loadCheckSettings() {
+
+        checkSettings.setObjectType(CheckSettings.class);
+        CheckSettings settings = new CheckSettings();
+        try {
+            if (!checkSettings.doExist()) {
+                checkSettings.set(new CheckSettings());
+            }
+            settings = checkSettings.getObject();
+        } catch (SQLException e) {
+            ExceptionService.showErrorDialog(this, e, "Error loading check settings");
         }
-    
-    Settings set = new Settings(workingPath + "checks.ini");
-        
-        //load settings
-    dateX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
-    dateX.getModel().setValue(conv(set.getProp("DATEX")));
-    dateY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
-    dateY.getModel().setValue(conv(set.getProp("DATEY")));
-    
-    amtX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
-    amtX.getModel().setValue(conv(set.getProp("AMTX")));    
-    amtY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
-    amtY.getModel().setValue(conv(set.getProp("AMTY")));
-    
-    payX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
-    payX.getModel().setValue(conv(set.getProp("PAYEEX")));
-    payY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
-    payY.getModel().setValue(conv(set.getProp("PAYEEY")));
-    
-    spellX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
-    spellX.getModel().setValue(conv(set.getProp("SPELLX")));
-    spellY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
-    spellY.getModel().setValue(conv(set.getProp("SPELLY")));
-    
-    memoX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
-    memoX.getModel().setValue(conv(set.getProp("MEMOX")));
-    memoY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
-    memoY.getModel().setValue(conv(set.getProp("MEMOY")));
-    
-    sigX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
-    sigX.getModel().setValue(conv(set.getProp("SIGX")));
-    sigY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
-    sigY.getModel().setValue(conv(set.getProp("SIGY")));
-    
-    
-    defaultBox.setSelected(Boolean.parseBoolean(set.getProp("DEF")));
-    
-    printBox.setSelected(Boolean.parseBoolean(set.getProp("PRINTSIG")));
-    
-    imagePath = set.getProp("SIGPATH");
-        
-    this.setImage(imagePath);
-    
-    changeSpinners();
-    
-    toFontSpin.getModel().setValue(new Integer(conv(set.getProp("TOPS"),12)));
-    docFontSpin.getModel().setValue(new Integer(conv(set.getProp("DOCPS"),12)));
-    
-    String docFont = set.getProp("DOCFONT");
-    String toFont = set.getProp("TOFONT");
-    
-    if (toFont != null && !toFont.trim().equals("")) jComboBox1.getModel().setSelectedItem(toFont);
-    if (docFont != null && !docFont.trim().equals("")) jComboBox2.getModel().setSelectedItem(docFont);
-       
-    
-    
+
+        dateX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
+        dateX.getModel().setValue(settings.getCheckDate().x);
+        dateY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
+        dateY.getModel().setValue(settings.getCheckDate().y);
+
+        amtX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
+        amtX.getModel().setValue(settings.getAmount().x);
+        amtY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
+        amtY.getModel().setValue(settings.getAmount().y);
+
+        payX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
+        payX.getModel().setValue(settings.getPayee().x);
+        payY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
+        payY.getModel().setValue(settings.getPayee().y);
+
+        spellX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
+        spellX.getModel().setValue(settings.getSpelling().x);
+        spellY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
+        spellY.getModel().setValue(settings.getSpelling().y);
+
+        memoX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
+        memoX.getModel().setValue(settings.getMemo().x);
+        memoY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
+        memoY.getModel().setValue(settings.getMemo().y);
+
+        sigX.setModel(new SpinnerNumberModel(36, 10, 600, 1));
+        sigX.getModel().setValue(settings.getSignature().x);
+        sigY.setModel(new SpinnerNumberModel(36, 10, 780, 1));
+        sigY.getModel().setValue(settings.getSignature().y);
+
+        useDefaultCheckSettingsBox.setSelected(settings.isUseDefaultCheckSettings());
+
+        printSignatureBox.setSelected(settings.isPrintSignatureOnChecks());
+
+        changeSpinners();
+
+        payeeFontSizeSpinner.getModel().setValue(settings.getPayeeFont().getFontSize() < 8 ? 12 : settings.getPayeeFont().getFontSize());
+        checkFontSizeSpinner.getModel().setValue(settings.getCheckFont().getFontSize() < 8 ? 12 : settings.getCheckFont().getFontSize());
+
+        String checkFont = settings.getCheckFont().getFontName();
+        String payeeFont = settings.getPayeeFont().getFontName();
+
+        if (payeeFont != null && !payeeFont.trim().equals("")) {
+            payeeFontCombo.getModel().setSelectedItem(payeeFont);
+        }
+        if (checkFont != null && !checkFont.trim().equals("")) {
+            checkFontCombo.getModel().setSelectedItem(checkFont);
+        }
+
     }
-    
+
     private void saveSettings() {
-        
-        Settings props = new Settings(workingPath + "checks.ini");
-        
-        props.setProp("DATEX", Integer.toString((Integer)dateX.getModel().getValue()));
-        props.setProp("DATEY", Integer.toString((Integer)dateY.getModel().getValue()));
-        
-        props.setProp("PAYEEX", Integer.toString((Integer)payX.getModel().getValue()));
-        props.setProp("PAYEEY", Integer.toString((Integer)payY.getModel().getValue()));
-        
-        props.setProp("AMTX", Integer.toString((Integer)amtX.getModel().getValue()));
-        props.setProp("AMTY", Integer.toString((Integer)amtY.getModel().getValue()));
-        
-        props.setProp("SPELLX", Integer.toString((Integer)spellX.getModel().getValue()));
-        props.setProp("SPELLY", Integer.toString((Integer)spellY.getModel().getValue()));
-        
-        props.setProp("MEMOX", Integer.toString((Integer)memoX.getModel().getValue()));
-        props.setProp("MEMOY", Integer.toString((Integer)memoY.getModel().getValue()));
-        
-        props.setProp("SIGX", Integer.toString((Integer)sigX.getModel().getValue()));
-        props.setProp("SIGY", Integer.toString((Integer)sigY.getModel().getValue()));
-        
-        props.setProp("DEF", Boolean.toString(defaultBox.isSelected()));
-        
-        props.setProp("TOFONT", (String)jComboBox1.getModel().getSelectedItem());
-        props.setProp("DOCFONT", (String)jComboBox2.getModel().getSelectedItem());
-        
-        props.setProp("TOPS", Integer.toString((Integer)toFontSpin.getModel().getValue()));
-        props.setProp("DOCPS", Integer.toString((Integer)docFontSpin.getModel().getValue()));
-        
-        props.setProp("SIGPATH", imagePath);
-        props.setProp("PRINTSIG", String.valueOf(printBox.isSelected()));
-        
-        
-        
-        
-    }
-    
-    
-    public static String conv (int i){        
-        
-        String s;
-        s = Integer.toString(i);
-        return s;
-        
-        
-    }
-    
-   public static int conv(String s){
-        
-        int a = 0;
         try {
-            
-            a = Integer.valueOf(s);
-        } catch (NumberFormatException ex) {
-            return 0;
+            var check = checkSettings.getObject();
+            check.setAmount(getPointForSpinners(this.amtX, this.amtY));
+            check.setBase64EncodedImage(null);
+            check.setCheckDate(getPointForSpinners(this.amtX, this.amtY));
+            check.setMemo(getPointForSpinners(this.memoX, this.memoY));
+            check.setPayee(getPointForSpinners(this.payX, this.payY));
+            check.setSignature(getPointForSpinners(this.sigX, this.sigY));
+            check.setSpelling(getPointForSpinners(this.spellX, this.spellY));
+            check.setPrintSignatureOnChecks(this.printSignatureBox.isSelected());
+            check.setUseDefaultCheckSettings(this.useDefaultCheckSettingsBox.isSelected());
+            checkSettings.save();
+        } catch (SQLException e) {
+            ExceptionService.showErrorDialog(this, e, "Error saving check settings");
         }
-        
-        return a;
     }
-    
-   public static int conv(String s, int def){
-        
+
+    private Point getPointForSpinners(JSpinner xspinner, JSpinner yspinner) {
+        return new Point((int) xspinner.getModel().getValue(), (int) yspinner.getModel().getValue());
+    }
+
+    public static int conv(String s, int def) {
+
         int a = 0;
         try {
-            
+
             a = Integer.valueOf(s);
         } catch (NumberFormatException ex) {
             return def;
         }
-        
         return a;
     }
-   
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        defaultBox = new javax.swing.JCheckBox();
+        useDefaultCheckSettingsBox = new javax.swing.JCheckBox();
         jLabel2 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -248,18 +179,18 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
         dateX = new javax.swing.JSpinner();
         dateY = new javax.swing.JSpinner();
         jPanel2 = new javax.swing.JPanel();
-        jComboBox2 = new javax.swing.JComboBox();
-        jComboBox1 = new javax.swing.JComboBox();
+        checkFontCombo = new javax.swing.JComboBox();
+        payeeFontCombo = new javax.swing.JComboBox();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
-        toFontSpin = new javax.swing.JSpinner();
-        docFontSpin = new javax.swing.JSpinner();
+        payeeFontSizeSpinner = new javax.swing.JSpinner();
+        checkFontSizeSpinner = new javax.swing.JSpinner();
         jPanel3 = new javax.swing.JPanel();
         applyButton = new javax.swing.JButton();
         browseButton = new javax.swing.JButton();
         jLabel15 = new javax.swing.JLabel();
         previewLabel = new javax.swing.JLabel();
-        printBox = new javax.swing.JCheckBox();
+        printSignatureBox = new javax.swing.JCheckBox();
         warnLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -267,12 +198,12 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        defaultBox.setText("Ignore These");
-        defaultBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        defaultBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        defaultBox.addActionListener(new java.awt.event.ActionListener() {
+        useDefaultCheckSettingsBox.setText("Use Default");
+        useDefaultCheckSettingsBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        useDefaultCheckSettingsBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        useDefaultCheckSettingsBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                defaultBoxActionPerformed(evt);
+                useDefaultCheckSettingsBoxActionPerformed(evt);
             }
         });
 
@@ -307,7 +238,7 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(defaultBox)
+                    .add(useDefaultCheckSettingsBox)
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -319,41 +250,19 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
                                                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                                         .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                                             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                                                .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                                                                    .add(jLabel2)
-                                                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
-                                                                .add(jPanel1Layout.createSequentialGroup()
-                                                                    .add(jLabel1)
-                                                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                                            .add(jPanel1Layout.createSequentialGroup()
-                                                                .add(jLabel3)
-                                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                                        .add(jPanel1Layout.createSequentialGroup()
-                                                            .add(jLabel4)
-                                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                                    .add(jPanel1Layout.createSequentialGroup()
-                                                        .add(jLabel5)
-                                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                                .add(jPanel1Layout.createSequentialGroup()
-                                                    .add(jLabel6)
-                                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                            .add(jPanel1Layout.createSequentialGroup()
-                                                .add(jLabel7)
-                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                        .add(jPanel1Layout.createSequentialGroup()
-                                            .add(jLabel8)
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                    .add(jPanel1Layout.createSequentialGroup()
-                                        .add(jLabel11)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                .add(jPanel1Layout.createSequentialGroup()
-                                    .add(jLabel12)
-                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                            .add(jPanel1Layout.createSequentialGroup()
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                                    .add(jLabel10)
-                                    .add(jLabel9))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
+                                                                .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel2)
+                                                                .add(jLabel1))
+                                                            .add(jLabel3))
+                                                        .add(jLabel4))
+                                                    .add(jLabel5))
+                                                .add(jLabel6))
+                                            .add(jLabel7))
+                                        .add(jLabel8))
+                                    .add(jLabel11))
+                                .add(jLabel12))
+                            .add(jLabel10)
+                            .add(jLabel9))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                             .add(org.jdesktop.layout.GroupLayout.LEADING, sigY)
                             .add(org.jdesktop.layout.GroupLayout.LEADING, sigX)
@@ -421,23 +330,23 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
                     .add(jLabel12)
                     .add(sigY, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(defaultBox)
+                .add(useDefaultCheckSettingsBox)
                 .addContainerGap(74, Short.MAX_VALUE))
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Helvetica", "Roman", "Courier" }));
+        checkFontCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Helvetica", "Roman", "Courier" }));
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Helvetica", "Roman", "Courier" }));
+        payeeFontCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Helvetica", "Roman", "Courier" }));
 
         jLabel13.setText("Payee Font");
 
         jLabel14.setText("Check Font");
 
-        toFontSpin.setToolTipText("Font Size");
+        payeeFontSizeSpinner.setToolTipText("Font Size");
 
-        docFontSpin.setToolTipText("Font Size");
+        checkFontSizeSpinner.setToolTipText("Font Size");
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -450,12 +359,12 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
                     .add(jLabel13, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jComboBox1, 0, 128, Short.MAX_VALUE)
-                            .add(jComboBox2, 0, 128, Short.MAX_VALUE))
+                            .add(payeeFontCombo, 0, 128, Short.MAX_VALUE)
+                            .add(checkFontCombo, 0, 128, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(docFontSpin)
-                            .add(toFontSpin, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 55, Short.MAX_VALUE))))
+                            .add(checkFontSizeSpinner)
+                            .add(payeeFontSizeSpinner))))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -465,14 +374,14 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
                 .add(jLabel13)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(toFontSpin, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(payeeFontCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(payeeFontSizeSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jLabel14)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jComboBox2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(docFontSpin, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(checkFontCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(checkFontSizeSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -500,13 +409,13 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
 
         previewLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 
-        printBox.setSelected(true);
-        printBox.setText("Print Signature");
-        printBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        printBox.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        printBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        printSignatureBox.setSelected(true);
+        printSignatureBox.setText("Print Signature");
+        printSignatureBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        printSignatureBox.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        printSignatureBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
 
-        warnLabel.setFont(new java.awt.Font("Tahoma", 0, 10));
+        warnLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         warnLabel.setForeground(new java.awt.Color(204, 0, 0));
         warnLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 
@@ -522,7 +431,7 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
                     .add(applyButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
                     .add(browseButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel15, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, printBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, printSignatureBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -535,7 +444,7 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(browseButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(printBox)
+                .add(printSignatureBox)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(warnLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(45, 45, 45)
@@ -572,104 +481,115 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private String imagePath=".";
-    
-    
+    private String imagePath = ".";
+
+
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-        
+
         JFileChooser fileChooser = DV.getFileChooser(imagePath);
-            
+
         java.io.File curFile = fileChooser.getSelectedFile();
-        if (curFile == null) return;
-        if (curFile != null )imagePath = curFile.toString();
-        if (!curFile.toString().contains(".gif")  && !curFile.toString().contains(".jpg")) imagePath = "";
-        
+        if (curFile == null) {
+            return;
+        }
+        if (curFile != null) {
+            imagePath = curFile.toString();
+        }
+        if (!curFile.toString().contains(".gif") && !curFile.toString().contains(".jpg")) {
+            imagePath = "";
+        }
+
         setImage(imagePath);
-        
-        
+
+
     }//GEN-LAST:event_browseButtonActionPerformed
 
-    private void setImage(String imagePath){
-        
+    private void setImage(String imagePath) {
+
         boolean tooTall = false;
-        
+
         previewLabel.setIcon(new ImageIcon(imagePath));
         if (previewLabel.getIcon().getIconHeight() > 75) {
             warnLabel.setText("Signature may be too tall!");
             tooTall = true;
-            
-        }else warnLabel.setText("");
-        
-        if (previewLabel.getIcon().getIconWidth() > 220) {
-            
-            warnLabel.setText("Signature may be too wide!");
-            if (tooTall) warnLabel.setText("Signature image is too tall & wide!");
-            
-        }else{
-                        
-            if (!tooTall) warnLabel.setText("");
-            
+
+        } else {
+            warnLabel.setText("");
         }
-        
-        this.pack(); 
-        
+
+        if (previewLabel.getIcon().getIconWidth() > 220) {
+
+            warnLabel.setText("Signature may be too wide!");
+            if (tooTall) {
+                warnLabel.setText("Signature image is too tall & wide!");
+            }
+
+        } else {
+
+            if (!tooTall) {
+                warnLabel.setText("");
+            }
+
+        }
+
+        this.pack();
+
     }
-    
+
     private void applyButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_applyButtonActionPerformed
-        
+
         saveSettings();
         this.dispose();
-        
+
     }//GEN-LAST:event_applyButtonActionPerformed
 
     private void changeSpinners() {
-        
-        
+
         boolean status;
-        
-        if (defaultBox.isSelected()) status = false;
-        else status = true;
-        
+
+        if (useDefaultCheckSettingsBox.isSelected()) {
+            status = false;
+        } else {
+            status = true;
+        }
+
         dateY.setEnabled(status);
         dateX.setEnabled(status);
-        
+
         payX.setEnabled(status);
         payY.setEnabled(status);
-        
+
         amtX.setEnabled(status);
         amtY.setEnabled(status);
-        
+
         spellY.setEnabled(status);
         spellX.setEnabled(status);
-        
+
         memoY.setEnabled(status);
         memoX.setEnabled(status);
-        
+
         sigY.setEnabled(status);
         sigX.setEnabled(status);
-        
+
     }
-    
-    
-    private void defaultBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_defaultBoxActionPerformed
+
+
+    private void useDefaultCheckSettingsBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useDefaultCheckSettingsBoxActionPerformed
 
         changeSpinners();
-        
-    }//GEN-LAST:event_defaultBoxActionPerformed
-    
-    
-    
+
+    }//GEN-LAST:event_useDefaultCheckSettingsBoxActionPerformed
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSpinner amtX;
     private javax.swing.JSpinner amtY;
     private javax.swing.JButton applyButton;
     private javax.swing.JButton browseButton;
+    private javax.swing.JComboBox checkFontCombo;
+    private javax.swing.JSpinner checkFontSizeSpinner;
     private javax.swing.JSpinner dateX;
     private javax.swing.JSpinner dateY;
-    private javax.swing.JCheckBox defaultBox;
-    private javax.swing.JSpinner docFontSpin;
-    private javax.swing.JComboBox jComboBox1;
-    private javax.swing.JComboBox jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -692,14 +612,16 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
     private javax.swing.JSpinner memoY;
     private javax.swing.JSpinner payX;
     private javax.swing.JSpinner payY;
+    private javax.swing.JComboBox payeeFontCombo;
+    private javax.swing.JSpinner payeeFontSizeSpinner;
     private javax.swing.JLabel previewLabel;
-    private javax.swing.JCheckBox printBox;
+    private javax.swing.JCheckBox printSignatureBox;
     private javax.swing.JSpinner sigX;
     private javax.swing.JSpinner sigY;
     private javax.swing.JSpinner spellX;
     private javax.swing.JSpinner spellY;
-    private javax.swing.JSpinner toFontSpin;
+    private javax.swing.JCheckBox useDefaultCheckSettingsBox;
     private javax.swing.JLabel warnLabel;
     // End of variables declaration//GEN-END:variables
-    
+
 }
