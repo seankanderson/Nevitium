@@ -13,28 +13,32 @@ import lombok.Setter;
 @DatabaseTable(tableName = "users")
 public class User extends BaseModel {
 
-    @DatabaseField
+    @DatabaseField(canBeNull = false, unique = true)
     private String userName;
     @DatabaseField
-    private String key;
+    private String email;    
     @DatabaseField
-    private boolean master;
+    private String phone;
     @DatabaseField
-    private long inventory;
+    private String password="";
     @DatabaseField
-    private long contacts;
+    private boolean admin = false;
     @DatabaseField
-    private long invoices;
+    private int inventory=300;
     @DatabaseField
-    private long invoiceManager;
+    private int contacts=300;
     @DatabaseField
-    private long reports;
+    private int invoices=300;
     @DatabaseField
-    private long checks;
+    private int invoiceManager=300;
     @DatabaseField
-    private long exports;
+    private int reports=100;
     @DatabaseField
-    private long settings;
+    private int checks=100;
+    @DatabaseField
+    private int exports=100;
+    @DatabaseField
+    private int settings=100;
     
     
 }

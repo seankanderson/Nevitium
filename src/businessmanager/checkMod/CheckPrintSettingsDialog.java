@@ -5,10 +5,9 @@
  */
 package businessmanager.checkMod;
 
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import datavirtue.*;
-import di.GuiceBindingModule;
+import di.DiService;
 import java.awt.Point;
 import javax.swing.*;
 import models.settings.CheckSettings;
@@ -31,7 +30,7 @@ public class CheckPrintSettingsDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        Injector injector = DiService.getInjector();
         checkSettings = injector.getInstance(CheckSettingsService.class);
         checkSettings.setObjectType(CheckSettings.class);
 

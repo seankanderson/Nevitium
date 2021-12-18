@@ -8,21 +8,18 @@
  */
 package businessmanager.checkMod;
 
-import java.text.NumberFormat;
-import java.util.Locale;
-
 /**
  *
  * @author Data Virtue
  */
 public class CheckStub {
 
-    private String payee;
-    private String date;
-    private String number;
-    private String amount;
-    private String memo;
-    private String[] address;
+    private final String payee;
+    private final String date;
+    private final String number;
+    private final String amount;
+    private final String memo;
+    private final String[] address;
 
     /**
      * Creates a new instance of CheckStub

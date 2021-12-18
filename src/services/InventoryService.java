@@ -1,12 +1,10 @@
 package services;
 
-import com.j256.ormlite.misc.TransactionManager;
 import dao.InventoryDao;
 import datavirtue.DV;
 import datavirtue.Settings;
 import java.util.List;
 import java.sql.SQLException;
-import java.util.concurrent.Callable;
 import models.Inventory;
 
 /**

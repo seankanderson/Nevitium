@@ -2,7 +2,7 @@
  * ControlCenter.java
  *
  * Created on June 22, 2006, 9:47 AM
- ** Copyright (c) Data Virtue 2006
+ ** Copyright (c) Data Virtue 2006 - 2022
  */
 
 package businessmanager;
@@ -23,7 +23,6 @@ import businessmanager.Reports.ReportTableDialog;
 import datavirtue.*;
 import businessmanager.checkMod.*;
 import de.schlichtherle.io.*;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.Image;
@@ -32,12 +31,11 @@ import java.util.*;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JFileChooser;
-import services.DatabaseService;
 
 /**
  *
  * @author  Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007 All Rights Reserved.
+ * @rights Copyright Data Virtue 2006, 2007, 2022 All Rights Reserved.
  */
 public class ControlCenter extends javax.swing.JFrame {
 
@@ -60,13 +58,7 @@ public class ControlCenter extends javax.swing.JFrame {
 	}} );
 
         System.setProperty("http.agent", "Nevitium 1.5.9");
-                /*
-        System.out.println(System.getProperty("user.home"));
-        System.out.println(System.getProperty("user.dir"));
-        System.out.println(System.getProperty("file.separator"));
-        System.out.println(System.getProperty("sun.cpu.isalist"));
-        */
-        
+          
         
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         
@@ -78,22 +70,6 @@ public class ControlCenter extends javax.swing.JFrame {
             //invoiceButton.setPreferredSize(new Dimension(91,81));
             
             dbsys = new datavirtue.DbEngine ("data/main.dsf", application, unicode);
-            
-            
-            
-            boolean per = Tools.verifyElevatedPermissions("ver.inf");
-            if (!per) {
-                JOptionPane.showMessageDialog(null, 
-                        "Nevitium was not able to access the program directory. Please contact software@datavirtue.com for support.");    
-                System.exit(-7);
-                }
-            DV.writeFile("ver.inf", "1.59", false);
-            
-            /* Check to see if the user can read/write lastco.inf */
-
-            workingPath = getLastCo("lastco.inf");  //**** Retrieves and setup last co that was open from text file ****
-            per = Tools.verifyElevatedPermissions(workingPath);
-            if (!per) System.exit(-7);
             
             /* Check to see if workingPath.conn.db can read / write */
             boolean setCo = false;
@@ -240,7 +216,7 @@ public class ControlCenter extends javax.swing.JFrame {
     }
 
     private void loadSettings ()  {
-     
+            
             props = new Settings(workingPath + "settings.ini");
             application.setProps(props);
 
@@ -1001,18 +977,7 @@ private boolean lockData(String path){
                 String layout_folder = path+"layouts"+this.file_sep;
 
                 //System.out.println(layout_folder);
-
-                new File(layout_folder).mkdir();
                
-                if (!new File(layout_folder+"layout.workorder.xml").exists()){
-                    new File("layouts"+file_sep+"layout.workorder.xml").copyTo(new File(layout_folder+file_sep+"layout.workorder.xml"));
-                }
-                if (!new File(layout_folder+"layout.invoice.xml").exists()){
-                    new File("layouts"+file_sep+"layout.invoice.xml").copyTo(new File(layout_folder+file_sep+"layout.invoice.xml"));
-                }
-                if (!new File(layout_folder+"layout.statement.xml").exists()){
-                    new File("layouts"+file_sep+"layout.statement.xml").copyTo(new File(layout_folder+file_sep+"layout.statement.xml"));
-                }
                 if (secure) this.secure(false, false);
                 
                 props.setProp("DATA FOLDER", workingPath);

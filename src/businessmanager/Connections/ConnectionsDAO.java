@@ -1,11 +1,10 @@
 package businessmanager.Connections;
 
 import RuntimeManagement.GlobalApplicationDaemon;
-import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import datavirtue.*;
-import di.GuiceBindingModule;
+import di.DiService;
 import java.util.*;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -32,7 +31,7 @@ public class ConnectionsDAO {
         application = g;
         populateDAO(0);
 
-        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        Injector injector = DiService.getInjector();
         contactService = injector.getInstance(ContactService.class);
     }
 

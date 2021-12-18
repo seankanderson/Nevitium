@@ -14,9 +14,8 @@ import datavirtue.*;
 import java.awt.*;
 import javax.swing.*;
 import businessmanager.Common.*;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
-import di.GuiceBindingModule;
+import di.DiService;
 import services.AppSettingsService;
 import java.sql.SQLException;
 import models.settings.AppSettings;
@@ -51,7 +50,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
-        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        Injector injector = DiService.getInjector();
         settingsService = injector.getInstance(AppSettingsService.class);
         settingsService.setObjectType(AppSettings.class);
         if (!safe) {

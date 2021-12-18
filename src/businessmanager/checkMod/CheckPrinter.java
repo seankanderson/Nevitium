@@ -22,8 +22,6 @@ import java.awt.*;
 import java.awt.font.*;
 import java.awt.print.Paper;
 import java.awt.Toolkit;
-import java.text.NumberFormat;
-import java.util.Locale;
 import services.FormatService;
 
 /**
@@ -331,8 +329,6 @@ class CheckPrinterPage implements Printable {
       //payee stub
       g2d.drawString(check.getMemo()+DV.addSpace("", 40, ' ')+check.getAmount(), 36,324);
  
-      
-      
       //keeper stub
       g2d.drawString(check.getMemo()+DV.addSpace("", 40, ' ')+check.getAmount(), 36,685);
       

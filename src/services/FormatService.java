@@ -20,4 +20,16 @@ public class FormatService {
             return null;
         }
     }
+    
+    public static Integer parseInteger(String numberString) {
+        NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+        try {
+            Number number = format.parse(numberString);
+            return number.intValue();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
 }

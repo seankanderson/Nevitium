@@ -4,13 +4,12 @@
  */
 package services;
 
-import businessmanager.ControlCenter;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
-import di.GuiceBindingModule;
+import di.DiService;
 import models.Contact;
 import models.Inventory;
 import java.sql.SQLException;
+import models.User;
 
 /**
  *
@@ -20,13 +19,22 @@ public class TestDataService {
     
     public static void populateTestData() throws SQLException {
         
-        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        Injector injector = DiService.getInjector();
                 
         InventoryService inventoryService = injector.getInstance(InventoryService.class);
         ContactService contactService = injector.getInstance(ContactService.class);
+        UserService userService = injector.getInstance(UserService.class);
+        
         
         boolean dropTables = true;
         DatabaseService.createTables(dropTables);
+        
+        var user = new User();
+        
+        user.setAdmin(true);
+        user.setUserName("admin");
+        userService.save(user);
+        
         
         var contact = new Contact();
         

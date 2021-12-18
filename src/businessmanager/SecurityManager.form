@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <NonVisualComponents>
@@ -11,6 +11,7 @@
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -77,7 +78,7 @@
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
-                  <Component id="jScrollPane1" pref="279" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" pref="290" max="32767" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="jPanel3" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -112,8 +113,8 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="userTableKeyReleased"/>
                 <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="userTableMouseClicked"/>
+                <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="userTableKeyReleased"/>
               </Events>
             </Component>
           </SubComponents>
@@ -202,7 +203,7 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Cantarell" size="14" style="0"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="User Password (7 Char. Limit)"/>
+                <Property name="text" type="java.lang.String" value="User Password"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JPasswordField" name="passField1">
@@ -211,7 +212,7 @@
             </Component>
             <Component class="javax.swing.JButton" name="resetButton">
               <Properties>
-                <Property name="text" type="java.lang.String" value="(Re)Set Password"/>
+                <Property name="text" type="java.lang.String" value="Reset password"/>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
               <Events>
@@ -239,26 +240,29 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="jScrollPane2" alignment="0" pref="260" max="32767" attributes="0"/>
                       <Group type="102" alignment="1" attributes="0">
-                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                              <Component id="configField" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                              <Component id="exportField" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                              <Component id="checkField" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                              <Component id="reportField" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                              <Component id="managerField" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                              <Component id="invoiceField" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                              <Component id="connField" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                              <Component id="inventoryField" alignment="0" min="-2" pref="56" max="-2" attributes="1"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="1" attributes="0">
-                              <Component id="jLabel3" pref="192" max="32767" attributes="0"/>
-                              <Component id="jLabel11" alignment="0" pref="192" max="32767" attributes="0"/>
-                              <Component id="jLabel10" alignment="0" pref="192" max="32767" attributes="0"/>
-                              <Component id="jLabel9" alignment="0" pref="192" max="32767" attributes="0"/>
-                              <Component id="jLabel8" alignment="0" pref="192" max="32767" attributes="0"/>
-                              <Component id="jLabel7" alignment="0" pref="192" max="32767" attributes="0"/>
-                              <Component id="jLabel6" alignment="0" pref="192" max="32767" attributes="0"/>
-                              <Component id="jLabel5" alignment="0" pref="192" max="32767" attributes="0"/>
+                              <Component id="inventoryField" max="32767" attributes="0"/>
+                              <Component id="connField" max="32767" attributes="0"/>
+                              <Component id="managerField" max="32767" attributes="0"/>
+                              <Component id="reportField" max="32767" attributes="0"/>
+                              <Component id="checkField" max="32767" attributes="0"/>
+                              <Component id="exportField" max="32767" attributes="0"/>
+                              <Component id="settingsField" max="32767" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="invoiceField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="1" attributes="0">
+                              <Component id="jLabel3" pref="190" max="32767" attributes="0"/>
+                              <Component id="jLabel11" alignment="0" pref="190" max="32767" attributes="0"/>
+                              <Component id="jLabel10" alignment="0" pref="190" max="32767" attributes="0"/>
+                              <Component id="jLabel9" alignment="0" pref="190" max="32767" attributes="0"/>
+                              <Component id="jLabel8" alignment="0" pref="190" max="32767" attributes="0"/>
+                              <Component id="jLabel7" alignment="0" pref="190" max="32767" attributes="0"/>
+                              <Component id="jLabel6" alignment="0" pref="190" max="32767" attributes="0"/>
+                              <Component id="jLabel5" alignment="0" pref="190" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
@@ -283,45 +287,45 @@
                       <Component id="masterRadio" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="userRadio" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="8" max="32767" attributes="0"/>
+                  <EmptySpace pref="54" max="32767" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="inventoryField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel3" alignment="3" min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="inventoryField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="connField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel5" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="connField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="invoiceField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel6" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="invoiceField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="managerField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel7" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="managerField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="reportField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel8" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="reportField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="checkField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel9" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="checkField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="exportField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel10" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="exportField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="configField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel11" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                      <Component id="settingsField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="jScrollPane2" min="-2" pref="178" max="-2" attributes="0"/>
@@ -333,86 +337,6 @@
         </DimensionLayout>
       </Layout>
       <SubComponents>
-        <Component class="javax.swing.JFormattedTextField" name="inventoryField">
-          <Properties>
-            <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-              <Format subtype="1" type="0"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="inventoryFieldFocusGained"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JFormattedTextField" name="connField">
-          <Properties>
-            <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-              <Format subtype="1" type="0"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="connFieldFocusGained"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JFormattedTextField" name="invoiceField">
-          <Properties>
-            <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-              <Format subtype="1" type="0"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="invoiceFieldFocusGained"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JFormattedTextField" name="managerField">
-          <Properties>
-            <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-              <Format subtype="1" type="0"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="managerFieldFocusGained"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JFormattedTextField" name="reportField">
-          <Properties>
-            <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-              <Format subtype="1" type="0"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="reportFieldFocusGained"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JFormattedTextField" name="checkField">
-          <Properties>
-            <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-              <Format subtype="1" type="0"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="checkFieldFocusGained"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JFormattedTextField" name="exportField">
-          <Properties>
-            <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-              <Format subtype="1" type="0"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="exportFieldFocusGained"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JFormattedTextField" name="configField">
-          <Properties>
-            <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-              <Format subtype="1" type="0"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="configFieldFocusGained"/>
-          </Events>
-        </Component>
         <Component class="javax.swing.JLabel" name="jLabel3">
           <Properties>
             <Property name="text" type="java.lang.String" value="Inventory"/>
@@ -521,6 +445,22 @@
             </Component>
           </SubComponents>
         </Container>
+        <Component class="javax.swing.JTextField" name="inventoryField">
+        </Component>
+        <Component class="javax.swing.JTextField" name="connField">
+        </Component>
+        <Component class="javax.swing.JTextField" name="invoiceField">
+        </Component>
+        <Component class="javax.swing.JTextField" name="managerField">
+        </Component>
+        <Component class="javax.swing.JTextField" name="reportField">
+        </Component>
+        <Component class="javax.swing.JTextField" name="checkField">
+        </Component>
+        <Component class="javax.swing.JTextField" name="exportField">
+        </Component>
+        <Component class="javax.swing.JTextField" name="settingsField">
+        </Component>
       </SubComponents>
     </Container>
   </SubComponents>

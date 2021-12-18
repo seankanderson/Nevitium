@@ -14,9 +14,8 @@ import java.awt.*;
 import java.sql.SQLException;
 
 import businessmanager.Common.Tools;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
-import di.GuiceBindingModule;
+import di.DiService;
 import javax.swing.table.*;
 import javax.swing.*;
 import java.awt.event.*;
@@ -41,7 +40,7 @@ public class CheckDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        Injector injector = DiService.getInjector();
         checkSettings = injector.getInstance(CheckSettingsService.class);
         checkSettings.setObjectType(CheckSettings.class);
 
@@ -67,8 +66,7 @@ public class CheckDialog extends javax.swing.JDialog {
         }
 
         toField.requestFocus();
-
-        //datePicker1.setDateFormat(new SimpleDateFormat(props.getProp("DATEFORMAT")));
+        
         /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();
         InputMap im = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -102,18 +100,14 @@ public class CheckDialog extends javax.swing.JDialog {
         if (cat_tm != null && cat_tm.getRowCount() > 0) {
 
             for (int r = 0; r < cat_tm.getRowCount(); r++) {
-
                 itemList.add((String) cat_tm.getValueAt(r, 1));
-
             }
 
         } else {
-            //catList.add("");
             itemList.add("N/A");
         }
 
         toField.setDocument(new AutoCompleteDocument(toField, itemList));
-
     }
 
     private void normalizeItemList(String s) {
@@ -126,7 +120,7 @@ public class CheckDialog extends javax.swing.JDialog {
 
         if (al == null) {
 
-            db.saveRecord("chkpayee", new Object[]{new Integer(0), new String(s)}, false);
+            db.saveRecord("chkpayee", new Object[]{0, s}, false);
             //db.close();
 
         }

@@ -3,6 +3,7 @@ package services;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import java.sql.SQLException;
+import java.util.prefs.BackingStoreException;
 import models.KeyValueStore;
 import models.Contact;
 import models.ContactAddress;
@@ -13,6 +14,7 @@ import models.Invoice;
 import models.InvoiceItem;
 import models.InvoiceMessages;
 import models.User;
+import models.UserAudit;
 
 /**
  *
@@ -21,16 +23,17 @@ import models.User;
 public class DatabaseService {
     private static JdbcConnectionSource connectionSource;
     
-    public static JdbcConnectionSource getConnection()throws SQLException {
+    public static JdbcConnectionSource getConnection() throws SQLException, BackingStoreException {
+        
+        var connectionString = LocalSettingsService.getLocalAppSettings().getConnectionString();
+                
         if (connectionSource == null) {
-            // jdbc:h2:tcp://localhost:9400/~/nevitium
-            // jdbc:h2:~/nevitium;AUTO_SERVER=TRUE
-            connectionSource = new JdbcConnectionSource("jdbc:h2:~/nevitium;AUTO_SERVER=TRUE");
-            //Server.createWebServer("-web","-webAllowOthers", "-tcp","-tcpAllowOthers" );
+            connectionSource = new JdbcConnectionSource(connectionString);            
         }
         return connectionSource;
     }
-    public static void createTables(boolean dropTablesFirst) throws SQLException {
+    
+    public static void createTables(boolean dropTablesFirst) throws SQLException, BackingStoreException {
         
         getConnection();
         
@@ -43,6 +46,7 @@ public class DatabaseService {
             TableUtils.dropTable(connectionSource, InvoiceItem.class, true);
             TableUtils.dropTable(connectionSource, InvoiceMessages.class, true);
             TableUtils.dropTable(connectionSource, User.class, true);
+            TableUtils.dropTable(connectionSource, UserAudit.class, true);
             //TableUtils.dropTable(connectionSource, AppConfig.class, true);
         }
         

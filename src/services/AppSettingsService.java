@@ -8,4 +8,5 @@ import models.settings.AppSettings;
  */
 public class AppSettingsService extends KeyValueStoreService<AppSettings> {
 
+    
 }

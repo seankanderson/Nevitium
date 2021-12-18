@@ -18,10 +18,9 @@ import businessmanager.Common.Tools;
 import businessmanager.Reports.PurchaseHistoryReport;
 import businessmanager.Reports.ReportFactory;
 import businessmanager.Reports.ReportTableDialog;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import datavirtue.*;
-import di.GuiceBindingModule;
+import di.DiService;
 import javax.swing.table.*;
 import java.io.*;
 import java.util.ArrayList;
@@ -59,7 +58,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         super(parent, modal);
 
-        Injector injector = Guice.createInjector(new GuiceBindingModule());
+        Injector injector = DiService.getInjector();
         contactService = injector.getInstance(ContactService.class);
         journalService = injector.getInstance(ContactJournalService.class);
 
