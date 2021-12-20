@@ -15,7 +15,7 @@
             <url>src/businessmanager/ControlCenter.java</url>
             <bookmark id="0">
                 <name/>
-                <line>72</line>
+                <line>67</line>
                 <key/>
             </bookmark>
         </file>
@@ -23,19 +23,21 @@
             <url>src/businessmanager/Connections/MyConnectionsApp.java</url>
             <bookmark id="0">
                 <name/>
-                <line>171</line>
+                <line>173</line>
                 <key/>
             </bookmark>
         </file>
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/dev/Nevitium/src/models/AppConfig.java</file>
-            <file>file:/C:/dev/Nevitium/src/services/AppSettingsService.java</file>
+            <file>file:/C:/dev/Nevitium/src/businessmanager/Connections/ConnectionsShippingDialog.java</file>
+            <file>file:/C:/dev/Nevitium/src/businessmanager/InvoiceQuote/InvoiceDialog.java</file>
+            <file>file:/C:/dev/Nevitium/src/businessmanager/ControlCenter.java</file>
+            <file>file:/C:/dev/Nevitium/src/services/ContactAddressService.java</file>
             <file>file:/C:/dev/Nevitium/src/businessmanager/Main.java</file>
-            <file>file:/C:/dev/Nevitium/src/services/DatabaseService.java</file>
-            <file>file:/C:/dev/Nevitium/src/businessmanager/Config/SettingsDialog.java</file>
-            <file>file:/C:/dev/Nevitium/src/services/ExceptionService.java</file>
+            <file>file:/C:/dev/Nevitium/src/businessmanager/Connections/MyConnectionsApp.java</file>
+            <file>file:/C:/dev/Nevitium/src/dao/ContactAddressDao.java</file>
+            <file>file:/C:/dev/Nevitium/src/services/ContactService.java</file>
         </group>
     </open-files>
 </project-private>

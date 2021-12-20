@@ -11,16 +11,18 @@
  */
 package businessmanager;
 
+import com.datavirtue.nevitium.ui.ControlCenter;
 import com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme;
-import com.formdev.flatlaf.intellijthemes.FlatDarkPurpleIJTheme;
 import com.formdev.flatlaf.intellijthemes.FlatHighContrastIJTheme;
-import di.DiService;
+import com.datavirtue.nevitium.services.DiService;
+import java.awt.Toolkit;
 import java.sql.SQLException;
 import javax.swing.JFrame;
-import services.ExceptionService;
-import services.LocalSettingsService;
-import services.TestDataService;
-import ui.LocalSettingsDialog;
+import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.LocalSettingsService;
+import com.datavirtue.nevitium.services.TestDataService;
+import com.datavirtue.nevitium.ui.LocalSettingsDialog;
+import com.formdev.flatlaf.intellijthemes.FlatDarkPurpleIJTheme;
 
 /**
  *
@@ -35,7 +37,8 @@ public class Main {
     
     public static void main(String args[]) throws Exception {
         setLookAndFeel();
-        var frame = new JFrame();
+        var frame = new JFrame();        
+        frame.setIconImage(Toolkit.getDefaultToolkit().getImage(ControlCenter.class.getResource("/businessmanager/res/Orange.png")));
         frame.setVisible(true);
         var localSettingsApp = new LocalSettingsDialog(frame, true);
         localSettingsApp.display();
@@ -82,7 +85,9 @@ public class Main {
         if (theme.equals(LocalSettingsService.ARC_ORANGE_THEME)) {
              javax.swing.UIManager.setLookAndFeel(new FlatArcOrangeIJTheme());
         }else if (theme.equals(LocalSettingsService.PURPLE_DARK_THEME)) {
+            //javax.swing.UIManager.setLookAndFeel(new FlatGitHubDarkIJTheme());
             javax.swing.UIManager.setLookAndFeel(new FlatDarkPurpleIJTheme());
+            //javax.swing.UIManager.setLookAndFeel(new FlatGrayIJTheme());
         } else if (theme.equals(LocalSettingsService.HIGH_CONTRAST_THEME)) {
             javax.swing.UIManager.setLookAndFeel(new FlatHighContrastIJTheme());
         }
