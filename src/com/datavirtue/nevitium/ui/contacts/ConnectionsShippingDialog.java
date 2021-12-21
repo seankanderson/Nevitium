@@ -30,6 +30,7 @@ import com.datavirtue.nevitium.services.ExceptionService;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  *
  * @author Data Virtue
@@ -38,13 +39,13 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
 
     private final Image winIcon;
     private final GlobalApplicationDaemon application;
-    private Contact currentContact;
+
     private UUID contactId;
-    private ContactAddress currentContactAddress;
+    private Contact currentContact;
+    private ContactAddress currentAddress;
     private ContactService contactService;
-    
     private ContactAddress returnValue;
-    
+
     private final int parentKey = 0;
     private DbEngine db;
     private ConnectionsDAO cDAO;
@@ -57,7 +58,7 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
      */
     public ConnectionsShippingDialog(java.awt.Frame parent, boolean modal, UUID contactId, boolean selectMode, GlobalApplicationDaemon g) {
         super(parent, modal);
-        
+
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
@@ -122,7 +123,7 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
         clearButton = new javax.swing.JButton();
         helpBox = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        addressTable = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Shipping Address");
@@ -392,8 +393,8 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jTable1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        addressTable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        addressTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -404,21 +405,19 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jTable1.setFocusable(false);
-        jTable1.setSelectionBackground(new java.awt.Color(204, 255, 255));
-        jTable1.setSelectionForeground(new java.awt.Color(0, 51, 51));
-        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
+        addressTable.setFocusable(false);
+        addressTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        addressTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jTable1MouseClicked(evt);
+                addressTableMouseClicked(evt);
             }
         });
-        jTable1.addKeyListener(new java.awt.event.KeyAdapter() {
+        addressTable.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                jTable1KeyPressed(evt);
+                addressTableKeyPressed(evt);
             }
         });
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(addressTable);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -446,94 +445,60 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
 
     public void display() {
 
-        
         try {
             this.currentContact = this.contactService.getContactById(this.contactId);
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error when fetching contact");
-            
         }
-        
-        cDAO = new ConnectionsDAO(db, application, parentKey);
 
         refreshTable();
-
         populate();
-        
         this.setVisible(true);
-
     }
 
     private void refreshTable() {
-        
-    }
+        try {
 
-    public void setView() {
+            var addresses = contactService.getContactAddresses(currentContact);
+            var tableModel = new ContactAddressTableModel(addresses);
+            this.addressTable.setModel(tableModel);
 
-        int[] cols = {0, 0, 3, 5, 6}; //col view removal
-        if (jTable1.getModel().getRowCount() > 0) {
-            TableColumnModel cm = jTable1.getColumnModel();
-            TableColumn tc;
-            if (cm.getColumnCount() < 11) {
-                return;
-            }
-
-            for (int i = 0; i < cols.length; i++) {
-
-                tc = cm.getColumn(cols[i]);
-                jTable1.removeColumn(tc);
-
-            }
-
-            int a = jTable1.getColumnCount();
-            javax.swing.JTextField tf = new javax.swing.JTextField();
-            tf.setEditable(false);
-
-            javax.swing.JCheckBox cb = new javax.swing.JCheckBox();
-            cb.setEnabled(false);
-
-            for (int i = 0; i < a; i++) {
-
-                if (i < a - 1) {
-
-                    cm.getColumn(i).setCellEditor(new javax.swing.DefaultCellEditor(tf));
-
-                } else {
-                    cm.getColumn(i).setCellEditor(new javax.swing.DefaultCellEditor(cb));
-
-                }
-            }
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error getting addresses for contact");
         }
     }
 
     private void populate() {
 
-        if (shipToTableModel != null && shipToTableModel.getRowCount() > 0) {
-            int row = jTable1.getSelectedRow();
-            if (row > -1) {
-                connShip = DV.getTableRow(shipToTableModel, row);
-            }
+        if (this.addressTable.getRowCount() < 1) {
+            return;
+        }
+        int row = addressTable.getSelectedRow();
+        if (row < 0) {
+            return;
         }
 
-        if (connShip != null) {
+        var tableModel = (ContactAddressTableModel) addressTable.getModel();
+        this.currentAddress = (ContactAddress) tableModel.getValueAt(row);
 
-            companyField.setText((String) connShip[2]);
-            nameField.setText((String) connShip[3]);
-            streetField.setText((String) connShip[4]);
-            addr2Field.setText((String) connShip[5]);
-            cityField.setText((String) connShip[6]);
-            stateField.setText((String) connShip[7]);
-            postCodeField.setText((String) connShip[8]);
-            countryCombo.setSelectedItem((String) connShip[9]);
-            phoneField.setText((String) connShip[10]);
-            defaultBox.setSelected((Boolean) connShip[11]);
+        if (currentAddress != null) {
+
+            companyField.setText(currentAddress.getCompany());
+            nameField.setText(currentAddress.getAttention());
+            streetField.setText(currentAddress.getAddress1());
+            addr2Field.setText(currentAddress.getAddress2());
+            cityField.setText(currentAddress.getCity());
+            stateField.setText(currentAddress.getState());
+            postCodeField.setText(currentAddress.getPostalCode());
+            countryCombo.setSelectedItem(currentAddress.getCountryCode());
+            phoneField.setText(currentAddress.getPhone());
+            defaultBox.setSelected(currentAddress.isDefaultAddress());
             setFieldsEnabled(true);
 
         } else {
-            companyField.setText(cDAO.getCompany());
-            connShip = new Object[12];
-            connShip[0] = new Integer(0);
-            connShip[1] = new Integer(parentKey);
+            companyField.setText(currentContact.getCompany());
+            currentAddress = new ContactAddress();
+            currentAddress.setContact(currentContact);
         }
 
     }
@@ -547,13 +512,13 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
         cityField.setText("");
         stateField.setText("");
         postCodeField.setText("");
-        countryCombo.setSelectedItem("US");  //set to default country
+        countryCombo.setSelectedItem("US");
         phoneField.setText("");
         defaultBox.setSelected(false);
 
-        connShip = new Object[12];
-        connShip[0] = new Integer(0);
-        connShip[1] = new Integer(parentKey);
+        currentAddress = new ContactAddress();
+        currentAddress.setContact(currentContact);
+
         helpBox.setText("Click the 'Company' field to start a new record.");
     }
 
@@ -584,21 +549,25 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
 
     private void cloneButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cloneButtonActionPerformed
         clearFields();
-        companyField.setText(cDAO.getCompany());
-        nameField.setText(cDAO.getContact());
-        streetField.setText(cDAO.getStreet());
-        addr2Field.setText(cDAO.getAddr2());
-        cityField.setText(cDAO.getCity());
-        stateField.setText(cDAO.getState());
-        postCodeField.setText(cDAO.getPostCode());
-        countryCombo.setSelectedItem(cDAO.getAlphaCountryCode());
-        phoneField.setText(cDAO.getPhone());
+        companyField.setText(currentContact.getCompany());
+        nameField.setText(currentContact.getContact());
+        streetField.setText(currentContact.getAddress1());
+        addr2Field.setText(currentContact.getAddress2());
+        cityField.setText(currentContact.getCity());
+        stateField.setText(currentContact.getState());
+        postCodeField.setText(currentContact.getPostalCode());
+        countryCombo.setSelectedItem(currentContact.getCountryCode());
+        phoneField.setText(currentContact.getPhone());
         setFieldsEnabled(true);
     }//GEN-LAST:event_cloneButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
 
-        saveAction();
+        try {
+            saveAction();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error saving contact address");
+        }
 
     }//GEN-LAST:event_saveButtonActionPerformed
 
@@ -606,10 +575,9 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
         if (!companyField.isEnabled()) {
 
             setFieldsEnabled(true);
-            companyField.setText(cDAO.getCompany());
-            connShip = new Object[12];
-            connShip[0] = new Integer(0);
-            connShip[1] = new Integer(parentKey);
+            companyField.setText(currentContact.getCompany());
+            currentAddress = new ContactAddress();
+            currentAddress.setContact(currentContact);
             helpBox.setText("Remember to click 'Save' after making changes.");
             companyField.requestFocus();
 
@@ -621,7 +589,7 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
         setFieldsEnabled(false);
     }//GEN-LAST:event_clearButtonActionPerformed
 
-    private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
+    private void addressTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addressTableMouseClicked
         int mouseButton = evt.getButton();
         if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) {
             return;
@@ -629,23 +597,21 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
 
         if (selectMode && evt.getClickCount() == 2) {
 
-            int row = jTable1.rowAtPoint(new Point(evt.getX(), evt.getY()));
-
-            if (jTable1.getSelectedRow() > -1) {
-                var tableModel = (ContactAddressTableModel) jTable1.getModel();
-                var contactAddress = (ContactAddress) tableModel.getValueAt(jTable1.getSelectedRow());
+            if (addressTable.getSelectedRow() > -1) {
+                var tableModel = (ContactAddressTableModel) addressTable.getModel();
+                var contactAddress = (ContactAddress) tableModel.getValueAt(addressTable.getSelectedRow());
                 returnValue = contactAddress;
                 this.setVisible(false);
             }
         }
 
         populate();
-    }//GEN-LAST:event_jTable1MouseClicked
+    }//GEN-LAST:event_addressTableMouseClicked
 
 
-    private void jTable1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTable1KeyPressed
+    private void addressTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_addressTableKeyPressed
         populate();
-    }//GEN-LAST:event_jTable1KeyPressed
+    }//GEN-LAST:event_addressTableKeyPressed
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
         selectAction();
@@ -656,7 +622,7 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
             return;
         }
 
-        returnValue = currentContactAddress;
+        returnValue = currentAddress;
         this.setVisible(false);
     }
 
@@ -665,39 +631,19 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
         return returnValue;
     }
 
-    private void saveAction() {
+    private void saveAction() throws SQLException {
 
-        if (defaultBox.isSelected()) {
-
-            ArrayList stl = cDAO.getShiptoList();
-
-            if (stl != null) {
-
-                for (int x = 0; x < stl.size(); x++) {
-
-                    ShipToDAO std = (ShipToDAO) stl.get(x);
-                    if (std.isDefault()) {
-                        std.setDefault(false);
-                        std.save();
-                    }
-
-                }
-
-            }
-
-        }
-        connShip[1] = new Integer(parentKey);
-        connShip[2] = new String(companyField.getText());
-        connShip[3] = new String(nameField.getText());
-        connShip[4] = new String(streetField.getText());
-        connShip[5] = new String(addr2Field.getText());
-        connShip[6] = new String(cityField.getText());
-        connShip[7] = new String(stateField.getText());
-        connShip[8] = new String(postCodeField.getText());
-        connShip[9] = new String((String) countryCombo.getSelectedItem());
-        connShip[10] = new String(phoneField.getText());
-        connShip[11] = new Boolean(defaultBox.isSelected());
-        db.saveRecord("connship", connShip, false);
+        currentAddress.setCompany(this.companyField.getText());
+        currentAddress.setAttention(this.nameField.getText());
+        currentAddress.setAddress1(this.streetField.getText());
+        currentAddress.setAddress2(this.addr2Field.getText());
+        currentAddress.setCity(this.cityField.getText());
+        currentAddress.setState(this.stateField.getText());
+        currentAddress.setPostalCode(this.postCodeField.getText());
+        currentAddress.setCountryCode((String)this.countryCombo.getSelectedItem());
+        currentAddress.setPhone(this.phoneField.getText());
+        
+        contactService.saveAddress(currentAddress);
         refreshTable();
         clearFields();
         setFieldsEnabled(false);
@@ -705,6 +651,7 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField addr2Field;
+    private javax.swing.JTable addressTable;
     private javax.swing.JButton cancelButton;
     private javax.swing.JTextField cityField;
     private javax.swing.JButton clearButton;
@@ -726,7 +673,6 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JToolBar jToolBar2;
     private javax.swing.JTextField nameField;

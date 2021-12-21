@@ -151,8 +151,6 @@ public class ReturnDialog extends javax.swing.JDialog {
             }
         });
         jTable1.setGridColor(new java.awt.Color(0, 0, 0));
-        jTable1.setSelectionBackground(new java.awt.Color(204, 255, 255));
-        jTable1.setSelectionForeground(new java.awt.Color(0, 0, 0));
         jTable1.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
         jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {

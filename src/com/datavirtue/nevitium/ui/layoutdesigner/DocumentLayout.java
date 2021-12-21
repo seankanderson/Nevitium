@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package com.datavirtue.nevitium.ui.layoutdesign;
+package com.datavirtue.nevitium.ui.layoutdesigner;
 
 import datavirtue.DV;
 import datavirtue.ExtensionFileFilter;

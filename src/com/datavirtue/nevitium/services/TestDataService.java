@@ -2,6 +2,7 @@ package com.datavirtue.nevitium.services;
 
 import com.google.inject.Injector;
 import com.datavirtue.nevitium.models.contacts.Contact;
+import com.datavirtue.nevitium.models.contacts.ContactAddress;
 import com.datavirtue.nevitium.models.inventory.Inventory;
 import java.sql.SQLException;
 import com.datavirtue.nevitium.models.security.User;
@@ -17,9 +18,9 @@ public class TestDataService {
         
         Injector injector = DiService.getInjector();
                 
-        InventoryService inventoryService = injector.getInstance(InventoryService.class);
-        ContactService contactService = injector.getInstance(ContactService.class);
-        UserService userService = injector.getInstance(UserService.class);
+        var inventoryService = injector.getInstance(InventoryService.class);
+        var contactService = injector.getInstance(ContactService.class);
+        var userService = injector.getInstance(UserService.class);
         
         
         boolean dropTables = true;
@@ -54,6 +55,15 @@ public class TestDataService {
         contact.setTaxable1(true);
         contact.setTaxable2(false);
         contactService.save(contact);        
+        
+        var contactAddress = new ContactAddress();
+        contactAddress.setAttention("Sean Anderson");
+        contactAddress.setCompany("Nucleus Mobile");
+        contactAddress.setAddress1("5244 LEninger Haiugh Rd");
+        contactAddress.setContact(contact);
+        contactAddress.setCity("Hillsboro");
+        contactAddress.setState("OH");
+        contactService.saveAddress(contactAddress);
         
         var inventory = new Inventory();
         inventory.setDescription("Battlestar Galactica: Miniseries");

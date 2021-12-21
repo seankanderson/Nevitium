@@ -16,17 +16,17 @@ import com.datavirtue.nevitium.database.reports.ReportFactory;
 import com.datavirtue.nevitium.database.reports.ReportDialog;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import com.datavirtue.nevitium.ui.contacts.MyConnectionsApp;
+import com.datavirtue.nevitium.ui.contacts.ContactsApp;
 import com.datavirtue.nevitium.ui.contacts.ConnectionsShippingDialog;
 import com.datavirtue.nevitium.ui.util.NewEmail;
 import com.datavirtue.nevitium.models.invoices.old.OldInvoice;
 import com.datavirtue.nevitium.models.invoices.old.InvoiceModel;
 import com.datavirtue.nevitium.ui.VATCalculator;
 import com.datavirtue.nevitium.ui.inventory.MyInventoryApp;
-import com.datavirtue.nevitium.ui.layoutdesign.DocumentElementTable;
-import com.datavirtue.nevitium.ui.layoutdesign.DocumentLayout;
-import com.datavirtue.nevitium.ui.layoutdesign.InvoicePrintPanel;
-import com.datavirtue.nevitium.ui.layoutdesign.PrintPreview;
+import com.datavirtue.nevitium.ui.layoutdesigner.DocumentElementTable;
+import com.datavirtue.nevitium.ui.layoutdesigner.DocumentLayout;
+import com.datavirtue.nevitium.ui.layoutdesigner.InvoicePrintPanel;
+import com.datavirtue.nevitium.ui.layoutdesigner.PrintPreview;
 import com.datavirtue.nevitium.models.invoices.old.PDFInvoice;
 import com.datavirtue.nevitium.models.invoices.old.PaymentActivityDialog;
 import com.datavirtue.nevitium.models.invoices.old.Quote;
@@ -71,7 +71,7 @@ import com.datavirtue.nevitium.services.InvoiceService;
  * @author Sean K Anderson - Data Virtue
  * @rights Copyright Data Virtue 2006, 2007, 2008, 2009 All Rights Reserved.
  */
-public class InvoiceDialog extends javax.swing.JDialog {
+public class InvoiceApp extends javax.swing.JDialog {
 
     private KeyCard accessKey;
     private boolean debug = false;
@@ -84,7 +84,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
     private InvoiceItemService itemService;
     private ContactService contactService;
 
-    public InvoiceDialog(java.awt.Frame parent, boolean modal, com.datavirtue.nevitium.models.invoices.Invoice quote, GlobalApplicationDaemon application) {
+    public InvoiceApp(java.awt.Frame parent, boolean modal, com.datavirtue.nevitium.models.invoices.Invoice quote, GlobalApplicationDaemon application) {
 
         super(parent, modal);
         accessKey = application.getKey_card();
@@ -236,7 +236,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
     }
 
     /* This constructor is for viewing an invoice <---ONLY!! */
-    public InvoiceDialog(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, Invoice invoice) {
+    public InvoiceApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, Invoice invoice) {
 
         super(parent, modal);
 
@@ -1541,8 +1541,6 @@ public class InvoiceDialog extends javax.swing.JDialog {
         numberField.setText(inum);
 
         clearFields();
-
-        invTable.setSelectionForeground(Color.BLACK);
 
         TableColumnModel cm = invTable.getColumnModel();
         TableColumn tc;
@@ -3556,7 +3554,7 @@ public class InvoiceDialog extends javax.swing.JDialog {
         }
 
         // open MyConnectionsApp and get ANY address
-        MyConnectionsApp cd = new MyConnectionsApp(this.parentWin, true, application,
+        ContactsApp cd = new ContactsApp(this.parentWin, true, application,
                 true, true, false);
 
         var shippingContact = cd.getReturnValue();
@@ -3591,8 +3589,8 @@ public class InvoiceDialog extends javax.swing.JDialog {
 
     private void custAction() {
 
-        MyConnectionsApp cd
-                = new MyConnectionsApp(this.parentWin, true, application, true, true, false);
+        ContactsApp cd
+                = new ContactsApp(this.parentWin, true, application, true, true, false);
 
         var contact = cd.getReturnValue();  //real value
 

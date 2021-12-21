@@ -96,8 +96,6 @@ public class PaymentActivityDialog extends javax.swing.JDialog {
             }
         });
         paymentTable.setToolTipText("Invoice Activity");
-        paymentTable.setSelectionBackground(new java.awt.Color(204, 255, 204));
-        paymentTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
         paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, SwingConstants.RIGHT));
         jScrollPane3.setViewportView(paymentTable);
 

@@ -1,4 +1,4 @@
-package com.datavirtue.nevitium.ui.layoutdesign;
+package com.datavirtue.nevitium.ui.layoutdesigner;
 import java.util.ArrayList;
 
 public class DocumentElementTable {

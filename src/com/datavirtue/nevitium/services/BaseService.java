@@ -19,7 +19,6 @@ public abstract class BaseService<T1 extends BaseDaoImpl<T2, Object>, T2 extends
     @Inject
     @Named("DatabaseConnection")
     protected JdbcConnectionSource connection;
-    protected T1 dao;
     
 //    protected JdbcConnectionSource getDatabaseConnection() {
 //        JdbcConnectionSource conn;
@@ -36,11 +35,11 @@ public abstract class BaseService<T1 extends BaseDaoImpl<T2, Object>, T2 extends
         return this.getDao().queryForAll();
     }
 
-    public void save(T2 item) throws SQLException {
+    public int save(T2 item) throws SQLException {
         if (item.getId() == null) {
-            this.getDao().create(item);
+            return this.getDao().create(item);
         } else {
-            this.getDao().update(item);
+            return this.getDao().update(item);
         }
     }
     

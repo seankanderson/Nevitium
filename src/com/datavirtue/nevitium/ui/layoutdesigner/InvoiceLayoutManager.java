@@ -9,7 +9,7 @@
  * Created on Aug 23, 2010, 12:51:35 AM
  */
 
-package com.datavirtue.nevitium.ui.layoutdesign;
+package com.datavirtue.nevitium.ui.layoutdesigner;
 
 
 import RuntimeManagement.GlobalApplicationDaemon;

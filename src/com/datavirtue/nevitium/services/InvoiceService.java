@@ -3,6 +3,7 @@ package com.datavirtue.nevitium.services;
 import com.datavirtue.nevitium.database.orm.InvoiceDao;
 import java.sql.SQLException;
 import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.j256.ormlite.dao.DaoManager;
 
 /**
  *
@@ -12,7 +13,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
 
     @Override
     public InvoiceDao getDao() throws SQLException {
-        return dao == null ? new InvoiceDao(connection) : dao;
+        return DaoManager.createDao(connection, Invoice.class);
     }
     
 }

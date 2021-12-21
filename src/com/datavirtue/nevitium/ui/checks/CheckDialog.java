@@ -7,7 +7,7 @@ package com.datavirtue.nevitium.ui.checks;
 
 import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
-import com.datavirtue.nevitium.ui.contacts.MyConnectionsApp;
+import com.datavirtue.nevitium.ui.contacts.ContactsApp;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import datavirtue.*;
 import java.awt.*;
@@ -452,7 +452,7 @@ public class CheckDialog extends javax.swing.JDialog {
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
 
-        MyConnectionsApp cd = new MyConnectionsApp(null, true, application, true, false, true);
+        ContactsApp cd = new ContactsApp(null, true, application, true, false, true);
 
         var contact = cd.getReturnValue();
 

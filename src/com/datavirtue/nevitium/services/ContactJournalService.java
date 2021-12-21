@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 import com.datavirtue.nevitium.models.contacts.ContactJournal;
+import com.j256.ormlite.dao.DaoManager;
 
 /**
  *
@@ -22,7 +23,7 @@ public class ContactJournalService extends BaseService<ContactJournalDao, Contac
     
     @Override
     public ContactJournalDao getDao() throws SQLException {
-        return dao == null ? new ContactJournalDao(connection) : dao;
+        return DaoManager.createDao(connection, ContactJournal.class);
     }
     
 }

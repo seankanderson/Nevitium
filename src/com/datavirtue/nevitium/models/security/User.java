@@ -1,5 +1,6 @@
 package com.datavirtue.nevitium.models.security;
 
+import com.datavirtue.nevitium.database.orm.UserDao;
 import com.datavirtue.nevitium.models.BaseModel;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -11,7 +12,7 @@ import lombok.Setter;
  * @author SeanAnderson
  */
 @Getter @Setter
-@DatabaseTable(tableName = "users")
+@DatabaseTable(tableName = "users", daoClass = UserDao.class)
 public class User extends BaseModel {
 
     @DatabaseField(canBeNull = false, unique = true)

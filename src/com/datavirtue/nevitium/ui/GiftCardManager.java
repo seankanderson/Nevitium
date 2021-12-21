@@ -16,7 +16,7 @@ import RuntimeManagement.GlobalApplicationDaemon;
 import RuntimeManagement.KeyCard;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
-import com.datavirtue.nevitium.ui.invoices.InvoiceDialog;
+import com.datavirtue.nevitium.ui.invoices.InvoiceApp;
 
 import datavirtue.DV;
 import datavirtue.DbEngine;
@@ -235,8 +235,6 @@ public class GiftCardManager extends javax.swing.JDialog {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        cardTable.setSelectionBackground(new java.awt.Color(204, 255, 255));
-        cardTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
         cardTable.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 cardTableKeyPressed(evt);
@@ -265,8 +263,6 @@ public class GiftCardManager extends javax.swing.JDialog {
 
             }
         ));
-        useageTable.setSelectionBackground(new java.awt.Color(204, 255, 204));
-        useageTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
         useageTable.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 useageTableKeyPressed(evt);

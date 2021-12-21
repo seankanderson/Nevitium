@@ -10,16 +10,12 @@ import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.ui.invoices.PaymentDialog;
-import com.datavirtue.nevitium.database.reports.ReportModel;
-import com.datavirtue.nevitium.ui.invoices.InvoiceDialog;
+import com.datavirtue.nevitium.ui.invoices.InvoiceApp;
 
 import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.models.contacts.old.ContactJournalListModel;
 import com.datavirtue.nevitium.models.contacts.old.ContactsTableModel;
-import com.datavirtue.nevitium.database.reports.PurchaseHistoryReport;
 import com.datavirtue.nevitium.database.reports.ReportFactory;
-import com.datavirtue.nevitium.database.reports.ReportTableDialog;
-import com.datavirtue.nevitium.ui.TableView;
 import com.google.inject.Injector;
 import datavirtue.*;
 import com.datavirtue.nevitium.services.DiService;
@@ -36,6 +32,7 @@ import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.contacts.ContactJournal;
 import com.datavirtue.nevitium.models.invoices.CustomerInvoiceListTableModel;
 import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ContactJournalService;
 import com.datavirtue.nevitium.services.ContactService;
@@ -47,19 +44,31 @@ import com.datavirtue.nevitium.services.ExceptionService;
  * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010 All Rights
  * Reserved.
  */
-public class MyConnectionsApp extends javax.swing.JDialog {
+public class ContactsApp extends javax.swing.JDialog {
 
-    private final KeyCard accessKey;
+    private KeyCard accessKey;
     private final GlobalApplicationDaemon application;
     private Contact currentContact = new Contact();
     private final ContactService contactService;
     private final ContactJournalService journalService;
     private final AppSettingsService appSettings;
 
+    Settings props;
+    private Contact returnValue = null;
+    private boolean selectMode = false;
+    //private Object [] dataOut = new Object [20];
+    private int edit_key = 0;
+    private java.awt.Frame parentWin;
+    private DbEngine zip;
+    private String nl = System.getProperty("line.separator");
+    private Image winIcon;
+    private boolean small = false;
+    private int searchColumn = 1;
+
     /**
      * Creates new form ConnectionsDialog
      */
-    public MyConnectionsApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon g, boolean select, boolean customers, boolean suppliers) {
+    public ContactsApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon g, boolean select, boolean customers, boolean suppliers) {
 
         super(parent, modal);
 
@@ -67,37 +76,13 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         contactService = injector.getInstance(ContactService.class);
         journalService = injector.getInstance(ContactJournalService.class);
         appSettings = injector.getInstance(AppSettingsService.class);
-
-        Toolkit tools = Toolkit.getDefaultToolkit();
-        winIcon = tools.getImage(MyConnectionsApp.class.getResource("/businessmanager/res/Orange.png"));
-
-        initComponents();
+        appSettings.setObjectType(AppSettings.class);
+        
         this.application = g;
 
-        this.addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent e) {
+        winIcon = Toolkit.getDefaultToolkit().getImage(ContactsApp.class.getResource("/businessmanager/res/Orange.png"));
 
-                recordScreenPosition();
-
-            }
-        });
-
-        functionToolbar.setLayout(new FlowLayout());
-        invoiceToolbar.setLayout(new FlowLayout());
-
-        workingPath = application.getWorkingPath();
-        accessKey = application.getKey_card();
-        setDbEngine(application.getDb());
-        props = application.getProps();
-
-        String coName = props.getProp("CO NAME");
-        this.setTitle(coName + " Human Connections");
-
-        jTabbedPane1.setSelectedIndex(0); //select a tab to view by default
-
-        int c = Tools.getStringInt(props.getProp("CONN COL"), 0);
-        searchFieldCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Company", "First Name", "Last Name", "Address1", "Address2", "City", "State", "Postal Code", "Contact", "Phone", "Fax", "Email", "Web Link"}));
-        searchFieldCombo.setSelectedIndex(c);
+        initComponents();
 
         /* Limit chars availble in textfields */
         companyTextField.setDocument(new LimitedDocument(35));
@@ -115,21 +100,8 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         wwwTextField.setDocument(new LimitedDocument(50));
         notesTextArea.setDocument(new LimitedDocument(100));
 
-        /* Close dialog on escape */
-        ActionMap am = getRootPane().getActionMap();
-        InputMap im = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        Object windowCloseKey = new Object();
-        KeyStroke windowCloseStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
-        Action windowCloseAction = new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                setVisible(false);
-                dispose();
-
-            }
-        };
-        im.put(windowCloseStroke, windowCloseKey);
-        am.put(windowCloseKey, windowCloseAction);
-        /* End Close Dialog on Escape*/
+        functionToolbar.setLayout(new FlowLayout());
+        invoiceToolbar.setLayout(new FlowLayout());
 
         if (customers && !suppliers) {
             custRadio.setSelected(true);
@@ -141,9 +113,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             allRadio.setSelected(true);
         }
 
-        connTable.setModel(filter());
-
-        //setView(vals);
         selectMode = select;
 
         if (select) {
@@ -161,17 +130,57 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             setFieldsEnabled(false);
         }
 
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                recordScreenPosition();
+            }
+        });
+
+        /* Close dialog on escape */
+        ActionMap am = getRootPane().getActionMap();
+        InputMap im = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        Object windowCloseKey = new Object();
+        KeyStroke windowCloseStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        Action windowCloseAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                setVisible(false);
+                dispose();
+
+            }
+        };
+        im.put(windowCloseStroke, windowCloseKey);
+        am.put(windowCloseKey, windowCloseAction);
+        /* End Close Dialog on Escape*/
+
+    }
+
+    public void display() throws SQLException {
+
+        accessKey = application.getKey_card();
+        
+        var settings = appSettings.getObject();
+        var company = settings.getCompany();
+        this.setTitle(company.getCompanyName() + " Business Contacts");
+
+        var contactSettings = appSettings.getObject().getContacts();
+        var defaultSearchField = contactSettings != null 
+                ? contactSettings.getContactDefaultSearchField() 
+                : "Company";
+
+        searchFieldCombo.setModel(
+                new javax.swing.DefaultComboBoxModel(
+                        new String[]{"Company", "First Name", "Last Name", "Address1", "Address2", "City", "State", "Postal Code", "Contact", "Phone", "Fax", "Email", "Web Link"}));
+        searchFieldCombo.setSelectedItem(defaultSearchField);
+
+        contactDetailTabPane.setSelectedIndex(0);
         findField.requestFocus();
 
-        zip = new DbEngine();
-        zip.loadSchema("zip.sch");
-
-        String tax1name = props.getProp("TAX1NAME");
-        String tax2name = props.getProp("TAX2NAME");
-        tax1CheckBox.setText(tax1name);
-        tax2CheckBox.setText(tax2name);
-        connTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
-
+        var invoiceSettings = appSettings.getObject().getInvoice();
+        tax1CheckBox.setText(invoiceSettings.getTax1Name());
+        tax2CheckBox.setText(invoiceSettings.getTax2Name());
+        
+        this.refreshTable();
+        
         //check for good stored values
         //if bad do resizing routine if good just position and display
         if (this.checkForScreenSettings()) {
@@ -183,8 +192,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         this.setVisible(true);
     }
-
-    private String workingPath = "";
 
     private ContactsTableModel filter() {
 
@@ -217,32 +224,32 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     private void recordScreenPosition() {
 
-        Point p = this.getLocationOnScreen();
-        Dimension d = this.getSize();
-        props.setProp("CONNPOS", p.x + "," + p.y);
-        props.setProp("CONNSIZE", d.width + "," + d.height);
+//        Point p = this.getLocationOnScreen();
+//        Dimension d = this.getSize();
+//        props.setProp("CONNPOS", p.x + "," + p.y);
+//        props.setProp("CONNSIZE", d.width + "," + d.height);
     }
 
     private Point defaultScreenPosition;
     private Dimension defaultWindowSize;
 
     private boolean checkForScreenSettings() {
-        String pt = props.getProp("CONNPOS");
-        String dim = props.getProp("CONNSIZE");
-        if (pt.equals("")) {
-            return false;
-        }
-        if (dim.equals("")) {
-            return false;
-        }
-        if ((Tools.parsePoint(pt)) == null) {
-            return false;
-        }
-        if ((Tools.parseDimension(dim)) == null) {
-            return false;
-        }
-        return true;
-
+//        String pt = props.getProp("CONNPOS");
+//        String dim = props.getProp("CONNSIZE");
+//        if (pt.equals("")) {
+//            return false;
+//        }
+//        if (dim.equals("")) {
+//            return false;
+//        }
+//        if ((Tools.parsePoint(pt)) == null) {
+//            return false;
+//        }
+//        if ((Tools.parseDimension(dim)) == null) {
+//            return false;
+//        }
+//        return true;
+        return false;
     }
 
     private void storeDefaultScreen() {
@@ -372,12 +379,12 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     private void populateFields() {
 
-        if (connTable.getSelectedRow() > -1) {
+        if (contactTable.getSelectedRow() > -1) {
             //int key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
             //connDAO = new ConnectionsDAO(db, application, key);
             //edit_key = connDAO.getKey();
-            var tableModel = (ContactsTableModel) connTable.getModel();
-            currentContact = (Contact) tableModel.getValueAt(connTable.getSelectedRow());
+            var tableModel = (ContactsTableModel) contactTable.getModel();
+            currentContact = (Contact) tableModel.getValueAt(contactTable.getSelectedRow());
         } else {
             return;
         }
@@ -430,7 +437,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     private void populateInvoices(boolean change) {
 
-        if (connTable.getSelectedRow() < 0) {
+        if (contactTable.getSelectedRow() < 0) {
             return;
         }
 
@@ -459,7 +466,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             }
         }
 
-        int key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
+        int key = (Integer) contactTable.getModel().getValueAt(contactTable.getSelectedRow(), 0);
 
         /* the custom TableModel is assigned to the My Connections invoiceTable */
         //invoiceTable.setModel(connDAO.getInvoiceTableModel(table, key));
@@ -480,8 +487,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         TableColumnModel cm = invoiceTable.getColumnModel();
         TableColumn tc;
-        invoiceTable.setSelectionForeground(Color.BLACK);
-
+        
         if (invoiceTable.getColumnCount() > 2) {
 
             //setup hold table view
@@ -498,17 +504,17 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     public void setView(int[] cols) {
 
-        if (connTable.getModel().getRowCount() > 0) {
-            TableColumnModel cm = connTable.getColumnModel();
+        if (contactTable.getModel().getRowCount() > 0) {
+            TableColumnModel cm = contactTable.getColumnModel();
             TableColumn tc;
             //connTable.setCellEditor(null);
 
             for (int i = 0; i < cols.length; i++) {
                 tc = cm.getColumn(cols[i]);
-                connTable.removeColumn(tc);
+                contactTable.removeColumn(tc);
             }
 
-            int a = connTable.getColumnCount();
+            int a = contactTable.getColumnCount();
             javax.swing.JTextField tf = new javax.swing.JTextField();
             tf.setEditable(false);
             for (int i = 0; i < a; i++) {
@@ -517,12 +523,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             }
 
         }
-
-    }
-
-    public void setDbEngine(DbEngine dbe) {
-
-        db = dbe;
 
     }
 
@@ -535,7 +535,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             try {
                 var results = contactService.searchField(searchField, findField.getText());
                 if (results != null && results.size() > 0) {
-                    connTable.setModel(new ContactsTableModel(results));
+                    contactTable.setModel(new ContactsTableModel(results));
                     props.setProp("CONN COL", searchField);
                 } else {
                     JOptionPane.showMessageDialog(this, "No matching records were found.", "Find Failed", JOptionPane.OK_OPTION);
@@ -551,32 +551,32 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     }
 
     private void export(String filename) {
-        ReportModel rm = new ReportModel(connTable.getModel());
-        StringBuilder sb = new StringBuilder();
-        int col_count = connTable.getModel().getColumnCount();
-
-        /* Headers  */
-        if (!new File(filename).exists()) {
-            String[] headers = db.getFieldNames("conn");
-            for (int i = 0; i < headers.length; i++) {
-                sb.append(headers[i]);
-                if (i < headers.length - 1) {
-                    sb.append(',');
-                }
-            }
-            sb.append(System.getProperty("line.separator"));
-        }
-        /* Data  */
-        do {
-            for (int c = 0; c < col_count; c++) {
-                sb.append(rm.getValueAt(c).replace(',', ';'));
-                if (c < connTable.getModel().getColumnCount() - 1) {
-                    sb.append(',');
-                }
-            }
-            sb.append(System.getProperty("line.separator"));
-        } while (rm.next());
-        DV.writeFile(filename, sb.toString(), true);
+//        ReportModel rm = new ReportModel(contactTable.getModel());
+//        StringBuilder sb = new StringBuilder();
+//        int col_count = contactTable.getModel().getColumnCount();
+//
+//        /* Headers  */
+//        if (!new File(filename).exists()) {
+//            String[] headers = db.getFieldNames("conn");
+//            for (int i = 0; i < headers.length; i++) {
+//                sb.append(headers[i]);
+//                if (i < headers.length - 1) {
+//                    sb.append(',');
+//                }
+//            }
+//            sb.append(System.getProperty("line.separator"));
+//        }
+//        /* Data  */
+//        do {
+//            for (int c = 0; c < col_count; c++) {
+//                sb.append(rm.getValueAt(c).replace(',', ';'));
+//                if (c < contactTable.getModel().getColumnCount() - 1) {
+//                    sb.append(',');
+//                }
+//            }
+//            sb.append(System.getProperty("line.separator"));
+//        } while (rm.next());
+//        DV.writeFile(filename, sb.toString(), true);
     }
 
     private ContactJournal currentJournal;
@@ -679,10 +679,9 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         buttonGroup1 = new javax.swing.ButtonGroup();
         buttonGroup2 = new javax.swing.ButtonGroup();
         jSeparator2 = new javax.swing.JSeparator();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        connTable = new javax.swing.JTable();
-        jPanel4 = new javax.swing.JPanel();
-        jLabel15 = new javax.swing.JLabel();
+        contactTableScrollPane = new javax.swing.JScrollPane();
+        contactTable = new javax.swing.JTable();
+        contactTableToolPanel = new javax.swing.JPanel();
         findField = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         searchFieldCombo = new javax.swing.JComboBox();
@@ -700,7 +699,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         selectButton = new javax.swing.JButton();
         voidButton = new javax.swing.JButton();
         detailPanel = new javax.swing.JPanel();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        contactDetailTabPane = new javax.swing.JTabbedPane();
         addressPanel = new javax.swing.JPanel();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
@@ -763,7 +762,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         jScrollPane4 = new javax.swing.JScrollPane();
         journalTextArea = new javax.swing.JTextPane();
         jLabel17 = new javax.swing.JLabel();
-        jToolBar4 = new javax.swing.JToolBar();
+        contactDetailsToolBar = new javax.swing.JToolBar();
         clearButton = new javax.swing.JButton();
         saveButton = new javax.swing.JButton();
         messageField = new javax.swing.JTextField();
@@ -773,8 +772,8 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         setIconImage(winIcon);
         setModal(true);
 
-        connTable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        connTable.setModel(new javax.swing.table.DefaultTableModel(
+        contactTable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        contactTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -782,22 +781,22 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
             }
         ));
-        connTable.addMouseListener(new java.awt.event.MouseAdapter() {
+        contactTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                connTableMouseClicked(evt);
+                contactTableMouseClicked(evt);
             }
         });
-        connTable.addKeyListener(new java.awt.event.KeyAdapter() {
+        contactTable.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                connTableKeyPressed(evt);
+                contactTableKeyPressed(evt);
             }
             public void keyReleased(java.awt.event.KeyEvent evt) {
-                connTableKeyReleased(evt);
+                contactTableKeyReleased(evt);
             }
         });
-        jScrollPane1.setViewportView(connTable);
+        contactTableScrollPane.setViewportView(contactTable);
 
-        jPanel4.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        contactTableToolPanel.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         findField.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         findField.setToolTipText("Input Search Text Here and Hit ENTER to Search");
@@ -964,37 +963,34 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         });
         filterToolbar.add(voidButton);
 
-        org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel4Layout.createSequentialGroup()
+        org.jdesktop.layout.GroupLayout contactTableToolPanelLayout = new org.jdesktop.layout.GroupLayout(contactTableToolPanel);
+        contactTableToolPanel.setLayout(contactTableToolPanelLayout);
+        contactTableToolPanelLayout.setHorizontalGroup(
+            contactTableToolPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(contactTableToolPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel4Layout.createSequentialGroup()
+                .add(contactTableToolPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(contactTableToolPanelLayout.createSequentialGroup()
                         .add(searchFieldCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(10, 10, 10)
                         .add(findField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 165, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jLabel15)
                     .add(filterToolbar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(functionToolbar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel4Layout.createSequentialGroup()
+        contactTableToolPanelLayout.setVerticalGroup(
+            contactTableToolPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(contactTableToolPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(contactTableToolPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, functionToolbar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 85, Short.MAX_VALUE)
-                    .add(jPanel4Layout.createSequentialGroup()
-                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel15)
-                            .add(filterToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 44, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(contactTableToolPanelLayout.createSequentialGroup()
+                        .add(filterToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 44, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                        .add(contactTableToolPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(jLabel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE)
                             .add(searchFieldCombo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE)
                             .add(findField))))
@@ -1003,7 +999,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         detailPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jTabbedPane1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        contactDetailTabPane.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
 
         addressPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
 
@@ -1305,7 +1301,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
                 .add(438, 438, 438))
         );
 
-        jTabbedPane1.addTab("Address", addressPanel);
+        contactDetailTabPane.addTab("Address", addressPanel);
 
         contactPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
 
@@ -1562,7 +1558,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Contact/Invoices", contactPanel);
+        contactDetailTabPane.addTab("Contact/Invoices", contactPanel);
 
         journalPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -1583,8 +1579,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         journalList.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         journalList.setToolTipText("Daily Journals");
-        journalList.setSelectionBackground(new java.awt.Color(204, 255, 255));
-        journalList.setSelectionForeground(new java.awt.Color(0, 51, 51));
         journalList.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 journalListMouseClicked(evt);
@@ -1664,10 +1658,10 @@ public class MyConnectionsApp extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Journal", journalPanel);
+        contactDetailTabPane.addTab("Journal", journalPanel);
 
-        jToolBar4.setFloatable(false);
-        jToolBar4.setRollover(true);
+        contactDetailsToolBar.setFloatable(false);
+        contactDetailsToolBar.setRollover(true);
 
         clearButton.setText("Clear");
         clearButton.setToolTipText("Clears the Form");
@@ -1676,7 +1670,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
                 clearButtonActionPerformed(evt);
             }
         });
-        jToolBar4.add(clearButton);
+        contactDetailsToolBar.add(clearButton);
 
         saveButton.setFont(new java.awt.Font("Tahoma", 1, 13)); // NOI18N
         saveButton.setText("Save");
@@ -1689,11 +1683,11 @@ public class MyConnectionsApp extends javax.swing.JDialog {
                 saveButtonActionPerformed(evt);
             }
         });
-        jToolBar4.add(saveButton);
+        contactDetailsToolBar.add(saveButton);
 
         messageField.setEditable(false);
         messageField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        jToolBar4.add(messageField);
+        contactDetailsToolBar.add(messageField);
 
         org.jdesktop.layout.GroupLayout detailPanelLayout = new org.jdesktop.layout.GroupLayout(detailPanel);
         detailPanel.setLayout(detailPanelLayout);
@@ -1702,16 +1696,16 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             .add(org.jdesktop.layout.GroupLayout.TRAILING, detailPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 858, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jToolBar4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, contactDetailTabPane)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, contactDetailsToolBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         detailPanelLayout.setVerticalGroup(
             detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(detailPanelLayout.createSequentialGroup()
-                .add(jToolBar4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(contactDetailsToolBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 358, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(contactDetailTabPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 358, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1722,8 +1716,8 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1)
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, contactTableScrollPane)
+                    .add(contactTableToolPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(detailPanel, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1731,9 +1725,9 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE)
+                .add(contactTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(contactTableToolPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
                 .add(detailPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -1801,9 +1795,9 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             return;
         }
 
-        if (connTable.getSelectedRow() > -1) {
+        if (contactTable.getSelectedRow() > -1) {
 
-            new ConnLabelDialog(null, true, connTable.getModel(), connTable.getSelectedRows(), workingPath, props);
+            new ConnLabelDialog(null, true, contactTable.getModel(), contactTable.getSelectedRows());
 
         } else {
 
@@ -1940,15 +1934,15 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         if (invoiceTable.getSelectedRow() > -1) {
 
-            var tableModel = (CustomerInvoiceListTableModel)invoiceTable.getModel();
-            
-            var invoice = (Invoice)tableModel.getValueAt(invoiceTable.getSelectedRow());
-                    
+            var tableModel = (CustomerInvoiceListTableModel) invoiceTable.getModel();
+
+            var invoice = (Invoice) tableModel.getValueAt(invoiceTable.getSelectedRow());
+
             if (invoiceToggleButton.getText().endsWith("Quotes")) {
 
                 if (invoice != null) {
                     /* Opening quotes */
-                    InvoiceDialog id = new InvoiceDialog(parentWin, true, application, invoice); //no select
+                    InvoiceApp id = new InvoiceApp(parentWin, true, application, invoice); //no select
 
                     id.setVisible(true);
                     id.dispose();
@@ -1957,7 +1951,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             } else {
                 if (invoice != null) {
 
-                    InvoiceDialog id = new InvoiceDialog(parentWin, true, invoice, application); //no select
+                    InvoiceApp id = new InvoiceApp(parentWin, true, invoice, application); //no select
 
                     id.setVisible(true);
                     id.dispose();
@@ -2004,10 +1998,10 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         journalList.setEnabled(false);
     }//GEN-LAST:event_journalTextAreaFocusGained
 
-    private void connTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_connTableKeyReleased
+    private void contactTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_contactTableKeyReleased
 
-        if (connTable.getSelectedRow() > -1) {
-            Integer key = (Integer) connTable.getModel().getValueAt(connTable.getSelectedRow(), 0);
+        if (contactTable.getSelectedRow() > -1) {
+            Integer key = (Integer) contactTable.getModel().getValueAt(contactTable.getSelectedRow(), 0);
             edit_key = key;
             populateFields();
             setFieldsEnabled(true);
@@ -2016,7 +2010,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         }
 
-    }//GEN-LAST:event_connTableKeyReleased
+    }//GEN-LAST:event_contactTableKeyReleased
 
     private void journalListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_journalListMouseClicked
 
@@ -2042,7 +2036,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
 
-        if (connTable.getModel().getRowCount() > 0) {
+        if (contactTable.getModel().getRowCount() > 0) {
             if (!accessKey.checkExports(500)) {
                 accessKey.showMessage("Export");
                 return;
@@ -2071,15 +2065,15 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_findFieldKeyPressed
 
-    private void connTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_connTableKeyPressed
+    private void contactTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_contactTableKeyPressed
 
         if (selectMode) {
 
             if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
 
-                if (connTable.getSelectedRow() > -1 && selectMode) {
-                    var tableModel = (ContactsTableModel) connTable.getModel();
-                    returnValue = (Contact) tableModel.getValueAt(connTable.getSelectedRow());
+                if (contactTable.getSelectedRow() > -1 && selectMode) {
+                    var tableModel = (ContactsTableModel) contactTable.getModel();
+                    returnValue = (Contact) tableModel.getValueAt(contactTable.getSelectedRow());
                     this.setVisible(false);
                 }
 
@@ -2088,7 +2082,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         }
 
 
-    }//GEN-LAST:event_connTableKeyPressed
+    }//GEN-LAST:event_contactTableKeyPressed
 
     private void companyTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_companyTextFieldMouseClicked
 
@@ -2109,7 +2103,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     }//GEN-LAST:event_companyTextFieldMouseClicked
 
-    private void connTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_connTableMouseClicked
+    private void contactTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_contactTableMouseClicked
         int mouseButton = evt.getButton();
         if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) {
             return;
@@ -2120,10 +2114,10 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
             if (evt.getClickCount() == 2) {
 
-                int row = connTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
+                int row = contactTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
 
-                if (connTable.getSelectedRow() > -1) {
-                    var tableModel = (ContactsTableModel) connTable.getModel();
+                if (contactTable.getSelectedRow() > -1) {
+                    var tableModel = (ContactsTableModel) contactTable.getModel();
                     returnValue = (Contact) tableModel.getValueAt(row);
                     this.setVisible(false);
                 }
@@ -2132,11 +2126,11 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         populateFields();
 
-    }//GEN-LAST:event_connTableMouseClicked
+    }//GEN-LAST:event_contactTableMouseClicked
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
 
-        if (connTable.getSelectedRow() > -1) {
+        if (contactTable.getSelectedRow() > -1) {
 
             if (!accessKey.checkConnections(500)) {
                 accessKey.showMessage("Delete");
@@ -2163,7 +2157,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     private void refreshTable() {
 
-        connTable.setModel(filter());
+        contactTable.setModel(filter());
         //setView(vals);
 
     }
@@ -2177,39 +2171,17 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     }//GEN-LAST:event_clearButtonActionPerformed
 
-    private boolean checkDuplicates() {
-
-        ArrayList al;
-
-        al = db.search("conn", 9, phoneTextField.getText().trim(), false);
-        /* DV.scanArrayList() checks through the al for the specified int value, if found the int is returned */
-        if (al == null || DV.scanArrayList(al, (Integer) edit_key) == edit_key); else {
-
-            JOptionPane.showMessageDialog(this, "Phone number is used in another record.", "Duplicate Data!", JOptionPane.OK_OPTION);
+    private boolean checkDuplicates() throws SQLException {
+        if (currentContact.getId() == null
+                && contactService.newContactCandidateExists(
+                        companyTextField.getText().trim(),
+                        emailTextField.getText().trim(),
+                        phoneTextField.getText().trim())) {
+            JOptionPane.showMessageDialog(this, "The email address, company name, or phone number is already used in another contact.", "Duplicate contact", JOptionPane.OK_OPTION);
             return false;
 
         }
-
-        al = db.search("conn", 1, companyTextField.getText().trim(), false);
-
-        if (al == null || DV.scanArrayList(al, edit_key) == edit_key); else {
-
-            JOptionPane.showMessageDialog(this, "Company name is used in another record.", "Duplicate Data!", JOptionPane.OK_OPTION);
-            return false;
-
-        }
-
-        al = db.search("conn", 12, emailTextField.getText().trim(), false);
-
-        if (al == null || DV.scanArrayList(al, edit_key) == edit_key); else {
-
-            JOptionPane.showMessageDialog(this, "Email address is used in another record.", "Duplicate Data!", JOptionPane.OK_OPTION);
-            return false;
-
-        }
-
         return true;
-
     }
 
     private void saveAction() {
@@ -2271,10 +2243,10 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         refreshTable();
 
         /*  select  */
-        int row = ((ContactsTableModel) connTable.getModel()).getCollection().indexOf(currentContact);
+        int row = ((ContactsTableModel) contactTable.getModel()).getCollection().indexOf(currentContact);
 
-        if (row <= connTable.getModel().getRowCount()) {
-            connTable.changeSelection(row, 0, false, false);
+        if (row <= contactTable.getModel().getRowCount()) {
+            contactTable.changeSelection(row, 0, false, false);
         }
 
     }
@@ -2293,7 +2265,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
         File f = fileChooser.getSelectedFile();
 
         int[] r = {0, 1, 2, 3, 4, 5};
-        db.csvImport("countries", f, false, r, false);
+        //db.csvImport("countries", f, false, r, false);
 
     }
 
@@ -2306,8 +2278,10 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     }//GEN-LAST:event_notesTextAreaFocusLost
 
     private void shipToButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shipToButtonActionPerformed
-        if (edit_key > 0)
+        if (this.currentContact.getId() != null) {
             shipToAction();
+        }
+            
     }//GEN-LAST:event_shipToButtonActionPerformed
 
     private void invoiceToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceToggleButtonActionPerformed
@@ -2358,9 +2332,9 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
 
-        if (connTable.getSelectedRow() > -1) {
-            var tableModel = (ContactsTableModel) connTable.getModel();
-            returnValue = (Contact) tableModel.getValueAt(connTable.getSelectedRow());
+        if (contactTable.getSelectedRow() > -1) {
+            var tableModel = (ContactsTableModel) contactTable.getModel();
+            returnValue = (Contact) tableModel.getValueAt(contactTable.getSelectedRow());
             this.dispose();
 
         }
@@ -2376,7 +2350,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     }//GEN-LAST:event_searchFieldComboActionPerformed
 
     private void doInvoiceReport() {
-        int r = connTable.getSelectedRow();
+        int r = contactTable.getSelectedRow();
 
         if (r < 0) {
             return;
@@ -2386,7 +2360,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             return;
         }
 
-        int k = (Integer) connTable.getModel().getValueAt(r, 0);
+        int k = (Integer) contactTable.getModel().getValueAt(r, 0);
 
         if (k > 0) {
             ReportFactory.generateCustomerStatement(application, this.currentContact);
@@ -2401,7 +2375,7 @@ public class MyConnectionsApp extends javax.swing.JDialog {
             return;
         }
 
-        int row = connTable.getSelectedRow();
+        int row = contactTable.getSelectedRow();
 
         if (row < 0) {
             return;
@@ -2409,55 +2383,41 @@ public class MyConnectionsApp extends javax.swing.JDialog {
 
         int k = edit_key;
 
-        java.util.ArrayList al = db.search("invoice", 11, Integer.toString(k), false);
+        //java.util.ArrayList al = db.search("invoice", 11, Integer.toString(k), false);
 
-        if (al == null || al.size() < 1) {
-
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "No invoices found for this contact.");
-            return;
-        }
-
-        k = (Integer) connTable.getModel().getValueAt(row, 0);
-        PurchaseHistoryReport phr = new PurchaseHistoryReport(application);
-        phr.SetTitle("Customer Purchase History Report");
-        phr.setCustomer(k);
-        phr.buildReport();
-        new ReportTableDialog(parentWin, true, phr, props);
+//        if (al == null || al.size() < 1) {
+//
+//            javax.swing.JOptionPane.showMessageDialog(null,
+//                    "No invoices found for this contact.");
+//            return;
+//        }
+//
+//        k = (Integer) contactTable.getModel().getValueAt(row, 0);
+//        PurchaseHistoryReport phr = new PurchaseHistoryReport(application);
+//        phr.SetTitle("Customer Purchase History Report");
+//        phr.setCustomer(k);
+//        phr.buildReport();
+//        new ReportTableDialog(parentWin, true, phr, props);
 
     }
 
     private void shipToAction() {
         var dialog = new ConnectionsShippingDialog(parentWin, true, this.currentContact.getId(), false, application);
         dialog.display();
-        
+
     }
 
     private void getCountry() {
 
         int[] r = {0};
 
-        TableView tv = new TableView(parentWin, true, db, "countries", 0,
-                "Select a country from the table.", r);
+        //TableView tv = new TableView(parentWin, true, db, "countries", 0,
+         //       "Select a country from the table.", r);
 
-        tv.dispose();
+       // tv.dispose();
 
     }
 
-    Settings props;
-    private DbEngine db = null;
-    //private ConnectionsDAO connDAO = null;
-    private Contact returnValue = null;
-    private boolean selectMode = false;
-    //private Object [] dataOut = new Object [20];
-    private int edit_key = 0;
-    private int[] vals = {0, 15, 14, 13, 12, 11, 10, 3, 3, 3, 3, 3, 6, 6}; //col view removal
-    private java.awt.Frame parentWin;
-    private DbEngine zip;
-    private String nl = System.getProperty("line.separator");
-    private Image winIcon;
-    private boolean small = false;
-    private int searchColumn = 1;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addressPanel;
@@ -2468,8 +2428,12 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     private javax.swing.JTextField cityTextField;
     private javax.swing.JButton clearButton;
     private javax.swing.JTextField companyTextField;
-    private javax.swing.JTable connTable;
+    private javax.swing.JTabbedPane contactDetailTabPane;
+    private javax.swing.JToolBar contactDetailsToolBar;
     private javax.swing.JPanel contactPanel;
+    private javax.swing.JTable contactTable;
+    private javax.swing.JScrollPane contactTableScrollPane;
+    private javax.swing.JPanel contactTableToolPanel;
     private javax.swing.JTextField contactTextField;
     private javax.swing.JComboBox countryCombo;
     private javax.swing.JCheckBox custCheckBox;
@@ -2495,7 +2459,6 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
@@ -2510,18 +2473,14 @@ public class MyConnectionsApp extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JToolBar jToolBar4;
     private javax.swing.JList journalList;
     private javax.swing.JPanel journalPanel;
     private javax.swing.JTextPane journalTextArea;

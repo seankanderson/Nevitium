@@ -1,9 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.datavirtue.nevitium.models.inventory;
 
+import com.datavirtue.nevitium.database.orm.InventoryDao;
 import com.datavirtue.nevitium.models.BaseModel;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -15,7 +12,7 @@ import lombok.Setter;
  * @author SeanAnderson
  */
 @Getter @Setter
-@DatabaseTable(tableName = "inventory")
+@DatabaseTable(tableName = "inventory", daoClass = InventoryDao.class)
 public class Inventory extends BaseModel{    
     @DatabaseField
     private String upc;

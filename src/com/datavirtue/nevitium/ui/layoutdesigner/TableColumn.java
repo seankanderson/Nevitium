@@ -1,4 +1,4 @@
-package com.datavirtue.nevitium.ui.layoutdesign;
+package com.datavirtue.nevitium.ui.layoutdesigner;
 
 class TableColumn {
 

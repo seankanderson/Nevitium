@@ -334,8 +334,6 @@ public class SecurityManager extends javax.swing.JDialog {
                 return canEdit [columnIndex];
             }
         });
-        userTable.setSelectionBackground(new java.awt.Color(204, 255, 255));
-        userTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
         userTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 userTableMouseClicked(evt);

@@ -78,8 +78,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         workingPath = application.getWorkingPath();
 
-        iTable.setSelectionForeground(Color.BLACK);
-
         if (selectMode) {
             receiveModeBox.setVisible(false);
         }

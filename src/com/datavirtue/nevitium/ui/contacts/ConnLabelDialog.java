@@ -22,10 +22,10 @@ public class ConnLabelDialog extends javax.swing.JDialog {
     
     /** Creates new form ConnLabelDialog */
     public ConnLabelDialog(java.awt.Frame parent, boolean modal,
-            javax.swing.table.TableModel tm, int [] selected_rows, String path, Settings props) {
+            javax.swing.table.TableModel tm, int [] selected_rows) {
         super(parent, modal);
         initComponents();
-        workingPath = path;
+        //workingPath = path;
         this.props = props;
          /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();

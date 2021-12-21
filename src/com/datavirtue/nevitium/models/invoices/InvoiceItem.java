@@ -1,10 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.datavirtue.nevitium.models.invoices;
 
-import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.database.orm.InvoiceItemDao;
 import com.datavirtue.nevitium.models.BaseModel;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -17,7 +13,7 @@ import lombok.Setter;
  * @author SeanAnderson
  */
 @Getter @Setter
-@DatabaseTable(tableName = "invoice_items")
+@DatabaseTable(tableName = "invoice_items", daoClass = InvoiceItemDao.class)
 public class InvoiceItem extends BaseModel {
 
     @DatabaseField(foreign=true,foreignAutoRefresh=true)

@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package com.datavirtue.nevitium.ui.layoutdesign;
+package com.datavirtue.nevitium.ui.layoutdesigner;
 
 import com.datavirtue.nevitium.ui.util.PrintPanel;
 import com.datavirtue.nevitium.models.invoices.old.OldInvoice;

@@ -1,5 +1,6 @@
 package com.datavirtue.nevitium.models.invoices;
 
+import com.datavirtue.nevitium.database.orm.InvoiceDao;
 import com.datavirtue.nevitium.models.BaseModel;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
@@ -15,7 +16,7 @@ import lombok.Setter;
  * @author SeanAnderson
  */
 @Getter @Setter
-@DatabaseTable(tableName = "invoices")
+@DatabaseTable(tableName = "invoices", daoClass = InvoiceDao.class)
 public class Invoice extends BaseModel{
 
     @DatabaseField

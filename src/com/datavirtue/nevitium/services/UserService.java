@@ -3,6 +3,7 @@ package com.datavirtue.nevitium.services;
 import com.datavirtue.nevitium.database.orm.UserDao;
 import java.sql.SQLException;
 import com.datavirtue.nevitium.models.security.User;
+import com.j256.ormlite.dao.DaoManager;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -13,7 +14,7 @@ public class UserService extends BaseService<UserDao, User>{
 
     @Override
     public UserDao getDao() throws SQLException {
-        return dao == null ? new UserDao(connection) : dao;
+        return DaoManager.createDao(connection, User.class);
     }
 
     public User getRootAdminUser() throws SQLException {

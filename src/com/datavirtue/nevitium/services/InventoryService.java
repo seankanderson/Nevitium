@@ -1,11 +1,14 @@
 package com.datavirtue.nevitium.services;
 
+import com.datavirtue.nevitium.database.orm.ContactAddressDao;
 import com.datavirtue.nevitium.database.orm.InventoryDao;
+import com.datavirtue.nevitium.models.contacts.ContactJournal;
 import datavirtue.DV;
 import datavirtue.Settings;
 import java.util.List;
 import java.sql.SQLException;
 import com.datavirtue.nevitium.models.inventory.Inventory;
+import com.j256.ormlite.dao.DaoManager;
 
 /**
  *
@@ -74,7 +77,7 @@ public class InventoryService extends BaseService<InventoryDao, Inventory> {
 
     @Override
     public InventoryDao getDao() throws SQLException {
-        return dao == null ? new InventoryDao(connection) : dao;
+        return DaoManager.createDao(connection, Inventory.class);
     }
 
 }

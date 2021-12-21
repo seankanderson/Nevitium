@@ -9,7 +9,7 @@
  * Created on Apr 26, 2011, 11:27:13 PM
  */
 
-package com.datavirtue.nevitium.ui.layoutdesign;
+package com.datavirtue.nevitium.ui.layoutdesigner;
 
 import com.datavirtue.nevitium.ui.util.PrintPanel;
 import datavirtue.DV;

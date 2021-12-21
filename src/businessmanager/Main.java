@@ -87,7 +87,7 @@ public class Main {
         }else if (theme.equals(LocalSettingsService.PURPLE_DARK_THEME)) {
             //javax.swing.UIManager.setLookAndFeel(new FlatGitHubDarkIJTheme());
             javax.swing.UIManager.setLookAndFeel(new FlatDarkPurpleIJTheme());
-            //javax.swing.UIManager.setLookAndFeel(new FlatGrayIJTheme());
+            //javax.swing.UIManager.setLookAndFeel(new FlatGradiantoDarkFuchsiaIJTheme());
         } else if (theme.equals(LocalSettingsService.HIGH_CONTRAST_THEME)) {
             javax.swing.UIManager.setLookAndFeel(new FlatHighContrastIJTheme());
         }

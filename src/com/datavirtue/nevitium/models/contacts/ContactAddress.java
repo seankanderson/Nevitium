@@ -1,6 +1,6 @@
 package com.datavirtue.nevitium.models.contacts;
 
-import com.datavirtue.nevitium.models.contacts.Contact;
+import com.datavirtue.nevitium.database.orm.ContactAddressDao;
 import com.datavirtue.nevitium.models.BaseModel;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -12,7 +12,7 @@ import lombok.Setter;
  * @author SeanAnderson
  */
 @Getter @Setter
-@DatabaseTable(tableName = "contact_addresses")
+@DatabaseTable(tableName = "contact_addresses", daoClass = ContactAddressDao.class)
 public class ContactAddress extends BaseModel {
      
     @DatabaseField(foreign=true,foreignAutoRefresh=true, canBeNull = false)

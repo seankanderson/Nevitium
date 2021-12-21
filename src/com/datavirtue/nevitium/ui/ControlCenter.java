@@ -8,15 +8,15 @@ package com.datavirtue.nevitium.ui;
 
 import com.datavirtue.nevitium.ui.checks.CheckDialog;
 import com.datavirtue.nevitium.ui.inventory.MyInventoryApp;
-import com.datavirtue.nevitium.ui.contacts.MyConnectionsApp;
+import com.datavirtue.nevitium.ui.contacts.ContactsApp;
 import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
 
 import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.database.reports.ReportFactory;
-import com.datavirtue.nevitium.ui.invoices.InvoiceDialog;
+import com.datavirtue.nevitium.ui.invoices.InvoiceApp;
 import com.datavirtue.nevitium.ui.invoices.InvoiceManager;
-import com.datavirtue.nevitium.ui.layoutdesign.InvoiceLayoutManager;
+import com.datavirtue.nevitium.ui.layoutdesigner.InvoiceLayoutManager;
 import com.datavirtue.nevitium.database.reports.ReportTableDialog;
 import businessmanager.ReturnMessageThread;
 import com.datavirtue.nevitium.models.invoices.Invoice;
@@ -33,6 +33,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.JFileChooser;
 import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
+import com.datavirtue.nevitium.services.ExceptionService;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -664,7 +668,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void custInvoiceHistory() {
 
-        MyConnectionsApp cd = new MyConnectionsApp(this, true, application, true, true, false);
+        ContactsApp cd = new ContactsApp(this, true, application, true, true, false);
         cd.setVisible(true);
 
         var contact = cd.getReturnValue();  //real value
@@ -1548,8 +1552,14 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void connectionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectionsButtonActionPerformed
         //Tools.playSound(getClass().getResource("/businessmanager/res/slip.wav"));
-        MyConnectionsApp cd = new MyConnectionsApp(this, true, application, false, true, true);
-        //cd.setVisible(true);
+        ContactsApp cd = new ContactsApp(this, true, application, false, true, true);
+        
+        
+        try {
+            cd.display();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error getting contacts");
+        }
 
         showStatus();
 
@@ -1561,7 +1571,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
 
-        InvoiceDialog id = new InvoiceDialog(this, true, null, application); //no select            id.setVisible(true);
+        InvoiceApp id = new InvoiceApp(this, true, null, application); //no select            id.setVisible(true);
         id.setVisible(true);
         sys_stat = id.getStat();
         id.dispose();
@@ -2486,7 +2496,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         var invoice = new Invoice();
-        InvoiceDialog id = new InvoiceDialog(this, true, invoice, application);
+        InvoiceApp id = new InvoiceApp(this, true, invoice, application);
         id.setVisible(true);
         sys_stat = id.getStat();
         id.dispose();
@@ -2528,7 +2538,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void connectionsItemActionPerformed(java.awt.event.ActionEvent evt) {//event_connectionsItemActionPerformed
         Tools.playSound(getClass().getResource("/businessmanager/res/slip.wav"));
-        MyConnectionsApp cd = new MyConnectionsApp(this, true, application, false, true, true);
+        ContactsApp cd = new ContactsApp(this, true, application, false, true, true);
         //cd.setVisible(true);
 
         showStatus();

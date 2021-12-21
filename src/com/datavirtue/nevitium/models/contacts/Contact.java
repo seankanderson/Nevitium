@@ -1,5 +1,6 @@
 package com.datavirtue.nevitium.models.contacts;
 
+import com.datavirtue.nevitium.database.orm.ContactDao;
 import com.datavirtue.nevitium.models.BaseModel;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
@@ -14,7 +15,7 @@ import lombok.Setter;
  * @author SeanAnderson
  */
 @Getter @Setter
-@DatabaseTable(tableName = "contacts")
+@DatabaseTable(tableName = "contacts", daoClass = ContactDao.class)
 public class Contact extends BaseModel {    
     @DatabaseField
     private String company;

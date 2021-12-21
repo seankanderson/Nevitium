@@ -12,6 +12,7 @@ public class AppSettings {
     private CompanySettings company;
     private DataSettings backups;
     private InternetSettings internet;
+    private ContactSettings contacts;
     private InventorySettings inventory;
     private InvoiceSettings invoice;
     private SecuritySettings security;

@@ -9,7 +9,7 @@
  * Created on Sep 15, 2010, 3:14:09 PM
  */
 
-package com.datavirtue.nevitium.ui.layoutdesign;
+package com.datavirtue.nevitium.ui.layoutdesigner;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import datavirtue.DV;
