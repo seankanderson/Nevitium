@@ -35,8 +35,6 @@ import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -79,7 +77,7 @@ public class ControlCenter extends javax.swing.JFrame {
         
         buildMenu();
         mainToolbar.setLayout(new FlowLayout());
-        statusToolbar.setLayout(new FlowLayout());
+        
         //invoiceButton.setPreferredSize(new Dimension(91,81));
 
         dbsys = new datavirtue.DbEngine("data/main.dsf", application, unicode);
@@ -98,15 +96,12 @@ public class ControlCenter extends javax.swing.JFrame {
         }
 
         mainToolbar.setVisible(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
-
-        pathLabel.setText(workingPath);
-
+        
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
 
         this.setLocation(dim.width, dim.height);
         updateMessage();
-        showStatus();
-
+        
         setBG();
 
         dbsys.setOptimized(true);
@@ -162,72 +157,8 @@ public class ControlCenter extends javax.swing.JFrame {
 
         }
     }
-
-    private String getLastCo(String f) {
-
-        if (new File(f).exists() && new File(f).length() > 0) {
-
-            return DV.readFile(f).trim();
-
-        }
-        return "data/";
-        /* Default, if directory is not present or available */
-
-    }
-
-    /* Displays the role of the current user and changes the win title to reflect the company name. */
-    private void showRole() {
-
-        userButton.setText(accessKey.getUserName());
-
-        if (userButton.getText().equals("No Security")) {
-            userButton.setIcon(new javax.swing.ImageIcon(
-                    getClass().getResource("/businessmanager/res/Aha-48/Unlock.png")));
-        }
-
-        String role = "Master";
-
-        /* Show the role and change the color based on the role, red for master users and green for regular users */
-        //roleButton.setForeground(new java.awt.Color(153,0,0));
-        //change icon
-        roleButton.setIcon(new javax.swing.ImageIcon(
-                getClass().getResource("/businessmanager/res/Aha-48/Boss.png")));
-
-        if (!accessKey.isMaster()) {
-
-            roleButton.setIcon(new javax.swing.ImageIcon(
-                    getClass().getResource("/businessmanager/res/Aha-48/User.png")));
-            role = "User";
-        }
-        roleButton.setText(role);
-
-        this.setTitle("Nevitium  " + '(' + props.getProp("CO NAME") + ')');
-
-    }
-
-    private void showStatus() {
-
-        ArrayList errors = application.getRuntimeIncidentList();
-
-        if (errors.size() > 0) {
-
-            statusButton.setIcon(new javax.swing.ImageIcon(
-                    getClass().getResource("/businessmanager/res/Aha-48/Single problem.png")));
-            pathLabel.setBackground(new java.awt.Color(255, 102, 102));
-
-        } else {
-
-            dbProblem = false;
-            statusButton.setIcon(new javax.swing.ImageIcon(
-                    getClass().getResource("/businessmanager/res/Aha-48/Green earth.png")));
-
-        }
-
-        boolean statShow = DV.parseBool(props.getProp("STATUS LIGHT"), true);
-        statusButton.setVisible(statShow);
-
-    }
-
+  
+   
     private void loadSettings() {
 
         props = new Settings(workingPath + "settings.ini");
@@ -399,8 +330,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
             props = new Settings(workingPath + "settings.ini");
             application.setProps(props);
-            dbsys = new DbEngine("data/main.dsf", application, unicode);
-            showStatus();
+            dbsys = new DbEngine("data/main.dsf", application, unicode);            
         }
     }
 
@@ -435,8 +365,7 @@ public class ControlCenter extends javax.swing.JFrame {
             ad.dispose();
             ad = null;
         }
-
-        showRole();
+        
     }
 
     /**
@@ -457,12 +386,7 @@ public class ControlCenter extends javax.swing.JFrame {
         invoiceButton = new javax.swing.JButton();
         settingsButton = new javax.swing.JButton();
         exitButton = new javax.swing.JButton();
-        jPanel2 = new javax.swing.JPanel();
-        statusToolbar = new javax.swing.JToolBar();
-        statusButton = new javax.swing.JButton();
-        userButton = new javax.swing.JButton();
-        roleButton = new javax.swing.JButton();
-        pathLabel = new javax.swing.JLabel();
+        statusMessagePanel = new javax.swing.JPanel();
         internetStatus = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -557,75 +481,17 @@ public class ControlCenter extends javax.swing.JFrame {
         });
         mainToolbar.add(exitButton);
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        statusMessagePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        statusToolbar.setFloatable(false);
-        statusToolbar.setRollover(true);
-
-        statusButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-48/Green earth.png"))); // NOI18N
-        statusButton.setText("Status");
-        statusButton.setToolTipText("Data Access Status");
-        statusButton.setFocusable(false);
-        statusButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        statusButton.setPreferredSize(new java.awt.Dimension(98, 81));
-        statusButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        statusButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                statusButtonActionPerformed(evt);
-            }
-        });
-        statusToolbar.add(statusButton);
-
-        userButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-48/Lock.png"))); // NOI18N
-        userButton.setText("Security");
-        userButton.setToolTipText("Security Status - Change User");
-        userButton.setFocusable(false);
-        userButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        userButton.setPreferredSize(new java.awt.Dimension(98, 81));
-        userButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        userButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                userButtonActionPerformed(evt);
-            }
-        });
-        statusToolbar.add(userButton);
-
-        roleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-48/Boss.png"))); // NOI18N
-        roleButton.setText("Master");
-        roleButton.setToolTipText("Current Security Role - Manage Security");
-        roleButton.setFocusable(false);
-        roleButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        roleButton.setPreferredSize(new java.awt.Dimension(98, 81));
-        roleButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        roleButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                roleButtonActionPerformed(evt);
-            }
-        });
-        statusToolbar.add(roleButton);
-
-        pathLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        pathLabel.setText("Folder Path");
-
-        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, pathLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 605, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, statusToolbar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 605, Short.MAX_VALUE))
-                .addContainerGap())
+        org.jdesktop.layout.GroupLayout statusMessagePanelLayout = new org.jdesktop.layout.GroupLayout(statusMessagePanel);
+        statusMessagePanel.setLayout(statusMessagePanelLayout);
+        statusMessagePanelLayout.setHorizontalGroup(
+            statusMessagePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 627, Short.MAX_VALUE)
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(pathLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(statusToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 87, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+        statusMessagePanelLayout.setVerticalGroup(
+            statusMessagePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 124, Short.MAX_VALUE)
         );
 
         internetStatus.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -641,7 +507,7 @@ public class ControlCenter extends javax.swing.JFrame {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 631, Short.MAX_VALUE)
                     .add(mainToolbar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 631, Short.MAX_VALUE)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(statusMessagePanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(remoteMessageBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 603, Short.MAX_VALUE)
                         .add(1, 1, 1)
@@ -653,9 +519,9 @@ public class ControlCenter extends javax.swing.JFrame {
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .add(mainToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 182, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(statusMessagePanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(remoteMessageBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 29, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1028,138 +894,14 @@ public class ControlCenter extends javax.swing.JFrame {
 
         dbsys.changePaths(path);
         workingPath = path;
-        pathLabel.setText(workingPath);
-
+        
         if (sec) {
             this.secure(false, false);
         }
 
     }
 
-    private void conversion14to15() {
-        JFileChooser fileChooser = DV.getFileChooser("..");
-
-        java.io.File curFile = fileChooser.getSelectedFile();
-        if (curFile == null) {
-            return;
-        }
-
-        if (!curFile.exists()) {
-
-            return;
-
-        }
-
-        String p = curFile.toString();
-
-        String current_version = DV.readFile("ver.inf").trim();
-
-        de.schlichtherle.io.File f = new de.schlichtherle.io.File(p);
-
-        String[] files = f.list();
-
-        boolean good_import = true;
-
-        if (files != null) {
-
-            int[] results = DV.whichContains(files, "ver.inf");
-            if (results.length < 1) {
-                good_import = false;
-            }
-
-        } else {
-            good_import = false;
-        }
-
-        if (!good_import) {
-
-            /* tell the asshole */
-            javax.swing.JOptionPane.showMessageDialog(null, "The file you tried to import is not a Nevitium Full Export.");
-            return;
-
-        }
-
-        /*Grab the ver file from the import  */
-        new de.schlichtherle.io.File(p + "/ver.inf").copyTo(new File("impver.inf"));
-
-        String import_version = DV.readFile("impver.inf");
-        new de.schlichtherle.io.File("impver.inf").delete();
-
-        if (!import_version.trim().equals(current_version.trim())
-                && !import_version.trim().equals("Version 1.3")) {  // || OR this to allow more versions
-
-            javax.swing.JOptionPane.showMessageDialog(null, "Version mismatch.  Needed: " + current_version + "   Found: " + import_version);
-            return;
-        }
-
-        //dbsys.csvImport("...", f,true, a );
-        f = new de.schlichtherle.io.File(p + "/inventory.csv");
-        int[] a = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
-        if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "inventory", a, true, true);
-        }
-
-        f = new de.schlichtherle.io.File(p + "/connections.csv");
-        a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-        if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "conn", a, true, true, true);
-        }
-
-        f = new de.schlichtherle.io.File(p + "/messages.csv");
-        a = new int[]{0, 1, 2};
-        if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "messages", a, true, true);
-        }
-
-        f = new de.schlichtherle.io.File(p + "/invcat.csv");
-        a = new int[]{0, 1};
-        if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "invcat", a, true, true);
-        }
-
-        f = new de.schlichtherle.io.File(p + "/imageref.csv");
-        a = new int[]{0, 1, 2, 3};
-        if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "imageref", a, true, true);
-        }
-
-        f = new de.schlichtherle.io.File(p + "/miscitems.csv");
-        a = new int[]{0, 1};
-        if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "miscitems", a, true, true);
-        }
-
-        f = new de.schlichtherle.io.File(p + "/invtcat.csv");
-        a = new int[]{0, 1, 2, 3};
-        if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "invtcat", a, true, true);
-        }
-
-        f = new de.schlichtherle.io.File(workingPath + "grps/");
-        if (f.exists()) {
-            new de.schlichtherle.io.File(p + "/grps/").copyAllTo(f);
-        }
-
-        f = new de.schlichtherle.io.File(workingPath + "jrnls/");
-        if (f.exists()) {
-            new de.schlichtherle.io.File(p + "/jrnls/").copyAllTo(f);
-        }
-
-        /*f = new de.schlichtherle.io.File(workingPath + "settings.ini");
-        if (f.exists())new de.schlichtherle.io.File(p + "/settings.ini").copyTo(f);
-         */
-        try {
-
-            f.umount(true, true, true, true);
-
-        } catch (ArchiveException ex) {
-            javax.swing.JOptionPane.showMessageDialog(null, ex.toString());
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "Please Restart Nevitium.");
-        }
-
-    }
-
+    
     private void upgradeImport() {
 
         JFileChooser fileChooser = DV.getFileChooser("..");
@@ -1538,8 +1280,7 @@ public class ControlCenter extends javax.swing.JFrame {
         if (accessKey.checkConfig(500)) {
             new SettingsDialog(this, true, application, true, 0).setVisible(true);
             loadSettings();
-            updateMessage();
-            showStatus();
+            updateMessage();            
             setLookAndFeel();
             setBG();
             mainToolbar.setVisible(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
@@ -1560,9 +1301,7 @@ public class ControlCenter extends javax.swing.JFrame {
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error getting contacts");
         }
-
-        showStatus();
-
+        
     }//GEN-LAST:event_connectionsButtonActionPerformed
 
     private void invoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceButtonActionPerformed
@@ -1576,7 +1315,7 @@ public class ControlCenter extends javax.swing.JFrame {
         sys_stat = id.getStat();
         id.dispose();
         id = null;
-        showStatus();
+        
     }//GEN-LAST:event_invoiceButtonActionPerformed
 
     private void activityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_activityButtonActionPerformed
@@ -1593,7 +1332,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
         i.dispose();
 
-        showStatus();
+        
     }//GEN-LAST:event_activityButtonActionPerformed
 
     private void inventoryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_inventoryButtonActionPerformed
@@ -1605,37 +1344,13 @@ public class ControlCenter extends javax.swing.JFrame {
             }
         });
 
-        showStatus();
+        
 
     }//GEN-LAST:event_inventoryButtonActionPerformed
 
     private void exitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitButtonActionPerformed
         closeAll();
     }//GEN-LAST:event_exitButtonActionPerformed
-
-    private void statusButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_statusButtonActionPerformed
-        DV.showErrorDialog(application.getRuntimeIncidentList());
-    }//GEN-LAST:event_statusButtonActionPerformed
-
-    private void userButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userButtonActionPerformed
-        secure(true, true);
-    }//GEN-LAST:event_userButtonActionPerformed
-
-    private void roleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roleButtonActionPerformed
-        if (accessKey.checkConfig(500)) {
-            new SettingsDialog(this, true, application, true, 3).setVisible(true);
-            loadSettings();
-            updateMessage();
-            showStatus();
-            setLookAndFeel();
-            setBG();
-            mainToolbar.setVisible(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
-        } else {
-
-            accessKey.showMessage("Settings");
-
-        }
-    }//GEN-LAST:event_roleButtonActionPerformed
 
     private void openInvoiceReport() {
 
@@ -1652,7 +1367,7 @@ public class ControlCenter extends javax.swing.JFrame {
             sys_stat = "";
         }
 
-        showStatus();
+        
     }
 
     private void goSettings() {
@@ -1661,7 +1376,7 @@ public class ControlCenter extends javax.swing.JFrame {
             new SettingsDialog(this, true, application, true, 8).setVisible(true);
             loadSettings();
             updateMessage();
-            showStatus();
+            
             setLookAndFeel();
             setBG();
             mainToolbar.setVisible(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
@@ -2373,8 +2088,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         sys_stat = ReportFactory.generateReorderReport(dbsys, props);
-        showStatus();
-
+        
     }//event_reorderReportActionPerformed
 
     private void vendorListActionPerformed(java.awt.event.ActionEvent evt) {//event_vendorListActionPerformed
@@ -2384,8 +2098,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         sys_stat = ReportFactory.generateCustomerReport(dbsys, props, true);
-        showStatus();
-
+        
     }//event_vendorListActionPerformed
 
     private void VendorPhoneListActionPerformed(java.awt.event.ActionEvent evt) {//event_VendorPhoneListActionPerformed
@@ -2396,8 +2109,7 @@ public class ControlCenter extends javax.swing.JFrame {
         }
 
         sys_stat = ReportFactory.generatePhoneList(dbsys, props, false, 11);
-        showStatus();
-
+        
     }//event_VendorPhoneListActionPerformed
 
     private void CustPhoneListActionPerformed(java.awt.event.ActionEvent evt) {//event_CustPhoneListActionPerformed
@@ -2407,8 +2119,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         sys_stat = ReportFactory.generatePhoneList(dbsys, props, true, 11);
-        showStatus();
-
+        
     }//event_CustPhoneListActionPerformed
 
     private void manualItemActionPerformed(java.awt.event.ActionEvent evt) {//event_manualItemActionPerformed
@@ -2449,8 +2160,7 @@ public class ControlCenter extends javax.swing.JFrame {
         }
 
         sys_stat = ReportFactory.generateInventoryStatusReport(dbsys, props);
-        showStatus();
-
+        
     }//event_inventoryReportItemActionPerformed
 
     private void newCompanyItemActionPerformed(java.awt.event.ActionEvent evt) {
@@ -2476,8 +2186,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         sys_stat = ReportFactory.generateCustomerReport(dbsys, props, false);
-        showStatus();
-
+        
     }//event_custReportActionPerformed
 
     private void salesItemActionPerformed(java.awt.event.ActionEvent evt) {//event_salesItemActionPerformed
@@ -2501,8 +2210,7 @@ public class ControlCenter extends javax.swing.JFrame {
         sys_stat = id.getStat();
         id.dispose();
         id = null;
-        showStatus();
-
+        
     }//event_quickItemActionPerformed
 
     private void invoiceItemActionPerformed(java.awt.event.ActionEvent evt) {//event_invoiceItemActionPerformed
@@ -2520,7 +2228,6 @@ public class ControlCenter extends javax.swing.JFrame {
 
         i.dispose();
 
-        showStatus();
     }//event_invoiceItemActionPerformed
 
     private void inventoryItemActionPerformed(java.awt.event.ActionEvent evt) {//event_inventoryItemActionPerformed
@@ -2531,8 +2238,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
             }
         });
-
-        showStatus();
+       
 
     }//event_inventoryItemActionPerformed
 
@@ -2540,8 +2246,7 @@ public class ControlCenter extends javax.swing.JFrame {
         Tools.playSound(getClass().getResource("/businessmanager/res/slip.wav"));
         ContactsApp cd = new ContactsApp(this, true, application, false, true, true);
         //cd.setVisible(true);
-
-        showStatus();
+        
     }//event_connectionsItemActionPerformed
 
     private void settingsItemActionPerformed(java.awt.event.ActionEvent evt) {//event_settingsItemActionPerformed
@@ -2570,7 +2275,7 @@ public class ControlCenter extends javax.swing.JFrame {
     }//event_prepaidItemActionPerformed
 
     private void conversionImportActionPerformed(java.awt.event.ActionEvent evt) {//event_conversionImportActionPerformed
-        conversion14to15();
+        
     }//event_conversionImportActionPerformed
 
     private void toolsMenuMouseClicked(java.awt.event.MouseEvent evt) {//event_toolsMenuMouseClicked
@@ -2601,17 +2306,12 @@ public class ControlCenter extends javax.swing.JFrame {
     private javax.swing.JLabel internetStatus;
     private javax.swing.JButton inventoryButton;
     private javax.swing.JButton invoiceButton;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JToolBar mainToolbar;
-    private javax.swing.JLabel pathLabel;
     private javax.swing.JLabel picLabel;
     private javax.swing.JTextField remoteMessageBox;
-    private javax.swing.JButton roleButton;
     private javax.swing.JButton settingsButton;
-    private javax.swing.JButton statusButton;
-    private javax.swing.JToolBar statusToolbar;
-    private javax.swing.JButton userButton;
+    private javax.swing.JPanel statusMessagePanel;
     // End of variables declaration//GEN-END:variables
 
 }

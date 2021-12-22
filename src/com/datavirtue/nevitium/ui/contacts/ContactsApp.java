@@ -33,10 +33,14 @@ import com.datavirtue.nevitium.models.contacts.ContactJournal;
 import com.datavirtue.nevitium.models.invoices.CustomerInvoiceListTableModel;
 import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.models.settings.AppSettings;
+import com.datavirtue.nevitium.models.settings.CompanySettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ContactJournalService;
 import com.datavirtue.nevitium.services.ContactService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -77,7 +81,7 @@ public class ContactsApp extends javax.swing.JDialog {
         journalService = injector.getInstance(ContactJournalService.class);
         appSettings = injector.getInstance(AppSettingsService.class);
         appSettings.setObjectType(AppSettings.class);
-        
+
         this.application = g;
 
         winIcon = Toolkit.getDefaultToolkit().getImage(ContactsApp.class.getResource("/businessmanager/res/Orange.png"));
@@ -157,14 +161,14 @@ public class ContactsApp extends javax.swing.JDialog {
     public void display() throws SQLException {
 
         accessKey = application.getKey_card();
-        
+
         var settings = appSettings.getObject();
         var company = settings.getCompany();
         this.setTitle(company.getCompanyName() + " Business Contacts");
 
         var contactSettings = appSettings.getObject().getContacts();
-        var defaultSearchField = contactSettings != null 
-                ? contactSettings.getContactDefaultSearchField() 
+        var defaultSearchField = contactSettings != null
+                ? contactSettings.getContactDefaultSearchField()
                 : "Company";
 
         searchFieldCombo.setModel(
@@ -178,9 +182,9 @@ public class ContactsApp extends javax.swing.JDialog {
         var invoiceSettings = appSettings.getObject().getInvoice();
         tax1CheckBox.setText(invoiceSettings.getTax1Name());
         tax2CheckBox.setText(invoiceSettings.getTax2Name());
-        
+
         this.refreshTable();
-        
+
         //check for good stored values
         //if bad do resizing routine if good just position and display
         if (this.checkForScreenSettings()) {
@@ -299,11 +303,19 @@ public class ContactsApp extends javax.swing.JDialog {
     }
 
     private void clearFields() {
-
         currentContact = new Contact();
 
-        String zone = props.getProp("ADDRESS STYLE");
-
+        CompanySettings settings = null;
+        
+        try {
+            settings = appSettings.getObject().getCompany();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching settings");
+            
+        }
+        
+        var countryCode = settings != null ? settings.getAddressFormat() : Locale.getDefault().getCountry();
+        
         keyLabel.setText(currentContact.getId() != null ? currentContact.getId().toString() : "NEW - UNSAVED");  //show the user the key for the record
 
         //populateInvoices(false);
@@ -315,12 +327,12 @@ public class ContactsApp extends javax.swing.JDialog {
         cityTextField.setText("");
         stateTextField.setText("");
         zipTextField.setText("");
-        countryCombo.setSelectedItem(zone);
+        countryCombo.setSelectedItem(countryCode);
         contactTextField.setText("");
         phoneTextField.setText("");
         faxTextField.setText("");
         emailTextField.setText("");
-        wwwTextField.setText("http://");
+        wwwTextField.setText("https://");
         notesTextArea.setText("");
         custCheckBox.setSelected(false);
         supplierCheckBox.setSelected(false);
@@ -487,7 +499,7 @@ public class ContactsApp extends javax.swing.JDialog {
 
         TableColumnModel cm = invoiceTable.getColumnModel();
         TableColumn tc;
-        
+
         if (invoiceTable.getColumnCount() > 2) {
 
             //setup hold table view
@@ -2281,7 +2293,7 @@ public class ContactsApp extends javax.swing.JDialog {
         if (this.currentContact.getId() != null) {
             shipToAction();
         }
-            
+
     }//GEN-LAST:event_shipToButtonActionPerformed
 
     private void invoiceToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceToggleButtonActionPerformed
@@ -2384,7 +2396,6 @@ public class ContactsApp extends javax.swing.JDialog {
         int k = edit_key;
 
         //java.util.ArrayList al = db.search("invoice", 11, Integer.toString(k), false);
-
 //        if (al == null || al.size() < 1) {
 //
 //            javax.swing.JOptionPane.showMessageDialog(null,
@@ -2398,11 +2409,10 @@ public class ContactsApp extends javax.swing.JDialog {
 //        phr.setCustomer(k);
 //        phr.buildReport();
 //        new ReportTableDialog(parentWin, true, phr, props);
-
     }
 
     private void shipToAction() {
-        var dialog = new ConnectionsShippingDialog(parentWin, true, this.currentContact.getId(), false, application);
+        var dialog = new ContactShippingDialog(parentWin, true, this.currentContact.getId(), false, application);
         dialog.display();
 
     }
@@ -2412,10 +2422,8 @@ public class ContactsApp extends javax.swing.JDialog {
         int[] r = {0};
 
         //TableView tv = new TableView(parentWin, true, db, "countries", 0,
-         //       "Select a country from the table.", r);
-
-       // tv.dispose();
-
+        //       "Select a country from the table.", r);
+        // tv.dispose();
     }
 
 

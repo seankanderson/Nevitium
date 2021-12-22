@@ -36,7 +36,7 @@ public class Main {
     }
     
     public static void main(String args[]) throws Exception {
-        setLookAndFeel();
+        LocalSettingsService.setLookAndFeel();
         var frame = new JFrame();        
         frame.setIconImage(Toolkit.getDefaultToolkit().getImage(ControlCenter.class.getResource("/businessmanager/res/Orange.png")));
         frame.setVisible(true);
@@ -46,7 +46,7 @@ public class Main {
         if (LocalSettingsService.getLocalAppSettings() == null) {
             System.exit(-1);
         } 
-        setLookAndFeel();
+        LocalSettingsService.setLookAndFeel();
         try {
             TestDataService.populateTestData();  
         }catch(SQLException e) {
@@ -69,29 +69,5 @@ public class Main {
         });
     }
     
-    private static void setLookAndFeel() throws Exception {        
-        // https://www.formdev.com/flatlaf/themes/#intellij_themes_pack
-        //      Documentation on how to create custom .json themes
-        // https://github.com/JFormDesigner/FlatLaf/tree/main/flatlaf-intellij-themes
-        //      Documentation for LeF themes...just new-up the class you want
-     
-        if (LocalSettingsService.getLocalAppSettings() == null) {
-            javax.swing.UIManager.setLookAndFeel(new FlatArcOrangeIJTheme());
-            return;
-        }
-        
-        var theme = LocalSettingsService.getLocalAppSettings().getTheme();
-        
-        if (theme.equals(LocalSettingsService.ARC_ORANGE_THEME)) {
-             javax.swing.UIManager.setLookAndFeel(new FlatArcOrangeIJTheme());
-        }else if (theme.equals(LocalSettingsService.PURPLE_DARK_THEME)) {
-            //javax.swing.UIManager.setLookAndFeel(new FlatGitHubDarkIJTheme());
-            javax.swing.UIManager.setLookAndFeel(new FlatDarkPurpleIJTheme());
-            //javax.swing.UIManager.setLookAndFeel(new FlatGradiantoDarkFuchsiaIJTheme());
-        } else if (theme.equals(LocalSettingsService.HIGH_CONTRAST_THEME)) {
-            javax.swing.UIManager.setLookAndFeel(new FlatHighContrastIJTheme());
-        }
-       
-        
-    }
+    
 }

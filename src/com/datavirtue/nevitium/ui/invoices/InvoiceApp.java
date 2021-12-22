@@ -17,7 +17,7 @@ import com.datavirtue.nevitium.database.reports.ReportDialog;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.contacts.ContactsApp;
-import com.datavirtue.nevitium.ui.contacts.ConnectionsShippingDialog;
+import com.datavirtue.nevitium.ui.contacts.ContactShippingDialog;
 import com.datavirtue.nevitium.ui.util.NewEmail;
 import com.datavirtue.nevitium.models.invoices.old.OldInvoice;
 import com.datavirtue.nevitium.models.invoices.old.InvoiceModel;
@@ -3530,7 +3530,7 @@ public class InvoiceApp extends javax.swing.JDialog {
             if (a == JOptionPane.YES_OPTION) {
 
                 var shippingDialog
-                        = new ConnectionsShippingDialog(parentWin, true, this.currentInvoice.getCustomerId(), true, application);
+                        = new ContactShippingDialog(parentWin, true, this.currentInvoice.getCustomerId(), true, application);
                 shippingDialog.display();
 
                 var address = shippingDialog.getSelectedAddress();

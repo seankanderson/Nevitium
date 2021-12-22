@@ -10,8 +10,6 @@ package com.datavirtue.nevitium.ui;
 import com.datavirtue.nevitium.ui.util.NewEmail;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.ui.util.Tools;
-import com.datavirtue.nevitium.ui.FontDialog;
-import com.datavirtue.nevitium.ui.ColorChooser;
 import RuntimeManagement.GlobalApplicationDaemon;
 import RuntimeManagement.KeyCard;
 import java.io.*;
@@ -32,6 +30,11 @@ import com.datavirtue.nevitium.models.settings.InvoiceSettings;
 import com.datavirtue.nevitium.models.settings.OutputSettings;
 import com.datavirtue.nevitium.models.settings.SecuritySettings;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.LocalSettingsService;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
 
 /**
  *
@@ -44,7 +47,7 @@ public class SettingsDialog extends javax.swing.JDialog {
     private String workingPath;
     private boolean debug = false;
     private GlobalApplicationDaemon application;
-    private final AppSettingsService settingsService;
+    private final AppSettingsService appSettings;
 
     public SettingsDialog(java.awt.Frame parent, boolean modal,
             GlobalApplicationDaemon application, boolean safe, int tabIndex) {
@@ -54,9 +57,12 @@ public class SettingsDialog extends javax.swing.JDialog {
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
+
+        themeComboBox.setModel(new DefaultComboBoxModel(LocalSettingsService.THEME_NAMES));
+
         Injector injector = DiService.getInjector();
-        settingsService = injector.getInstance(AppSettingsService.class);
-        settingsService.setObjectType(AppSettings.class);
+        appSettings = injector.getInstance(AppSettingsService.class);
+        appSettings.setObjectType(AppSettings.class);
         if (!safe) {
             configEDIButton.setEnabled(false);
         }
@@ -115,8 +121,8 @@ public class SettingsDialog extends javax.swing.JDialog {
         posPrinterPaperWidthSpinner.getModel().setValue(80);
         ///boolean settingsFileExists = (new File(workingPath + "settings.ini")).exists();
         try {
-            var settings = settingsService.getObject();
-            
+            var settings = appSettings.getObject();
+
             if (settings == null) {
                 createNewDefaultSettings();
             }
@@ -127,10 +133,10 @@ public class SettingsDialog extends javax.swing.JDialog {
         }
     }
 
-    private void createNewDefaultSettings() throws SQLException {        
-        settingsService.set(new AppSettings());
-        var settings = settingsService.getObject();
-                
+    private void createNewDefaultSettings() throws SQLException {
+        appSettings.set(new AppSettings());
+        var settings = appSettings.getObject();
+
         settings.setCompany(new CompanySettings());
         settings.setInternet(new InternetSettings());
         settings.getInternet().setEmailSettings(new EmailSettings());
@@ -151,7 +157,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         company.setEmail("");
         company.setTaxId("");
         company.setShowTaxIdOnInvoice(true);
-        company.setAddressFormat("US");
+        company.setAddressFormat(Locale.getDefault().getCountry());
 
         var email = settings.getInternet().getEmailSettings();
         email.setServerAddress("smtp");
@@ -248,18 +254,24 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         invoice.setNextInvoiceNumber(Integer.parseInt(iValue));
         invoice.setNextQuoteNumber(Integer.parseInt(qValue));
-        settingsService.save();
+        appSettings.save();
     }
 
     private void loadSettings() throws SQLException {
         //this.enumerateLayoutFiles(invoiceComboBox, "layout.invoice", props.getProp("INVOICE LAYOUT"));
 
-        var settings = settingsService.getObject();
+        try {
+            var localSettings = LocalSettingsService.getLocalAppSettings();
+            var theme = localSettings.getTheme();
+            themeComboBox.setSelectedItem(theme);
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error loading local settings");
+        }
+
+        var settings = appSettings.getObject();
 
         var internet = settings.getInternet();
         showRemoteMessageCheckbox.setSelected(internet.isShowRemoteMessage());
-
-        showToolbarCheckbox.setSelected(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
 
         var company = settings.getCompany();
         companyNameField.setText(company.getCompanyName());
@@ -305,8 +317,6 @@ public class SettingsDialog extends javax.swing.JDialog {
         emailUserName.setText(email.getServerUsername());
         emailPassword.setText(email.getServerPassword());
 
-        showStatusIconCheckbox.setSelected(Tools.getStringBool(props.getProp("STATUS LIGHT")));
-
         try {
             String fontName = props.getProp("FONT");
             int fontStyle = Integer.parseInt(props.getProp("FONT STYLE"));
@@ -315,7 +325,6 @@ public class SettingsDialog extends javax.swing.JDialog {
             companyNameField.setFont(companyFont);
         } catch (Exception e) {
 
-            DV.writeFile("error.log", "Error parsing Font from the settings.ini file.", true);
             companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
 
         }
@@ -367,11 +376,8 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         try {
             posPrinterPaperWidthSpinner.getModel().setValue(invoice.getRecieptPaperWidthInMm());
-
         } catch (Exception e) {
-
             posPrinterPaperWidthSpinner.getModel().setValue(80);  //Default
-
         }
 
         updateInches();
@@ -429,8 +435,6 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     private void convertOldSettings() {
         showRemoteMessageCheckbox.setSelected(DV.parseBool(props.getProp("REMOTE MESSAGE"), false));
-
-        showToolbarCheckbox.setSelected(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
 
         companyNameField.setText(props.getProp("CO NAME"));
         address2Field.setText(props.getProp("CO ADDRESS"));
@@ -633,7 +637,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     private void saveSettings() {
         try {
-            var settings = settingsService.getObject();
+            var settings = appSettings.getObject();
 
             if (settings == null) {
                 ExceptionService.showErrorDialog(this, null, "Settings were not loaded properly");
@@ -680,8 +684,8 @@ public class SettingsDialog extends javax.swing.JDialog {
             var roundingFactor = (String) this.cashRoundingCombo.getSelectedItem();
             invoice.setCashRoundingRate(
                     roundingFactor == null || roundingFactor.isBlank() || roundingFactor.equals("N/A")
-                    ? 0 
-                    : Double.parseDouble(roundingFactor) 
+                    ? 0
+                    : Double.parseDouble(roundingFactor)
             );
             invoice.setInvoiceName(this.invoiceNameField.getText());
             invoice.setInvoicePrefix(this.invoicePrefixField.getText());
@@ -718,10 +722,26 @@ public class SettingsDialog extends javax.swing.JDialog {
             output.setWatermarkImage(null);
             output.setUserWatermarkInReports(this.useWatermarkOnReportsCheckbox.isSelected());
 
-            settingsService.save();
+            appSettings.save();
         } catch (SQLException e) {
             ExceptionService.showErrorDialog(this, e, "Error saving settings");
         }
+
+        // save theme to local settings if changed        
+        try {
+            var localSettings = LocalSettingsService.getLocalAppSettings();
+            var currentTheme = localSettings.getTheme();
+            var selectedTheme = (String) themeComboBox.getSelectedItem();
+            if (!selectedTheme.equals(currentTheme)) {
+                localSettings.setTheme(selectedTheme);
+                LocalSettingsService.saveLocalAppSettings(localSettings);
+                LocalSettingsService.setLookAndFeel();
+            }
+
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error saving local settings");
+        }
+
         this.dispose();
 
     }
@@ -896,17 +916,6 @@ public class SettingsDialog extends javax.swing.JDialog {
         useSystemDefaultPdfReaderCheckbox = new javax.swing.JCheckBox();
         infoPanel = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
-        jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
-        jLabel15 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel48 = new javax.swing.JLabel();
-        checkUpdatesButton = new javax.swing.JButton();
-        jLabel18 = new javax.swing.JLabel();
-        themeComboBox = new javax.swing.JComboBox();
-        jLabel63 = new javax.swing.JLabel();
         jPanel6 = new javax.swing.JPanel();
         jLabel27 = new javax.swing.JLabel();
         jLabel28 = new javax.swing.JLabel();
@@ -914,10 +923,18 @@ public class SettingsDialog extends javax.swing.JDialog {
         jLabel30 = new javax.swing.JLabel();
         jLabel32 = new javax.swing.JLabel();
         jLabel31 = new javax.swing.JLabel();
+        jPanel8 = new javax.swing.JPanel();
         jLabel38 = new javax.swing.JLabel();
         userLabel = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        showToolbarCheckbox = new javax.swing.JCheckBox();
+        jLabel18 = new javax.swing.JLabel();
+        themeComboBox = new javax.swing.JComboBox();
+        jPanel10 = new javax.swing.JPanel();
+        jLabel14 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel48 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        checkUpdatesButton = new javax.swing.JButton();
         saveButton = new javax.swing.JButton();
         jLabel50 = new javax.swing.JLabel();
 
@@ -1014,7 +1031,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                             .add(taxIdField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                             .add(showTaxIdCheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap(131, Short.MAX_VALUE))
+                .addContainerGap(189, Short.MAX_VALUE))
         );
         jPanel17Layout.setVerticalGroup(
             jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1101,17 +1118,17 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(org.jdesktop.layout.GroupLayout.LEADING, companyInfoPanelLayout.createSequentialGroup()
                         .add(logoBrowse)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(logoField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 663, Short.MAX_VALUE))
+                        .add(logoField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 718, Short.MAX_VALUE))
                     .add(org.jdesktop.layout.GroupLayout.LEADING, companyInfoPanelLayout.createSequentialGroup()
                         .add(screenLogoBrowse)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(companyInfoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(screenPicField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 663, Short.MAX_VALUE)
-                            .add(jLabel44, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 663, Short.MAX_VALUE)))
+                            .add(screenPicField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 718, Short.MAX_VALUE)
+                            .add(jLabel44, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 718, Short.MAX_VALUE)))
                     .add(org.jdesktop.layout.GroupLayout.LEADING, companyInfoPanelLayout.createSequentialGroup()
                         .add(90, 90, 90)
                         .add(companyInfoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 697, Short.MAX_VALUE)
                             .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 504, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
@@ -1209,10 +1226,10 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel42, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(emailAddressField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
-                    .add(emailUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
+                    .add(emailAddressField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 665, Short.MAX_VALUE)
+                    .add(emailUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 665, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel19Layout.createSequentialGroup()
-                        .add(emailServerField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
+                        .add(emailServerField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 570, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 37, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1274,7 +1291,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(EDIPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel19, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(showRemoteMessageCheckbox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)
+                    .add(showRemoteMessageCheckbox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 787, Short.MAX_VALUE)
                     .add(configEDIButton))
                 .addContainerGap())
         );
@@ -1341,10 +1358,10 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(secondaryButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(dataFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 621, Short.MAX_VALUE)
+                    .add(dataFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 689, Short.MAX_VALUE)
                     .add(secondaryCheckBox)
-                    .add(secondaryBackupFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 621, Short.MAX_VALUE)
-                    .add(backupFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 621, Short.MAX_VALUE))
+                    .add(secondaryBackupFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 689, Short.MAX_VALUE)
+                    .add(backupFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 689, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1421,7 +1438,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel11Layout.createSequentialGroup()
-                        .add(jSeparator5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 708, Short.MAX_VALUE)
+                        .add(jSeparator5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 771, Short.MAX_VALUE)
                         .addContainerGap())
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1631,7 +1648,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .add(currencyField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(printZerosCheckBox)))
-                .addContainerGap(138, Short.MAX_VALUE))
+                .addContainerGap(189, Short.MAX_VALUE))
         );
         jPanel12Layout.setVerticalGroup(
             jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1786,7 +1803,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .add(jLabel23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 79, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel62, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE)
+                    .add(jLabel62, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 464, Short.MAX_VALUE)
                     .add(jPanel14Layout.createSequentialGroup()
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                             .add(interestGracePeriodField)
@@ -1892,7 +1909,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(invoiceLayoutComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 197, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layoutPathField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE))
+                    .add(layoutPathField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 686, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
@@ -1968,7 +1985,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(jPanel15Layout.createSequentialGroup()
                         .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(jPanel15Layout.createSequentialGroup()
-                                .add(jLabel21, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
+                                .add(jLabel21, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 142, Short.MAX_VALUE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                 .add(markupField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
@@ -2102,7 +2119,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .add(reportOutputFolderField)
                         .add(quoteOutputFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
                         .add(invoiceOutputFolderField)))
-                .addContainerGap(77, Short.MAX_VALUE))
+                .addContainerGap(139, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2316,68 +2333,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
             jPanel7.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-            jLabel11.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-            jLabel11.setText("Nevitium Invoice Manager 1.5.8.7");
-
-            jLabel12.setForeground(new java.awt.Color(0, 51, 255));
-            jLabel12.setText("www.datavirtue.com");
-            jLabel12.setToolTipText("Click this link to visit datavirtue.com");
-            jLabel12.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent evt) {
-                    jLabel12MouseClicked(evt);
-                }
-                public void mouseEntered(java.awt.event.MouseEvent evt) {
-                    jLabel12MouseEntered(evt);
-                }
-                public void mouseExited(java.awt.event.MouseEvent evt) {
-                    jLabel12MouseExited(evt);
-                }
-            });
-
-            jLabel13.setForeground(new java.awt.Color(0, 51, 255));
-            jLabel13.setText("software@datavirtue.com");
-            jLabel13.setToolTipText("Click this link to email Data Virtue");
-            jLabel13.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent evt) {
-                    jLabel13MouseClicked(evt);
-                }
-                public void mouseEntered(java.awt.event.MouseEvent evt) {
-                    jLabel13MouseEntered(evt);
-                }
-                public void mouseExited(java.awt.event.MouseEvent evt) {
-                    jLabel13MouseExited(evt);
-                }
-            });
-
-            jLabel14.setText("Copyright Data Virtue 2007-2022 - All Rights Reserved.");
-
-            jLabel15.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
-            jLabel15.setText("Programmed in Java Swing");
-
-            jLabel3.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-            jLabel3.setText("Updates:");
-
-            jLabel48.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-            jLabel48.setText("Support: ");
-
-            checkUpdatesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/RRZE/synchronized.png"))); // NOI18N
-            checkUpdatesButton.setText("Check For Updates");
-            checkUpdatesButton.setToolTipText("Tells you if there are new updates for Nevitium.");
-            checkUpdatesButton.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    checkUpdatesButtonActionPerformed(evt);
-                }
-            });
-
-            jLabel18.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-            jLabel18.setText("Select Theme:");
-
-            themeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Acrylic", "Aero ", "Aluminum", "Bernstein", "Fast", "Graphite", "HiFi", "Luna", "McWin", "Mint", "Noire", "Smart", "DEFAULT" }));
-            themeComboBox.setToolTipText("If you have problems after switching themes you need to restart Nevitium");
-
-            jLabel63.setText("Restart Nevitium after changing themes.");
-
-            jPanel6.setBorder(javax.swing.BorderFactory.createTitledBorder(" My System "));
+            jPanel6.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "System Information "));
 
             jLabel27.setText("Operating System:");
 
@@ -2394,10 +2350,6 @@ public class SettingsDialog extends javax.swing.JDialog {
             jLabel31.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
             jLabel31.setText("jLabel31");
 
-            jLabel38.setText("User: ");
-
-            userLabel.setText("User Info");
-
             org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
             jPanel6.setLayout(jPanel6Layout);
             jPanel6Layout.setHorizontalGroup(
@@ -2406,25 +2358,18 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .addContainerGap()
                     .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                         .add(jPanel6Layout.createSequentialGroup()
-                            .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                .add(jPanel6Layout.createSequentialGroup()
-                                    .add(jLabel27)
-                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                    .add(jLabel28))
-                                .add(jPanel6Layout.createSequentialGroup()
-                                    .add(jLabel29)
-                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                    .add(jLabel30))
-                                .add(jPanel6Layout.createSequentialGroup()
-                                    .add(jLabel32)
-                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                    .add(jLabel31)))
-                            .addContainerGap(554, Short.MAX_VALUE))
-                        .add(jPanel6Layout.createSequentialGroup()
-                            .add(jLabel38)
+                            .add(jLabel27)
                             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(userLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
-                            .add(570, 570, 570))))
+                            .add(jLabel28))
+                        .add(jPanel6Layout.createSequentialGroup()
+                            .add(jLabel29)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(jLabel30))
+                        .add(jPanel6Layout.createSequentialGroup()
+                            .add(jLabel32)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(jLabel31)))
+                    .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             );
             jPanel6Layout.setVerticalGroup(
                 jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2441,16 +2386,134 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel32)
                         .add(jLabel31))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                    .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel38)
-                        .add(userLabel))
-                    .addContainerGap(15, Short.MAX_VALUE))
+                    .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             );
 
-            jLabel4.setText("Show Toolbar:");
+            jPanel8.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Local Settings"));
 
-            showToolbarCheckbox.setSelected(true);
+            jLabel38.setText("Operating system user:");
+
+            userLabel.setText("User Info");
+
+            jLabel18.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+            jLabel18.setText("Theme");
+
+            themeComboBox.setToolTipText("If you have problems after switching themes you need to restart Nevitium");
+
+            org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
+            jPanel8.setLayout(jPanel8Layout);
+            jPanel8Layout.setHorizontalGroup(
+                jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel8Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(jPanel8Layout.createSequentialGroup()
+                            .add(jLabel38)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(userLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(580, 580, 580))
+                        .add(jPanel8Layout.createSequentialGroup()
+                            .add(jLabel18)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(themeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 196, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+            );
+            jPanel8Layout.setVerticalGroup(
+                jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel8Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel38)
+                        .add(userLabel))
+                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel18)
+                        .add(themeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            );
+
+            jPanel10.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Nevitium Invoice Manager"));
+
+            jLabel14.setText("Copyright Data Virtue 2007-2022 - All Rights Reserved.");
+
+            jLabel3.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+            jLabel3.setText("Updates:");
+
+            jLabel12.setForeground(new java.awt.Color(0, 102, 255));
+            jLabel12.setText("www.datavirtue.com");
+            jLabel12.setToolTipText("Click this link to visit datavirtue.com");
+            jLabel12.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    jLabel12MouseClicked(evt);
+                }
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    jLabel12MouseEntered(evt);
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    jLabel12MouseExited(evt);
+                }
+            });
+
+            jLabel48.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+            jLabel48.setText("Support: ");
+
+            jLabel13.setForeground(new java.awt.Color(0, 102, 255));
+            jLabel13.setText("software@datavirtue.com");
+            jLabel13.setToolTipText("Click this link to email Data Virtue");
+            jLabel13.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    jLabel13MouseClicked(evt);
+                }
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    jLabel13MouseEntered(evt);
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    jLabel13MouseExited(evt);
+                }
+            });
+
+            checkUpdatesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/RRZE/synchronized.png"))); // NOI18N
+            checkUpdatesButton.setText("Check For Updates");
+            checkUpdatesButton.setToolTipText("Tells you if there are new updates for Nevitium.");
+            checkUpdatesButton.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    checkUpdatesButtonActionPerformed(evt);
+                }
+            });
+
+            org.jdesktop.layout.GroupLayout jPanel10Layout = new org.jdesktop.layout.GroupLayout(jPanel10);
+            jPanel10.setLayout(jPanel10Layout);
+            jPanel10Layout.setHorizontalGroup(
+                jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel10Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(jLabel14)
+                        .add(jPanel10Layout.createSequentialGroup()
+                            .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(jLabel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 167, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(jLabel48)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(jLabel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 168, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(checkUpdatesButton))
+                    .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            );
+            jPanel10Layout.setVerticalGroup(
+                jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel10Layout.createSequentialGroup()
+                    .add(jLabel14)
+                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                    .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel3)
+                        .add(jLabel13)
+                        .add(jLabel48)
+                        .add(jLabel12))
+                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                    .add(checkUpdatesButton)
+                    .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            );
 
             org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
             jPanel7.setLayout(jPanel7Layout);
@@ -2459,62 +2522,21 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .add(jPanel7Layout.createSequentialGroup()
                     .addContainerGap()
                     .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jLabel14)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 708, Short.MAX_VALUE)
-                        .add(checkUpdatesButton)
-                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel15, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel7Layout.createSequentialGroup()
-                                .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 161, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(6, 6, 6)
-                                .add(jLabel48)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 168, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                        .add(jPanel7Layout.createSequentialGroup()
-                            .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                                .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 124, Short.MAX_VALUE))
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                .add(jPanel7Layout.createSequentialGroup()
-                                    .add(themeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                    .add(jLabel63, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE))
-                                .add(showToolbarCheckbox))))
+                        .add(jPanel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addContainerGap())
             );
             jPanel7Layout.setVerticalGroup(
                 jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                 .add(jPanel7Layout.createSequentialGroup()
                     .addContainerGap()
-                    .add(jLabel11)
+                    .add(jPanel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                    .add(jLabel14)
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                    .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel3)
-                        .add(jLabel13)
-                        .add(jLabel48)
-                        .add(jLabel12))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                    .add(jLabel15)
-                    .add(18, 18, 18)
-                    .add(checkUpdatesButton)
-                    .add(18, 18, 18)
                     .add(jPanel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                    .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel18)
-                        .add(themeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jLabel63))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                    .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel4)
-                        .add(showToolbarCheckbox))
-                    .addContainerGap(117, Short.MAX_VALUE))
+                    .add(jPanel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(168, Short.MAX_VALUE))
             );
 
             org.jdesktop.layout.GroupLayout infoPanelLayout = new org.jdesktop.layout.GroupLayout(infoPanel);
@@ -2556,9 +2578,9 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .add(layout.createSequentialGroup()
                     .addContainerGap()
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 862, Short.MAX_VALUE)
+                        .add(jTabbedPane1)
                         .add(layout.createSequentialGroup()
-                            .add(jLabel50, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 706, Short.MAX_VALUE)
+                            .add(jLabel50, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(18, 18, 18)
                             .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 138, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                     .addContainerGap())
@@ -3108,11 +3130,9 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JTextField invoicePrefixField;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
@@ -3137,7 +3157,6 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel38;
     private javax.swing.JLabel jLabel39;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel40;
     private javax.swing.JLabel jLabel41;
     private javax.swing.JLabel jLabel42;
@@ -3163,11 +3182,11 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JLabel jLabel60;
     private javax.swing.JLabel jLabel61;
     private javax.swing.JLabel jLabel62;
-    private javax.swing.JLabel jLabel63;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel13;
@@ -3182,6 +3201,7 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
+    private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JSeparator jSeparator5;
     private javax.swing.JTabbedPane jTabbedPane1;
@@ -3227,7 +3247,6 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JCheckBox showTax1Box;
     private javax.swing.JCheckBox showTax2Box;
     private javax.swing.JCheckBox showTaxIdCheckBox;
-    private javax.swing.JCheckBox showToolbarCheckbox;
     private javax.swing.JTextField statementColorField;
     private javax.swing.JTextField tax1Field;
     private javax.swing.JTextField tax1NameField;

@@ -1,13 +1,12 @@
 package com.datavirtue.nevitium.services;
 
-import com.datavirtue.nevitium.database.orm.ContactAddressDao;
 import com.datavirtue.nevitium.database.orm.InventoryDao;
-import com.datavirtue.nevitium.models.contacts.ContactJournal;
 import datavirtue.DV;
 import datavirtue.Settings;
 import java.util.List;
 import java.sql.SQLException;
 import com.datavirtue.nevitium.models.inventory.Inventory;
+import com.google.inject.Inject;
 import com.j256.ormlite.dao.DaoManager;
 
 /**
@@ -16,6 +15,9 @@ import com.j256.ormlite.dao.DaoManager;
  */
 public class InventoryService extends BaseService<InventoryDao, Inventory> {
 
+    @Inject
+    private AppSettingsService appSettings;
+    
     public InventoryService() {
 
     }
@@ -65,14 +67,14 @@ public class InventoryService extends BaseService<InventoryDao, Inventory> {
 //        });
     }
 
-    public double calculateMarkup(double cost, Settings props) {
-        float points;
-        if (DV.validFloatString(props.getProp("MARKUP"))) {
-            points = Float.parseFloat(props.getProp("MARKUP"));
-        } else {
-            return 0.00;
+    public double calculateMarkup(double cost) throws SQLException {
+        
+        var settings = appSettings.getObject().getInventory();
+        var markupFactor = settings.getDefaultProductMarkupFactor();     
+        if (markupFactor == 0) { 
+            markupFactor = 1; // failsafe to prevent returning zero
         }
-        return cost * points;
+        return cost * markupFactor;
     }
 
     @Override

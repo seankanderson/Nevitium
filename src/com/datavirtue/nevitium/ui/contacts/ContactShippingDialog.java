@@ -35,7 +35,7 @@ import java.util.logging.Logger;
  *
  * @author Data Virtue
  */
-public class ConnectionsShippingDialog extends javax.swing.JDialog {
+public class ContactShippingDialog extends javax.swing.JDialog {
 
     private final Image winIcon;
     private final GlobalApplicationDaemon application;
@@ -56,11 +56,10 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
     /**
      * Creates new form ConnectionsShippingDialog
      */
-    public ConnectionsShippingDialog(java.awt.Frame parent, boolean modal, UUID contactId, boolean selectMode, GlobalApplicationDaemon g) {
+    public ContactShippingDialog(java.awt.Frame parent, boolean modal, UUID contactId, boolean selectMode, GlobalApplicationDaemon g) {
         super(parent, modal);
-
-        Toolkit tools = Toolkit.getDefaultToolkit();
-        winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
+        
+        winIcon = Toolkit.getDefaultToolkit().getImage(ContactShippingDialog.class.getResource("/businessmanager/res/Orange.png"));
         initComponents();
         var injector = DiService.getInjector();
         this.contactService = injector.getInstance(ContactService.class);
@@ -128,6 +127,7 @@ public class ConnectionsShippingDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Shipping Address");
         setAlwaysOnTop(true);
+        setIconImage(winIcon);
         setResizable(false);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());

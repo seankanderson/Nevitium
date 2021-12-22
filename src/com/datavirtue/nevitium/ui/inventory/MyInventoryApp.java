@@ -12,11 +12,9 @@
  */
 package com.datavirtue.nevitium.ui.inventory;
 
-import com.datavirtue.nevitium.ui.StatusDialog;
 import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
-import businessmanager.*;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.util.Tools;
@@ -43,7 +41,9 @@ import java.util.prefs.BackingStoreException;
 import com.datavirtue.nevitium.models.settings.ScreenSettings;
 import com.datavirtue.nevitium.models.settings.WindowSizeAndPosition;
 import com.datavirtue.nevitium.services.AppSettingsService;
+import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
+import org.apache.commons.lang3.StringUtils;
 
 public class MyInventoryApp extends javax.swing.JDialog {
 
@@ -53,7 +53,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
     private AppSettingsService appSettings;
     private Inventory currentItem = new Inventory();
 
-   
     /**
      * Creates new form InventoryDialog
      */
@@ -65,7 +64,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         var injector = DiService.getInjector();
         inventoryService = injector.getInstance(InventoryService.class);
         appSettings = injector.getInstance(AppSettingsService.class);
-        
+
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(MyInventoryApp.class.getResource("/businessmanager/res/Orange.png"));
         this.setIconImage(winIcon);
@@ -99,8 +98,8 @@ public class MyInventoryApp extends javax.swing.JDialog {
         upcTextField.setDocument(new LimitedDocument(14));
         codeTextField.setDocument(new LimitedDocument(16));
         descTextField.setDocument(new LimitedDocument(50));
-        sizeTextField.setDocument(new LimitedDocument(15)); 
-        weightTextField.setDocument(new LimitedDocument(15)); 
+        sizeTextField.setDocument(new LimitedDocument(15));
+        weightTextField.setDocument(new LimitedDocument(15));
         catTextField.setDocument(new LimitedDocument(20));
 
         //Version 1.5
@@ -118,12 +117,11 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
                 try {
                     recordScreenPosition();
-                }catch(Exception exception) {
-                    
-                }
-                
-                // props.setProp("INVENTORY SEARCH", Integer.toString(searchFieldCombo.getSelectedIndex()));
+                } catch (Exception exception) {
 
+                }
+
+                // props.setProp("INVENTORY SEARCH", Integer.toString(searchFieldCombo.getSelectedIndex()));
             }
         });
 
@@ -248,29 +246,28 @@ public class MyInventoryApp extends javax.swing.JDialog {
         //qtyTextField.setInputVerifier(new DecimalPrecisionInputVerifier(2));
     }
 
-    private void recordScreenPosition() throws BackingStoreException, Exception  {
+    private void recordScreenPosition() throws BackingStoreException, Exception {
 
         Point screenLocation = this.getLocationOnScreen();
         Dimension sizeOnScreen = this.getSize();
-        
-        
+
         var localSettings = LocalSettingsService.getLocalAppSettings();
         if (localSettings == null) {
             throw new Exception("Settings are missing");
         }
-        
+
         var screenSettings = localSettings.getScreenSettings();
         if (screenSettings == null) {
-            screenSettings = new ScreenSettings();           
+            screenSettings = new ScreenSettings();
         }
-        
+
         var position = new WindowSizeAndPosition();
         position.setLocation(screenLocation);
         position.setSize(sizeOnScreen);
-        
+
         screenSettings.setInventory(position);
         LocalSettingsService.saveLocalAppSettings(localSettings);
-       
+
     }
 
     private Point defaultScreenPosition;
@@ -351,6 +348,22 @@ public class MyInventoryApp extends javax.swing.JDialog {
         }
     }
 
+    private void calculateMarkup() {
+        if (StringUtils.isEmpty(priceTextField.getText().trim())) {
+            try {
+                double cost = Double.parseDouble(costTextField.getText());
+                var price = inventoryService.calculateMarkup(cost);
+                priceTextField.setText(DV.money(price));
+            } catch (NumberFormatException numberFormatException) {
+                ExceptionService.showErrorDialog(this, numberFormatException, "Error parsing calculated markup number");
+            } catch (SQLException sqlException) {
+                ExceptionService.showErrorDialog(this, sqlException, "Error fetching default markup value settings");
+            }
+            
+        }
+
+    }
+    
     private void setFieldsEnabled(boolean enabled) {
 
         upcTextField.setEnabled(enabled);
@@ -454,7 +467,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (col == 4) { //size
 
-            java.util.List<Inventory> searchResults=null;
+            java.util.List<Inventory> searchResults = null;
 
             try {
                 searchResults = inventoryService.getAllInventoryBySize(findTextField.getText());
@@ -477,7 +490,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (col == 5) { //weight
 
-            java.util.List<Inventory> searchResults=null;
+            java.util.List<Inventory> searchResults = null;
 
             try {
                 searchResults = inventoryService.getAllInventoryByWeight(findTextField.getText());
@@ -500,7 +513,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (col == 6) { //category
 
-            java.util.List<Inventory> searchResults=null;
+            java.util.List<Inventory> searchResults = null;
 
             try {
                 searchResults = inventoryService.getAllInventoryByCategory(findTextField.getText());
@@ -522,7 +535,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (col == 3) { //search for desc
 
-            java.util.List<Inventory> searchResults=null;
+            java.util.List<Inventory> searchResults = null;
 
             try {
                 searchResults = inventoryService.getAllInventoryByDecription(findTextField.getText());
@@ -579,7 +592,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         if (col == 2) {  //Code
 
             java.util.List row = DV.searchTableMulti(iTable.getModel(), 0, text);
-            
+
             if (row != null) {
                 iTable.clearSelection();
                 for (int r = 0; r < row.size(); r++) {
@@ -693,7 +706,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }
 
     private void getNote(int invKey) {
-        
+
     }
 
     private void computePrices() {
@@ -1665,7 +1678,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }//GEN-LAST:event_receiveModeBoxMouseClicked
 
     private void noteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_noteButtonActionPerformed
-       
+
 
     }//GEN-LAST:event_noteButtonActionPerformed
 
@@ -1889,7 +1902,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_HOME) {
 
             //new InventoryNoteDialog(null, true, db, (Integer) dataOut[0], descTextField.getText());
-
         }
 
     }//GEN-LAST:event_iTableKeyPressed
@@ -1958,7 +1970,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
                 if (iTable.getSelectedRow() > -1) {
                     returnValue = new int[1];
-                    returnValue[0] = (Integer) tm.getValueAt(row, 0);                    
+                    returnValue[0] = (Integer) tm.getValueAt(row, 0);
                     this.setVisible(false);
                 }
 
@@ -2202,15 +2214,11 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 //new InventoryNoteDialog(null, true, db, (Integer) dataOut[0], descTextField.getText());
                 this.getNote(k);
             }
-
         }
-
     }//GEN-LAST:event_notesPaneMouseClicked
 
     private void priceTextFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_priceTextFieldFocusGained
-        double cost = Double.parseDouble(costTextField.getText());
-        var price = inventoryService.calculateMarkup(cost, props);
-        priceTextField.setText(DV.money(price));
+        calculateMarkup();
         selectAll(evt);
     }//GEN-LAST:event_priceTextFieldFocusGained
 
