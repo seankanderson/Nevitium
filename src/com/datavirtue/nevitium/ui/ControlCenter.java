@@ -22,18 +22,18 @@ import businessmanager.ReturnMessageThread;
 import com.datavirtue.nevitium.models.invoices.Invoice;
 import datavirtue.*;
 import de.schlichtherle.io.*;
-import com.datavirtue.nevitium.services.DiService;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.Image;
 import java.io.IOException;
-import java.util.*;
 import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.JFileChooser;
 import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
+import com.datavirtue.nevitium.services.DatabaseService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.UserService;
+import com.google.inject.Inject;
 import java.sql.SQLException;
 
 /**
@@ -44,10 +44,12 @@ import java.sql.SQLException;
 public class ControlCenter extends javax.swing.JFrame {
 
     private KeyCard accessKey;
-    private boolean log = false;
-    private boolean unicode = false;
     private Toolkit tools = Toolkit.getDefaultToolkit();
-    private final AppSettingsService settingsService;
+    @Inject
+    private final AppSettingsService appSettingsService=null;
+    private AppSettings appSettings;
+    @Inject
+    private UserService userService;
 
     /**
      * Creates new form ControlCenter
@@ -57,95 +59,57 @@ public class ControlCenter extends javax.swing.JFrame {
         //this.getLookAndFeel();
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-
                 closeAll();
-
             }
         });
 
-        System.setProperty("http.agent", "Nevitium 1.5.9");
-
+        System.setProperty("http.agent", "Nevitium");
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
-
         initComponents();
-
-        var injector = DiService.getInjector();
-        settingsService = injector.getInstance(AppSettingsService.class);
-        settingsService.setObjectType(AppSettings.class);
-        
-        //var o = settingsService..
         
         buildMenu();
-        mainToolbar.setLayout(new FlowLayout());
+    }
+    
+    public void display() {
         
-        //invoiceButton.setPreferredSize(new Dimension(91,81));
-
-        dbsys = new datavirtue.DbEngine("data/main.dsf", application, unicode);
-
-        /* Check to see if workingPath.conn.db can read / write */
-        boolean setCo = false;
-        application.setWorkingPath(workingPath);
-
-        application.setDb(this.dbsys);
-        setCo = this.previousCompany(workingPath);
-
-        while (setCo == false) {  //**** The directory was moved or invalid ****
-
-            setCo = getCoDialog(true);  //**** Send user back to the Open Co Dialog ****
-
-        }
-
-        mainToolbar.setVisible(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
-        
+        appSettingsService.setObjectType(AppSettings.class);   
+                
+        mainToolbar.setLayout(new FlowLayout());      
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-
         this.setLocation(dim.width, dim.height);
-        updateMessage();
         
+        try {
+            
+            appSettings = this.appSettingsService.getObject();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching settings from database");
+        }
+        updateMessage();        
         setBG();
-
-        dbsys.setOptimized(true);
-
+        this.setVisible(true);
+        this.authenticateUser();
     }
+ 
+    private void setBG()  {
 
-    private void getUnicodeProperty(String path) {
-
-        if (!new File(path + "encode.char").exists()) {
-            DV.writeFile(path + "encode.char", "ASCII", false);
+        try {
+            String screenPic = appSettingsService.getObject().getCompany().getMainScreenLogo();
+            picLabel.setIcon(new javax.swing.ImageIcon(screenPic));
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching settings");
         }
-
-        String char_encoding = DV.readFile(path + "encode.char");
-
-        //System.out.println(char_encoding);
-        if (char_encoding.trim().equalsIgnoreCase("utf") || char_encoding.trim().equalsIgnoreCase("unicode")) {
-            unicode = true;
-            System.out.println("UNICODE");
-        } else {
-            unicode = false;
-            System.out.println("NOT UNICODE");
-        }
-
-        dbsys.setUnicode(unicode, "data/main.dsf");
-
-    }
-
-    private void setBG() {
-
-        String screenPic = props.getProp("SCREEN");
-        picLabel.setIcon(new javax.swing.ImageIcon(screenPic));
 
     }
 
     private void updateMessage() {
 
-        boolean get;
-        get = DV.parseBool(props.getProp("REMOTE MESSAGE"), true);
-        if (!get) {
+        
+        if (!appSettings.getInternet().isShowRemoteMessage()) {
             internetStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Disconnect.png")));
         } else {
             internetStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Connect.png")));
         }
-        if (get) {
+        if (appSettings.getInternet().isShowRemoteMessage()) {
             /* Thread Example */
             ReturnMessageThread rm = new ReturnMessageThread("http://datavirtue.com/nevitium/update/nevstat.txt",
                     remoteMessageBox, internetStatus);
@@ -158,216 +122,37 @@ public class ControlCenter extends javax.swing.JFrame {
         }
     }
   
-   
-    private void loadSettings() {
-
-        props = new Settings(workingPath + "settings.ini");
-        application.setProps(props);
-
-        this.setTitle("Nevitium  " + '(' + props.getProp("CO NAME") + ')');
-        //props.setProp("DATA FOLDER", workingPath);
-    }
+  
 
     private void backup() {
-
-        if (!dbProblem) {
-            String coName = props.getProp("CO NAME");
-            coName = coName.replace(',', ' ').replace('*', ' ');
-            boolean problem = false;
-            String date = DV.getFullDate().replace('/', '-').replace(' ', '-').replace(',', ' ');
-
-            String message = "There was a problem creating the backup!";
-            FileDialog fd = new FileDialog(this, true, props.getProp("BACKUP FOLDER"), coName + "_Backup_" + date + ".zip");
-            fd.setVisible(true);
-
-            if (fd.getPath().equals("")) {
-                return;
-            }
-
-            try {
-                if (new File(fd.getFolder()).exists()) {
-
-                    javax.swing.JOptionPane.showMessageDialog(null,
-                            "Make sure no one attempts to access " + workingPath + " with another copy of Nevitium during the backup.");
-
-                    unlockData();
-
-                    File backup1 = new File(fd.getPath());
-
-                    File dataFolder = new File(workingPath);  //updated        
-
-                    dataFolder.archiveCopyAllTo(backup1);
-
-                    if (!backup1.exists()) {
-                        problem = true;
-                        message = "There was a problem trying to create the zip file. Make sure there are no invalid characters in the file name.";
-                    }
-
-                    backup1 = null;
-                    dataFolder = null;
-
-                    if (lockData(workingPath) == false) {
-                        closeAll();
-                    }
-                } else {
-
-                    message = "The Backup Folder" + System.getProperty("line.separator")
-                            + fd.getPath() + System.getProperty("line.separator") + "   does NOT exsist.";
-
-                    problem = true;
-                }
-
-                if (DV.parseBool(props.getProp("SECONDARY BACKUP"), false) && new File(props.getProp("SECONDARY FOLDER")).exists()) {
-
-                    File backup2 = new File(props.getProp("SECONDARY FOLDER") + coName + "_Backup_" + date + ".zip");
-                    //TODO: change to working folder
-                    File dataFolder2 = new File(this.workingPath);
-
-                    dataFolder2.archiveCopyAllTo(backup2);
-                    if (!backup2.exists()) {
-                        problem = true;
-                        message = "There was a problem trying to create the secondary zip file. Make sure there are no invalid characters in the file name.";
-                    }
-                    backup2 = null;
-                    dataFolder2 = null;
-
-                } else {
-                    if (props.getProp("SECONDARY BACKUP").equalsIgnoreCase("true")) {  //if i'm in here
-                        message = "The Backup Folder" + System.getProperty("line.separator")
-                                + props.getProp("SECONDARY FOLDER") + "   does NOT exsist.";
-
-                        problem = true;
-                    }
-                }
-            } catch (Exception e) {
-
-                problem = true;
-                DV.writeFile("backup.err", e.toString() + System.getProperty("line.separator") + DV.getShortDate(), true);
-
-            }
-            if (problem) {
-                JOptionPane.showMessageDialog(this, message);
-            } else {
-                JOptionPane.showMessageDialog(this, "Backup : " + fd.getPath() + nl + " Successful.");
-            }
-
-        } else {
-            JOptionPane.showMessageDialog(this, "The Database is reporting problems, backup aborted.");
-        }
+        
     }
 
     private void restore() {
 
-        boolean problem = false;
-        String message = "There was a problem restoring the backup!";
-
-        try {
-
-            //insert file mamanger / picker
-            File file;
-            String f;
-
-            if (props.getProp("BACKUP FOLDER").equals("")) {
-                f = ".";
-            } else {
-                f = props.getProp("BACKUP FOLDER");
-            }
-
-            //System.out.println(f);
-            file = new File(f);
-            JFileChooser fileChooser = new JFileChooser(file);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            int returnVal = fileChooser.showOpenDialog(this);
-            java.io.File curFile = fileChooser.getSelectedFile();
-
-            if (returnVal == JFileChooser.CANCEL_OPTION) {
-                return;
-            }
-
-            if (curFile == null) {
-                return;
-            }
-
-            //File backup1 = new File(curFile.toString());
-            File dataFolder = new File(workingPath);
-            File backup = new File(curFile.toString());
-
-            //check to make sure we are restoring nevitium backup
-            String[] files = backup.list();  //get a list of files in .zip file
-
-            Arrays.sort(files);  //sort the dang thing before you can do a search
-
-            if (Arrays.binarySearch(files, "conn.db") > -1) {  //search and compare return value
-
-                javax.swing.JOptionPane.showMessageDialog(null,
-                        "Make sure no one attempts to access " + workingPath + " with another copy of Nevitium during the restore.");
-
-                unlockData();
-
-                backup.archiveCopyAllTo(dataFolder);  //restore the data
-
-                //lockData(workingPath);
-            } else {
-
-                message = "The file you tried to restore was not a valid Nevitium Backup.";
-                problem = true;
-            }
-
-        } catch (Exception e) {
-
-            problem = true;
-            DV.writeFile("restore.err", e.toString() + System.getProperty("line.separator") + DV.getShortDate(), true);
-
-        }
-        //insert message
-        if (problem) {
-            JOptionPane.showMessageDialog(this, message);
-        } else {
-            JOptionPane.showMessageDialog(this, "Restore Successful");
-        }
-
-        if (dbProblem && !problem) {
-
-            props = new Settings(workingPath + "settings.ini");
-            application.setProps(props);
-            dbsys = new DbEngine("data/main.dsf", application, unicode);            
-        }
-    }
-
-    private void secure(boolean menu, boolean change) {
-
-        //System.out.println("Secure run!");
-        AccessDialog ad = new AccessDialog(null, true, dbsys, workingPath);
-
-        if (ad.isSecure()) {
-            if (ad.isAllowed()) {
-                accessKey = ad.getKeyCard();
-                application.setKey_card(accessKey);
-                if (debug) {
-                    System.out.println("Keycard assigned!");
-                }
-                ad.dispose();
-                ad = null;
-            } else {
-                if (!change) {
-                    System.exit(-3);
-                }
-                return;
-            }
-        } else {
-            if (menu) {
-                javax.swing.JOptionPane.showMessageDialog(null, "Security is not currently enabled.  Go to File-->Settings-->Security, to enable security & manage users. ");
-            }
-            Object[] defUser = new Object[]{new Integer(0),
-                "No Security", "", true};
-            accessKey = new KeyCard(defUser); //default full control
-            application.setKey_card(accessKey);
-            ad.dispose();
-            ad = null;
-        }
         
     }
 
+    private void authenticateUser() {        
+        try {
+           if (this.userService.isSecurityEnabled()) {
+               var accessDialog = new AccessDialog(this, true);
+                              
+               accessDialog.display();
+               
+               if (accessDialog.wasCanceled() || accessDialog.getUser() == null) {
+                   System.exit(0);
+               }else {
+                   UserService.setCurrentUser(accessDialog.getUser());
+               }
+           }
+                     
+            
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error checking security status in database");
+        }
+    }
+   
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -567,7 +352,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return this.newCompany();
         }
         if (action.equals("previous")) {
-            return this.previousCompany(ocd.getPath());
+            //return this.previousCompany(ocd.getPath());
         }
         ocd = null;
 
@@ -575,95 +360,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
     }
 
-    private boolean previousCompany(String folder) {
-
-        if (!new File(folder).exists()) {
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    folder + "  Is not available or doesn't exist.");
-            return false;
-        }
-
-        if (isFolderNevitium(folder)) {
-            return this.setCompany(folder);
-        } else if (Tools.isFolderEmpty(folder)) {
-            return this.setCompany(folder);
-        } else {
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "Nevitium tried unsuccessfully to load a database from " + folder);
-            return false;
-        }
-
-    }
-
-    private void addToPrevious(String newFolder) {
-
-        String newLine = System.getProperty("line.separator");
-
-        boolean match = false;
-
-        java.util.ArrayList al = new java.util.ArrayList();
-
-        java.io.BufferedReader in = null;
-        try {
-
-            if (!new File("prev.inf").exists()) {
-
-                DV.writeFile("prev.inf", workingPath + newLine, true);
-            }
-
-            in = new java.io.BufferedReader(new java.io.FileReader("prev.inf"));
-
-            String line = "";
-
-            while (line != null) {
-
-                line = in.readLine();
-                al.add(line);
-
-            }
-            al.trimToSize();
-
-            in.close();
-            in = null;    //clean up
-            line = null;
-
-            String tmp;
-            for (int i = 0; i < al.size(); i++) {
-
-                tmp = (String) al.get(i);
-                if (tmp == null) {
-                    break;
-                }
-
-                if (tmp.equals(newFolder)) {
-                    match = true;
-                }
-            }
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-        } finally {
-            try {
-
-                if (in != null) {
-                    in.close();
-                }
-                in = null;
-
-            } catch (IOException ex) {
-
-                ex.printStackTrace();
-
-            }
-        }
-
-        if (!match) {
-
-            DV.writeFile("prev.inf", newFolder + newLine, true);
-        }
-    }
+   
 
     private boolean newCompany() {
 
@@ -706,202 +403,25 @@ public class ControlCenter extends javax.swing.JFrame {
     }
 
     private boolean createCompany(String path) {
-        /* Set company with no security because we have not created
-             the Master user yet */
-        this.setCompany(path, false);  ///no security yet
-
-        /* New company folder is set now create the Master
-             user with no password hence security is disabled */
-        try {
-            Object[] user = new Object[12];
-            user[0] = new Integer(0);
-            user[1] = "Master";
-            user[2] = "";//password
-            user[3] = true;//master
-            user[4] = new Long(300);
-            user[5] = new Long(300);
-            user[6] = new Long(500);
-            user[7] = new Long(300);
-            user[8] = new Long(100);
-            user[9] = new Long(100);
-            user[10] = new Long(100);
-            user[11] = new Long(100);
-            dbsys.saveRecord("users", user, false);
-        } catch (Exception e) {
-            return false;
-        }
-        /* We now run a security check but the Master has no password
-             so the security check will automatically clear*/
-        this.secure(true, false);
-        this.setCompany(path);
-
+       
         return true;
     }
 
     private boolean openCompany() {
 
-        JFileChooser fileChooser = new JFileChooser(".");
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int returnVal = fileChooser.showOpenDialog(this);
-        java.io.File curFile = fileChooser.getSelectedFile();
-
-        if (returnVal == JFileChooser.CANCEL_OPTION) {
-            return false;
-        }
-
-        if (curFile == null) {
-            return false;
-        }
-        String newPath = curFile.getPath() + System.getProperty("file.separator");
-
-        /* Check to make sure the selected folder is a valid Nevitium folder. */
-
- /* Check to see if the folder is empty, if yes ask to setup a new co if no move on */
-        if (Tools.isFolderEmpty(newPath)) {
-
-            int a = javax.swing.JOptionPane.showConfirmDialog(null,
-                    "The folder you selected is empty; do you want to create a company there?", "Empty Folder", JOptionPane.YES_NO_OPTION);
-            if (a == 0) {
-                return createCompany(newPath);
-            } else {
-                return false;
-            }
-
-        }
-
-        if (this.isFolderNevitium(newPath)) {
-            return this.setCompany(newPath);
-        } else {
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    newPath + "  Is not a Nevitium folder.");
-            return false;
-        }
-
+     return true;
     }
 
-    private boolean isFolderNevitium(String folder) {
-        /* I should probably make this more comprehensive. */
-        if (new File(folder + "conn.db").exists() || new File(folder + "invoice.db").exists()) {
-            return true;
-        }
-        return false;
+   
 
-    }
-
-    private boolean setCompany(String path) {
-
-        return setCompany(path, true);
-
-    }
-
-    private void unlockData() {
-
-        try {
-            if (fl != null) {
-                fl.release();
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(null, "There was a problem closing the control file; contact support for help.");
-        }
-
-    }
-
-    private boolean lockData(String path) {
-
-        unlockData();
-
-        java.io.File ctrlFile;
-
-        try {
-            ctrlFile = new java.io.File(path + "data.run");
-
-            fos = new java.io.FileOutputStream(ctrlFile);
-            fl = fos.getChannel().tryLock();
-
-            if (fl == null) {
-
-                javax.swing.JOptionPane.showMessageDialog(null, "Only one user can access " + path);
-
-                return false;
-            }
-        } catch (Exception ex) {
-
-            javax.swing.JOptionPane.showMessageDialog(null, "There was a problem accessing: '" + path + "'" + nl
-                    + "You may not have permissions to access this folder.");
-            return false;
-        }
-        return true;
-
-    }
+   
 
     /* Used by openCompany, newCompany, getCoDialog, Constructor */
-    private boolean setCompany(String path, boolean secure) {
-
-        if (path == null) {
-            return false;
-        }
-
-        /*  
-         Try to get a lock on data.run before trying to access the data files.
-         
-         */
-        if (!lockData(path)) {
-
-            return false;
-
-        }
-
-        if (new File(path).isDirectory()) {
-
-            workingPath = path;
-            this.getUnicodeProperty(path);
-            this.changeDbPaths(path, false);  //Change the directory of the db files with no security check ****
-
-            if (!new File(path + "settings.ini").exists()) {
-
-                application.setWorkingPath(path);
-
-                application.setDb(dbsys);
-
-                //where is security setting ?
-                application.setKey_card(accessKey);
-                new SettingsDialog(this, true, application, false, 0).setVisible(true);
-
-            }
-        }
-
-        this.loadSettings();
-        String layout_folder = path + "layouts" + this.file_sep;
-
-        //System.out.println(layout_folder);
-        if (secure) {
-            this.secure(false, false);
-        }
-
-        props.setProp("DATA FOLDER", workingPath);
-        application.setWorkingPath(workingPath);
-
-        setBG();
-
-        this.addToPrevious(workingPath);
+    private boolean setCompany() {
 
         return true;
-
     }
-
-    private void changeDbPaths(String path, boolean sec) {
-
-        dbsys.changePaths(path);
-        workingPath = path;
-        
-        if (sec) {
-            this.secure(false, false);
-        }
-
-    }
-
-    
+   
     private void upgradeImport() {
 
         JFileChooser fileChooser = DV.getFileChooser("..");
@@ -963,146 +483,146 @@ public class ControlCenter extends javax.swing.JFrame {
         f = new de.schlichtherle.io.File(p + "/inventory.csv");
         int[] a = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "inventory", a, true, true);
+            //new ImportDialog(null, true, f, dbsys, "inventory", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/invnotes.csv");
         a = new int[]{0, 1, 2, 3};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "invnotes", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "invnotes", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/conn.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "conn", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "conn", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/connship.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "connship", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "connship", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/invoice.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "invoice", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "invoice", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/shipto.csv");
         a = new int[]{0, 1, 2, 3};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "shipto", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "shipto", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/invitems.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "invitems", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "invitems", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/payments.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "payments", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "payments", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/returns.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "returns", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "returns", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/messages.csv");
         a = new int[]{0, 1, 2};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "messages", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "messages", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/quote.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "quote", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "quote", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/qitems.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "qitems", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "qitems", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/qshipto.csv");
         a = new int[]{0, 1, 2, 3};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "qshipto", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "qshipto", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/invcat.csv");
         a = new int[]{0, 1};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "invcat", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "invcat", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/imageref.csv");
         a = new int[]{0, 1, 2, 3};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "imageref", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "imageref", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/card.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "card", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "card", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/users.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "users", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "users", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/countries.csv");
         a = new int[]{0, 1, 2, 3};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "countries", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "countries", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/auditlog.csv");
         a = new int[]{0, 1, 2, 3};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "auditlog", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "auditlog", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/miscitems.csv");
         a = new int[]{0, 1};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "miscitems", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "miscitems", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/checkpayee.csv");
         a = new int[]{0, 1, 2, 3};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "checkpayee", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "checkpayee", a, true, true);
         }
 
         f = new de.schlichtherle.io.File(p + "/invtcat.csv");
         a = new int[]{0, 1, 2, 3};
         if (f.exists()) {
-            new ImportDialog(null, true, f, dbsys, "invtcat", a, true, true);
+//            new ImportDialog(null, true, f, dbsys, "invtcat", a, true, true);
         }
 
-        f = new de.schlichtherle.io.File(workingPath + "grps/");
+//        f = new de.schlichtherle.io.File(workingPath + "grps/");
         if (f.exists()) {
             new de.schlichtherle.io.File(p + "/grps/").copyAllTo(f);
         }
 
-        f = new de.schlichtherle.io.File(workingPath + "jrnls/");
+//        f = new de.schlichtherle.io.File(workingPath + "jrnls/");
         if (f.exists()) {
             new de.schlichtherle.io.File(p + "/jrnls/").copyAllTo(f);
         }
 
-        f = new de.schlichtherle.io.File(workingPath + "settings.ini");
+//        f = new de.schlichtherle.io.File(workingPath + "settings.ini");
         if (f.exists()) {
             new de.schlichtherle.io.File(p + "/settings.ini").copyTo(f);
         }
@@ -1151,118 +671,118 @@ public class ControlCenter extends javax.swing.JFrame {
         sd.addStatus("Exporting Inventory...");
         de.schlichtherle.io.File f = new de.schlichtherle.io.File(p + "/inventory.csv");
         int[] a = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
-        dbsys.csvExport("inventory", f, a);
+//        dbsys.csvExport("inventory", f, a);
 
         sd.addStatus("Exporting Inventory Notes...");
         f = new de.schlichtherle.io.File(p + "/invnotes.csv");
         a = new int[]{0, 1, 2, 3};
-        dbsys.csvExport("invnotes", f, a);
+//        dbsys.csvExport("invnotes", f, a);
 
         sd.addStatus("Exporting My Connections...");
         f = new de.schlichtherle.io.File(p + "/conn.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
-        dbsys.csvExport("conn", f, a);
+        //dbsys.csvExport("conn", f, a);
 
         sd.addStatus("Exporting My Connections Ship To...");
         f = new de.schlichtherle.io.File(p + "/connship.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-        dbsys.csvExport("connship", f, a);
+        //dbsys.csvExport("connship", f, a);
 
         sd.addStatus("Exporting Country data...");
         f = new de.schlichtherle.io.File(p + "/countries.csv");
         a = new int[]{0, 1, 2, 3, 4, 5};
-        dbsys.csvExport("countries", f, a);
+        //dbsys.csvExport("countries", f, a);
 
         sd.addStatus("Exporting Invoices...");
         f = new de.schlichtherle.io.File(p + "/invoice.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-        dbsys.csvExport("invoice", f, a);
+        //dbsys.csvExport("invoice", f, a);
 
         sd.addStatus("Exporting Invoice ShipTo...");
         f = new de.schlichtherle.io.File(p + "/shipto.csv");
         a = new int[]{0, 1, 2, 3};
-        dbsys.csvExport("shipto", f, a);
+        //dbsys.csvExport("shipto", f, a);
 
         sd.addStatus("Exporting Invoice Items...");
         f = new de.schlichtherle.io.File(p + "/invitems.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        dbsys.csvExport("invitems", f, a);
+        //dbsys.csvExport("invitems", f, a);
 
         sd.addStatus("Exporting Invoice Returns...");
         f = new de.schlichtherle.io.File(p + "/returns.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        dbsys.csvExport("returns", f, a);
+        //dbsys.csvExport("returns", f, a);
 
         sd.addStatus("Exporting Invoice Payments...");
         f = new de.schlichtherle.io.File(p + "/payments.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6};
-        dbsys.csvExport("payments", f, a);
+        //dbsys.csvExport("payments", f, a);
 
         sd.addStatus("Exporting Quotes...");
         f = new de.schlichtherle.io.File(p + "/quote.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-        dbsys.csvExport("quote", f, a);
+        //dbsys.csvExport("quote", f, a);
 
         sd.addStatus("Exporting Quote Items...");
         f = new de.schlichtherle.io.File(p + "/qitems.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        dbsys.csvExport("qitems", f, a);
+        //dbsys.csvExport("qitems", f, a);
 
         sd.addStatus("Exporting Quote ShipTo...");
         f = new de.schlichtherle.io.File(p + "/qshipto.csv");
         a = new int[]{0, 1, 2, 3};
-        dbsys.csvExport("qshipto", f, a);
+        //dbsys.csvExport("qshipto", f, a);
 
         sd.addStatus("Exporting Prepaid Accounts...");
         f = new de.schlichtherle.io.File(p + "/card.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6};
-        dbsys.csvExport("card", f, a);
+        //dbsys.csvExport("card", f, a);
 
         sd.addStatus("Exporting Users...");
         f = new de.schlichtherle.io.File(p + "/users.csv");
         a = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-        dbsys.csvExport("users", f, a);
+        //dbsys.csvExport("users", f, a);
 
         sd.addStatus("Exporting Audit Log...");
         f = new de.schlichtherle.io.File(p + "/auditlog.csv");
         a = new int[]{0, 1, 2, 3};
-        dbsys.csvExport("auditlog", f, a);
+        //dbsys.csvExport("auditlog", f, a);
 
         sd.addStatus("Exporting Misc Items Memory...");
         f = new de.schlichtherle.io.File(p + "/miscitems.csv");
         a = new int[]{0, 1};
-        dbsys.csvExport("miscitems", f, a);
+        //dbsys.csvExport("miscitems", f, a);
 
         sd.addStatus("Exporting Check Payees Memory...");
         f = new de.schlichtherle.io.File(p + "/chkpayee.csv");
         a = new int[]{0, 1};
-        dbsys.csvExport("chkpayee", f, a);
+        //dbsys.csvExport("chkpayee", f, a);
 
         sd.addStatus("Exporting Invoice Messages...");
         f = new de.schlichtherle.io.File(p + "/messages.csv");
         a = new int[]{0, 1, 2};
-        dbsys.csvExport("messages", f, a);
+        //dbsys.csvExport("messages", f, a);
 
         sd.addStatus("Exporting Inventory Category Memory...");
         f = new de.schlichtherle.io.File(p + "/invtcat.csv");
         a = new int[]{0, 1};
-        dbsys.csvExport("invtcat", f, a);
+        //dbsys.csvExport("invtcat", f, a);
 
         sd.addStatus("Exporting Inventory Image References...");
         f = new de.schlichtherle.io.File(p + "/imageref.csv");
         a = new int[]{0, 1, 2, 3};
-        dbsys.csvExport("imgref", f, a);
+        //dbsys.csvExport("imgref", f, a);
 
         sd.addStatus("Copying Inventory Groups...");
         f = new de.schlichtherle.io.File(p + "/grps/");
-        new de.schlichtherle.io.File(workingPath + "grps").copyAllTo(f);
+//        new de.schlichtherle.io.File(workingPath + "grps").copyAllTo(f);
 
         sd.addStatus("Copying My Connections Journals...");
         f = new de.schlichtherle.io.File(p + "/jrnls/");
-        new de.schlichtherle.io.File(workingPath + "jrnls").copyAllTo(f);
-
+//        new de.schlichtherle.io.File(workingPath + "jrnls").copyAllTo(f);
+//
         sd.addStatus("Copying Settings.ini...");
-        new de.schlichtherle.io.File(workingPath + "settings.ini").copyTo(new de.schlichtherle.io.File(p + "/settings.ini"));
+//        new de.schlichtherle.io.File(workingPath + "settings.ini").copyTo(new de.schlichtherle.io.File(p + "/settings.ini"));
 
         sd.addStatus("Copying ver.inf...");
         new de.schlichtherle.io.File("ver.inf").copyTo(new de.schlichtherle.io.File(p + "/ver.inf"));
@@ -1277,13 +797,10 @@ public class ControlCenter extends javax.swing.JFrame {
     }
 
     private void settingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_settingsButtonActionPerformed
-        if (accessKey.checkConfig(500)) {
-            new SettingsDialog(this, true, application, true, 0).setVisible(true);
-            loadSettings();
-            updateMessage();            
-            setLookAndFeel();
-            setBG();
-            mainToolbar.setVisible(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
+        if (UserService.getCurrentUser().isAdmin() || UserService.getCurrentUser().getSettings() == 500) {
+            new SettingsDialog(this, true, application, true, 0).setVisible(true);            
+            updateMessage();               
+            setBG();            
         } else {
 
             accessKey.showMessage("Settings");
@@ -1352,6 +869,11 @@ public class ControlCenter extends javax.swing.JFrame {
         closeAll();
     }//GEN-LAST:event_exitButtonActionPerformed
 
+    private void closeAll() {
+        DatabaseService.closeDatabaseConnections();
+        System.exit(0);
+    }
+    
     private void openInvoiceReport() {
 
         if (!accessKey.checkReports(300)) {
@@ -1373,62 +895,21 @@ public class ControlCenter extends javax.swing.JFrame {
     private void goSettings() {
 
         if (accessKey.checkConfig(500)) {
-            new SettingsDialog(this, true, application, true, 8).setVisible(true);
-            loadSettings();
+            new SettingsDialog(this, true, application, true, 8).setVisible(true);            
             updateMessage();
-            
-            setLookAndFeel();
-            setBG();
-            mainToolbar.setVisible(DV.parseBool(props.getProp("SHOW TOOLBAR"), true));
+            setBG();            
         } else {
-
             accessKey.showMessage("Settings");
-
-        }
-
-    }
-
-    private void setLookAndFeel() {
-        String newLook = DV.readFile("theme.ini");
-        newLook = newLook.trim();
-        if (newLook.equals(currentLookAndFeel)) {
-            return;
-        }
-
-        try {
-
-            String os = System.getProperty("os.name").toLowerCase();
-
-            /* X Setup */
-            if (!os.contains("nix") && !os.contains("nux") && !os.contains("mac")) {
-
-                //setLookAndFeel();
-                return;
-            }
-
-            if (newLook.equalsIgnoreCase("default")) {
-                //don't set any look and feel
-            } else {
-                javax.swing.UIManager.setLookAndFeel(newLook);
-            }
-        } catch (Exception ex) {
-
-            DV.writeFile("theme.ini", "DEFAULT", false);
-            /*Contimue with default theme */
         }
     }
-
-    private void getLookAndFeel() {
-        currentLookAndFeel = DV.readFile("theme.ini");
-    }
-
+  
     private String file_sep = System.getProperty("file.separator");
 
     private void launchPaymentSystem() {
 
         boolean usePaymentSystem = false;
 
-        String paymentURL = props.getProp("PAYMENT URL");
+        String paymentURL = appSettings.getOutput().getPaymentSystemUri();
 
         if (paymentURL.length() > 0) {
             usePaymentSystem = true;
@@ -1447,7 +928,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
         if (usePaymentSystem) {
 
-            boolean webPayment = DV.parseBool(props.getProp("WEB PAYMENT"), false);
+            boolean webPayment = appSettings.getOutput().isPaymentSystemUriIsWeblink();
             if (webPayment) {
                 String url = paymentURL;
                 if (!url.contains("http://") && !url.contains("HTTP://")
@@ -1455,14 +936,14 @@ public class ControlCenter extends javax.swing.JFrame {
 
                     javax.swing.JOptionPane.showMessageDialog(null,
                             "You must spcifiy a protocol in the web address" + nl
-                            + "Example: http://www.paypal.com instead of just www.paypal.com");
+                            + "Example: http://www.stripe.com instead of just: www.stripe.com");
                     return;
                 }
                 int a = DV.launchURL(paymentURL);
                 if (a < 1) {
                     javax.swing.JOptionPane.showMessageDialog(null,
                             "There was a problem trying to launch your web browser."
-                            + nl + "This may not be supported by your Operating System.");
+                            + nl + "This may not be supported by your operating system.");
                 }
 
             } else {
@@ -1489,40 +970,11 @@ public class ControlCenter extends javax.swing.JFrame {
                             + "<<" + paymentURL + ">>");
                     //ex.printStackTrace();
                 }
-
             }
-
         }
-
     }
 
-    private void closeAll() {
-
-        try {
-
-            if (fl != null) {
-                fl.release();
-                fos.close();
-            }
-
-            java.io.File f = new java.io.File("data.run");
-            f.delete();
-            f = new java.io.File("nevitium.run");
-            f.delete();
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-
-        DV.writeFile("lastco.inf", workingPath, false);
-
-        dbsys.close();
-        dbsys = null;
-
-        System.exit(0);
-
-    }
-
+   
     public void buildMenu() {
 
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -1929,20 +1381,14 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private boolean debug = false;
 
-    private String workingPath = "data/";
-    private Settings props = new Settings(workingPath + "settings.ini");
+        
     private GlobalApplicationDaemon application = new GlobalApplicationDaemon();
-    private datavirtue.DbEngine dbsys;
-
-    private String unclear = "";
+    
     private Image winIcon;
-    private char sep1 = '.';
-    private char sep2 = '.';
-    private boolean dbProblem = false;
+        
     private String nl = System.getProperty("line.separator");
     private String sys_stat = "";
 
-    private DefaultTableModel tm;
     private static boolean RUNNING = false;
 
     private java.io.FileOutputStream fos;
@@ -2009,7 +1455,7 @@ public class ControlCenter extends javax.swing.JFrame {
     /* BEGIN ACT PERF */
     private void workOrderItemActionPerformed(java.awt.event.ActionEvent evt) {//event_workOrderItemActionPerformed
 
-        boolean stat = ReportFactory.generateWorkOrder(props);
+        boolean stat = ReportFactory.generateWorkOrder(null);
         if (stat == false) {
             javax.swing.JOptionPane.showMessageDialog(null, "A problem occurred while building the workorder.");
         }
@@ -2017,7 +1463,7 @@ public class ControlCenter extends javax.swing.JFrame {
     }//event_workOrderItemActionPerformed
 
     private void switchItemActionPerformed(java.awt.event.ActionEvent evt) {//event_switchItemActionPerformed
-        secure(true, true);
+        this.authenticateUser();
     }//event_switchItemActionPerformed
 
     private void checkMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//event_checkMenuItemActionPerformed
@@ -2073,7 +1519,7 @@ public class ControlCenter extends javax.swing.JFrame {
     private void exportItemActionPerformed(java.awt.event.ActionEvent evt) {//event_exportItemActionPerformed
 
         if (accessKey.checkExports(500)) {
-            new ExportDialog(null, true, dbsys);
+            new ExportDialog(null, true, null);
         } else {
 
             accessKey.showMessage("Export");
@@ -2087,7 +1533,7 @@ public class ControlCenter extends javax.swing.JFrame {
             accessKey.showMessage("Reports");
             return;
         }
-        sys_stat = ReportFactory.generateReorderReport(dbsys, props);
+        sys_stat = ReportFactory.generateReorderReport(null, null);
         
     }//event_reorderReportActionPerformed
 
@@ -2097,7 +1543,7 @@ public class ControlCenter extends javax.swing.JFrame {
             accessKey.showMessage("Customer/Supplier Reports");
             return;
         }
-        sys_stat = ReportFactory.generateCustomerReport(dbsys, props, true);
+        sys_stat = ReportFactory.generateCustomerReport(null, null, true);
         
     }//event_vendorListActionPerformed
 
@@ -2108,7 +1554,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
 
-        sys_stat = ReportFactory.generatePhoneList(dbsys, props, false, 11);
+        sys_stat = ReportFactory.generatePhoneList(null, null, false, 11);
         
     }//event_VendorPhoneListActionPerformed
 
@@ -2118,7 +1564,7 @@ public class ControlCenter extends javax.swing.JFrame {
             accessKey.showMessage("Customer/Supplier Reports");
             return;
         }
-        sys_stat = ReportFactory.generatePhoneList(dbsys, props, true, 11);
+        sys_stat = ReportFactory.generatePhoneList(null, null, true, 11);
         
     }//event_CustPhoneListActionPerformed
 
@@ -2159,7 +1605,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
 
-        sys_stat = ReportFactory.generateInventoryStatusReport(dbsys, props);
+        sys_stat = ReportFactory.generateInventoryStatusReport(null, null);
         
     }//event_inventoryReportItemActionPerformed
 
@@ -2185,7 +1631,7 @@ public class ControlCenter extends javax.swing.JFrame {
             accessKey.showMessage("Customer/Supplier Reports");
             return;
         }
-        sys_stat = ReportFactory.generateCustomerReport(dbsys, props, false);
+        sys_stat = ReportFactory.generateCustomerReport(null, null, false);
         
     }//event_custReportActionPerformed
 
@@ -2283,7 +1729,7 @@ public class ControlCenter extends javax.swing.JFrame {
     }//event_toolsMenuMouseClicked
 
     private void enhancedModeBoxActionPerformed(java.awt.event.ActionEvent evt) {//event_enhancedModeBoxActionPerformed
-        dbsys.setOptimized(enhancedModeBox.isSelected());
+        //dbsys.setOptimized(enhancedModeBox.isSelected());
     }//event_enhancedModeBoxActionPerformed
 
     private void layoutManagerItemActionPerformed(java.awt.event.ActionEvent evt) {//event_layoutManagerItemActionPerformed

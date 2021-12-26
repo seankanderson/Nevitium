@@ -26,12 +26,12 @@ public class TestDataService {
         boolean dropTables = true;
         DatabaseService.createTables(dropTables);
         
-        var user = new User();
-        
-        user.setAdmin(true);
-        user.setUserName("admin");
-        userService.save(user);
-        
+//        var user = new User();
+//        
+//        user.setAdmin(true);
+//        user.setUserName("admin");
+//        userService.save(user);
+//        
         
         var contact = new Contact();
         

@@ -33,6 +33,12 @@ public class DatabaseService {
         return connectionSource;
     }
     
+    public static void closeDatabaseConnections() {
+        if (connectionSource != null) {
+            connectionSource.closeQuietly();
+        }
+    }
+    
     public static void createTables(boolean dropTablesFirst) throws SQLException, BackingStoreException {
         
         getConnection();
@@ -45,7 +51,7 @@ public class DatabaseService {
             TableUtils.dropTable(connectionSource, Invoice.class, true);
             TableUtils.dropTable(connectionSource, InvoiceItem.class, true);
             TableUtils.dropTable(connectionSource, InvoiceMessages.class, true);
-            TableUtils.dropTable(connectionSource, User.class, true);
+            //TableUtils.dropTable(connectionSource, User.class, true);
             TableUtils.dropTable(connectionSource, UserAudit.class, true);
             //TableUtils.dropTable(connectionSource, AppConfig.class, true);
         }
@@ -67,7 +73,7 @@ public class DatabaseService {
         TableUtils.createTableIfNotExists(getConnection(), InvoiceMessages.class); 
         TableUtils.clearTable(connectionSource, InvoiceMessages.class);
         TableUtils.createTableIfNotExists(getConnection(), User.class); 
-        TableUtils.clearTable(connectionSource, User.class);   
+        //TableUtils.clearTable(connectionSource, User.class);   
         TableUtils.createTableIfNotExists(getConnection(), KeyValueStore.class); 
         //TableUtils.clearTable(connectionSource, AppConfig.class);    
     }

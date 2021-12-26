@@ -24,4 +24,6 @@ public class CompanySettings {
     private String invoiceLogoMimeType;
     private String mainScreenLogo;
     private String mainScreenLogoMimeType;
+    
+    private FontSetting companyFont;
 }

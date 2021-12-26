@@ -24,16 +24,16 @@ import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.models.settings.CompanySettings;
 import com.datavirtue.nevitium.models.settings.DataSettings;
 import com.datavirtue.nevitium.models.settings.EmailSettings;
+import com.datavirtue.nevitium.models.settings.FontSetting;
 import com.datavirtue.nevitium.models.settings.InternetSettings;
 import com.datavirtue.nevitium.models.settings.InventorySettings;
 import com.datavirtue.nevitium.models.settings.InvoiceSettings;
 import com.datavirtue.nevitium.models.settings.OutputSettings;
 import com.datavirtue.nevitium.models.settings.SecuritySettings;
+import com.datavirtue.nevitium.services.DatabaseService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import java.util.Locale;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 
 /**
@@ -43,17 +43,17 @@ import java.util.prefs.BackingStoreException;
  */
 public class SettingsDialog extends javax.swing.JDialog {
 
-    private DbEngine db;
-    private String workingPath;
-    private boolean debug = false;
-    private GlobalApplicationDaemon application;
-    private final AppSettingsService appSettings;
-
+    private final AppSettingsService appSettingsService;
+    private java.awt.Frame parentWin;
+    private java.awt.Font companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
+    private Cursor defaultCursor;
+    private Image winIcon;
+    
     public SettingsDialog(java.awt.Frame parent, boolean modal,
             GlobalApplicationDaemon application, boolean safe, int tabIndex) {
         super(parent, modal);
         parentWin = parent;
-        this.application = application;
+        
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
@@ -61,8 +61,9 @@ public class SettingsDialog extends javax.swing.JDialog {
         themeComboBox.setModel(new DefaultComboBoxModel(LocalSettingsService.THEME_NAMES));
 
         Injector injector = DiService.getInjector();
-        appSettings = injector.getInstance(AppSettingsService.class);
-        appSettings.setObjectType(AppSettings.class);
+        appSettingsService = injector.getInstance(AppSettingsService.class);
+        appSettingsService.setObjectType(AppSettings.class);
+
         if (!safe) {
             configEDIButton.setEnabled(false);
         }
@@ -83,10 +84,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 }
             }
         });
-
-        this.db = application.getDb();
-        this.workingPath = application.getWorkingPath();
-        accessKey = application.getKey_card();
+                
         this.addTab(0, "My Company", "/businessmanager/res/Aha-16/enabled/Globe.png");
         this.addTab(1, "Internet  ", "/businessmanager/res/Aha-16/enabled/Address book.png");
         this.addTab(2, "Backups   ", "/businessmanager/res/Aha-16/enabled/Archive.png");
@@ -96,9 +94,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         this.addTab(6, "Inventory ", "/businessmanager/res/Aha-16/enabled/Book of records.png");
         this.addTab(7, "Output    ", "/businessmanager/res/Aha-16/enabled/Documents.png");
         this.addTab(8, "Info      ", "/businessmanager/res/Aha-16/enabled/Info.png");
-
-        props = new Settings(workingPath + "settings.ini");
-        layoutPathField.setText(workingPath + "layouts/");
+        
         invoicePrefixField.setDocument(new LimitedDocument(3));
         quotePrefixField.setDocument(new LimitedDocument(3));
         jTabbedPane1.setSelectedIndex(tabIndex);
@@ -121,7 +117,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         posPrinterPaperWidthSpinner.getModel().setValue(80);
         ///boolean settingsFileExists = (new File(workingPath + "settings.ini")).exists();
         try {
-            var settings = appSettings.getObject();
+            var settings = appSettingsService.getObject();
 
             if (settings == null) {
                 createNewDefaultSettings();
@@ -134,8 +130,8 @@ public class SettingsDialog extends javax.swing.JDialog {
     }
 
     private void createNewDefaultSettings() throws SQLException {
-        appSettings.set(new AppSettings());
-        var settings = appSettings.getObject();
+        appSettingsService.set(new AppSettings());
+        var settings = appSettingsService.getObject();
 
         settings.setCompany(new CompanySettings());
         settings.setInternet(new InternetSettings());
@@ -254,21 +250,22 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         invoice.setNextInvoiceNumber(Integer.parseInt(iValue));
         invoice.setNextQuoteNumber(Integer.parseInt(qValue));
-        appSettings.save();
+        appSettingsService.save();
     }
 
     private void loadSettings() throws SQLException {
-        //this.enumerateLayoutFiles(invoiceComboBox, "layout.invoice", props.getProp("INVOICE LAYOUT"));
 
         try {
             var localSettings = LocalSettingsService.getLocalAppSettings();
             var theme = localSettings.getTheme();
-            themeComboBox.setSelectedItem(theme);
+            this.themeComboBox.setSelectedItem(theme);
+            var connectionString = localSettings.getConnectionString();
+            this.currentConnectionStringTextField.setText(connectionString);
         } catch (BackingStoreException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error loading local settings");
         }
 
-        var settings = appSettings.getObject();
+        var settings = appSettingsService.getObject();
 
         var internet = settings.getInternet();
         showRemoteMessageCheckbox.setSelected(internet.isShowRemoteMessage());
@@ -306,6 +303,14 @@ public class SettingsDialog extends javax.swing.JDialog {
             countryCombo.setSelectedItem("PH");
         }
 
+        var font = company.getCompanyFont();
+        if (font == null) {
+            companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
+        } else {
+            companyFont = new java.awt.Font(font.getFontName(), font.getFontStyle(), font.getFontSize());
+        }
+        companyNameField.setFont(companyFont);
+
         taxIdField.setText(company.getTaxId());
         showTaxIdCheckBox.setSelected(company.isShowTaxIdOnInvoice());
 
@@ -317,21 +322,14 @@ public class SettingsDialog extends javax.swing.JDialog {
         emailUserName.setText(email.getServerUsername());
         emailPassword.setText(email.getServerPassword());
 
+        logoField.setText(company.getInvoiceLogo());
+        screenPicField.setText(company.getMainScreenLogo());
+
         try {
-            String fontName = props.getProp("FONT");
-            int fontStyle = Integer.parseInt(props.getProp("FONT STYLE"));
-            int fontSize = Integer.parseInt(props.getProp("FONT SIZE"));
-            companyFont = new java.awt.Font(fontName, fontStyle, fontSize);
-            companyNameField.setFont(companyFont);
-        } catch (Exception e) {
-
-            companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
-
+            dataFolderField.setText(DatabaseService.getConnection().getUrl());
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error getting database file location");
         }
-        logoField.setText(props.getProp("LOGO"));
-        screenPicField.setText(props.getProp("SCREEN"));
-
-        dataFolderField.setText(props.getProp("DATA FOLDER"));
 
         var output = settings.getOutput();
         reportOutputFolderField.setText(output.getReportDestinationUri());
@@ -401,8 +399,8 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         inkSaverCheckbox.setSelected(invoice.isInkSaver());
 
-        invoiceColorField.setBackground(Tools.stringToColor(props.getProp("INCOLOR")));
-        statementColorField.setBackground(Tools.stringToColor(props.getProp("STCOLOR")));
+        //invoiceColorField.setBackground(Tools.stringToColor(props.getProp("INCOLOR")));
+        //statementColorField.setBackground(Tools.stringToColor(props.getProp("STCOLOR")));
 
         var inventory = settings.getInventory();
         String weight = inventory.getWeightUnit();
@@ -429,186 +427,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         jLabel28.setText(System.getProperty("os.name") + " " + System.getProperty("os.version") + " : " + System.getProperty("sun.os.patch.level"));
         jLabel30.setText(System.getProperty("java.runtime.name") + " " + System.getProperty("java.vm.version"));
         jLabel31.setText(System.getProperty("user.dir"));
-        userLabel.setText(System.getProperty("user.name"));
-
-    }
-
-    private void convertOldSettings() {
-        showRemoteMessageCheckbox.setSelected(DV.parseBool(props.getProp("REMOTE MESSAGE"), false));
-
-        companyNameField.setText(props.getProp("CO NAME"));
-        address2Field.setText(props.getProp("CO ADDRESS"));
-        cityStateZipField.setText(props.getProp("CO CITY"));
-        phoneField.setText(props.getProp("CO PHONE"));
-        address1Field.setText(props.getProp("CO OTHER"));
-
-        String zone = props.getProp("ADDRESS STYLE");
-        if (zone.equals("US")) {
-            countryCombo.setSelectedItem("US");
-        }
-        if (zone.equals("CA")) {
-            countryCombo.setSelectedItem("CA");
-        }
-        if (zone.equals("AU")) {
-            countryCombo.setSelectedItem("AU");
-        }
-        if (zone.equals("UK")) {
-            countryCombo.setSelectedItem("UK");
-        }
-        if (zone.equals("IN")) {
-            countryCombo.setSelectedItem("IN");
-        }
-        if (zone.equals("ZA")) {
-            countryCombo.setSelectedItem("ZA");
-        }
-        if (zone.equals("NZ")) {
-            countryCombo.setSelectedItem("NZ");
-        }
-        if (zone.equals("PH")) {
-            countryCombo.setSelectedItem("PH");
-        }
-
-        taxIdField.setText(props.getProp("TAXID"));
-        showTaxIdCheckBox.setSelected(Tools.getStringBool(props.getProp("DISPLAYTAXID")));
-
-        /* email settings */
-        emailServerField.setText(props.getProp("EMAIL SERVER"));
-        emailPortField.setText(props.getProp("EMAIL PORT"));
-        emailSslCheckbox.setSelected(DV.parseBool(props.getProp("SSL"), false));
-        emailAddressField.setText(props.getProp("EMAIL ADDRESS"));
-        emailUserName.setText(props.getProp("EMAIL USER"));
-        emailPassword.setText(props.getProp("EMAIL PWD"));
-
-        showStatusIconCheckbox.setSelected(Tools.getStringBool(props.getProp("STATUS LIGHT")));
-
-        try {
-            String fontName = props.getProp("FONT");
-            int fontStyle = Integer.parseInt(props.getProp("FONT STYLE"));
-            int fontSize = Integer.parseInt(props.getProp("FONT SIZE"));
-            companyFont = new java.awt.Font(fontName, fontStyle, fontSize);
-            companyNameField.setFont(companyFont);
-        } catch (Exception e) {
-
-            DV.writeFile("error.log", "Error parsing Font from the settings.ini file.", true);
-            companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
-
-        }
-        logoField.setText(props.getProp("LOGO"));
-        screenPicField.setText(props.getProp("SCREEN"));
-
-        dataFolderField.setText(props.getProp("DATA FOLDER"));
-
-        reportOutputFolderField.setText(props.getProp("REPORT FOLDER"));
-        quoteOutputFolderField.setText(props.getProp("QUOTE FOLDER"));
-        invoiceOutputFolderField.setText(props.getProp("INVOICE FOLDER"));
-
-        pdfReaderBinField.setText(props.getProp("ACROEXE"));
-        useSystemDefaultPdfReaderCheckbox.setSelected(DV.parseBool(props.getProp("DESKTOP SUPPORTED"), false));
-
-        paymentSystemUriField.setText(props.getProp("PAYMENT URL"));
-        paymentSystemIsWebCheckbox.setSelected(Tools.getStringBool(props.getProp("WEB PAYMENT")));
-        usePaymentSystemForCardsCheckbox.setSelected(Tools.getStringBool(props.getProp("CC PAYMENT")));
-        usePaymentSystemForChecksCheckbox.setSelected(Tools.getStringBool(props.getProp("CHK PAYMENT")));
-
-        watermarkImagePathField.setText(props.getProp("WATERMARK"));
-        useWatermarkOnReportsCheckbox.setSelected(DV.parseBool(props.getProp("PRINT WM"), false));
-
-        backupFolderField.setText(props.getProp("BACKUP FOLDER"));
-        secondaryCheckBox.setSelected(DV.parseBool(props.getProp("SECONDARY BACKUP"), false));
-        secondaryBackupFolderField.setText(props.getProp("SECONDARY FOLDER"));
-
-        //secCheckBox.setSelected( Boolean.parseBoolean( props.getProp("SECURITY") ));
-        tax1Field.setText(props.getProp("TAX1"));
-        tax2Field.setText(props.getProp("TAX2"));
-
-        //Version 1.5
-        tax1NameField.setText(props.getProp("TAX1NAME"));
-        tax2NameField.setText(props.getProp("TAX2NAME"));
-
-        //version 1.5.7
-        showTax1Box.setSelected(DV.parseBool(props.getProp("SHOW TAX 1"), true));
-        showTax2Box.setSelected(DV.parseBool(props.getProp("SHOW TAX 2"), true));
-
-        String rounding = props.getProp("CASHRND");
-
-        cashRoundingCombo.setSelectedItem("N/A");
-        if (rounding.equals(".05")) {
-            cashRoundingCombo.setSelectedItem(".05");
-        }
-        if (rounding.equals(".10")) {
-            cashRoundingCombo.setSelectedItem(".10");
-        }
-
-        try {
-            posPrinterPaperWidthSpinner.getModel().setValue(Integer.parseInt(props.getProp("ROLL WIDTH")));
-
-        } catch (Exception e) {
-
-            posPrinterPaperWidthSpinner.getModel().setValue(80);  //Default
-
-        }
-
-        updateInches();
-
-        invoicePrefixField.setText(props.getProp("INVOICE PREFIX"));
-        quotePrefixField.setText(props.getProp("QUOTE PREFIX"));
-
-        interestRateField.setText(props.getProp("CR RATE"));
-        //default invoice scan field setting
-        String t = props.getProp("SCAN FIELD");
-
-        if (t.equals("UPC")) {
-
-            defaultScanUpcRadio.setSelected(true);
-            //
-        } else {
-
-            //upcRadio.setSelected(false);
-            defaultScanCodeRadio.setSelected(true);
-
-        }
-
-        interestGracePeriodField.setText(props.getProp("GRACE"));
-
-        posModeBox.setSelected(DV.parseBool(props.getProp("POS"), false));
-
-        processPaymentWhenPostingCheckbox.setSelected(DV.parseBool(props.getProp("PROCESSPAYMENT"), true));
-
-        inkSaverCheckbox.setSelected(DV.parseBool(props.getProp("INK SAVER"), true));
-
-        invoiceColorField.setBackground(Tools.stringToColor(props.getProp("INCOLOR")));
-        statementColorField.setBackground(Tools.stringToColor(props.getProp("STCOLOR")));
-
-        String weight = props.getProp("MEASURE");
-        if (weight.equals("lbs")) {
-            lbsRadio.setSelected(true);
-        } else {
-            kgsRadio.setSelected(true);
-        }
-
-        invoiceNameField.setText(props.getProp("INVOICE NAME"));
-        quoteNameField.setText(props.getProp("QUOTE NAME"));
-
-        billToTextField.setText(props.getProp("BILLTO"));
-        catLineCheckBox.setSelected(DV.parseBool(props.getProp("CATLINE"), false));
-
-        String currency = props.getProp("SYM");
-        currencyField.setText(currency);
-
-        boolean print_zeros = Tools.getStringBool(props.getProp("PRINT ZEROS"));
-        printZerosCheckBox.setSelected(print_zeros);
-
-        //default inventory search field setting
-        t = props.getProp("INVENTORY SEARCH");
-
-        markupField.setText(props.getProp("MARKUP"));
-
-        quantityCheckBox.setSelected(DV.parseBool(props.getProp("IGNOREQTY"), false));
-
-        jLabel28.setText(System.getProperty("os.name") + " " + System.getProperty("os.version") + " : " + System.getProperty("sun.os.patch.level"));
-        jLabel30.setText(System.getProperty("java.runtime.name") + " " + System.getProperty("java.vm.version"));
-        jLabel31.setText(System.getProperty("user.dir"));
-        userLabel.setText(System.getProperty("user.name"));
+        this.operatingSystemUserTextField.setText(System.getProperty("user.name"));
 
     }
 
@@ -619,25 +438,9 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     }
 
-    private void enumerateLayoutFiles(JComboBox combo, String filter, String key) {
-        File layoutPath = new File(workingPath + "/layouts/");
-        String[] files = layoutPath.list();
-        if (files == null || files.length < 1) {
-            return;
-        }
-        combo.addItem("None");
-        for (int i = 0; i < files.length; i++) {
-            if (files[i].toLowerCase().contains(filter)) {
-                combo.addItem(files[i]);
-            }
-        }
-
-        combo.setSelectedItem(props.getProp(key));
-    }
-
     private void saveSettings() {
         try {
-            var settings = appSettings.getObject();
+            var settings = appSettingsService.getObject();
 
             if (settings == null) {
                 ExceptionService.showErrorDialog(this, null, "Settings were not loaded properly");
@@ -656,6 +459,9 @@ public class SettingsDialog extends javax.swing.JDialog {
             company.setShowTaxIdOnInvoice(this.showTaxIdCheckBox.isSelected());
             company.setAddressFormat((String) this.countryCombo.getSelectedItem());
 
+            var font = this.companyFont;
+            company.setCompanyFont(new FontSetting(font.getFontName(), font.getStyle(), font.getSize()));
+            
             var email = settings.getInternet().getEmailSettings();
             email.setServerAddress(this.emailServerField.getText());
             email.setServerPort(this.emailPortField.getText());
@@ -722,12 +528,11 @@ public class SettingsDialog extends javax.swing.JDialog {
             output.setWatermarkImage(null);
             output.setUserWatermarkInReports(this.useWatermarkOnReportsCheckbox.isSelected());
 
-            appSettings.save();
+            appSettingsService.save();
         } catch (SQLException e) {
             ExceptionService.showErrorDialog(this, e, "Error saving settings");
         }
-
-        // save theme to local settings if changed        
+        
         try {
             var localSettings = LocalSettingsService.getLocalAppSettings();
             var currentTheme = localSettings.getTheme();
@@ -746,6 +551,15 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     }
 
+    private void getCompanyFontFromUser() {
+        FontDialog fd = new FontDialog(null, true, companyNameField.getFont());
+        fd.setVisible(true);
+        var font = fd.getChosenFont();
+        this.companyFont = font;
+        companyNameField.setFont(font);
+        fd.dispose();
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -925,9 +739,12 @@ public class SettingsDialog extends javax.swing.JDialog {
         jLabel31 = new javax.swing.JLabel();
         jPanel8 = new javax.swing.JPanel();
         jLabel38 = new javax.swing.JLabel();
-        userLabel = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
         themeComboBox = new javax.swing.JComboBox();
+        jLabel4 = new javax.swing.JLabel();
+        currentConnectionStringTextField = new javax.swing.JTextField();
+        jButton1 = new javax.swing.JButton();
+        operatingSystemUserTextField = new javax.swing.JTextField();
         jPanel10 = new javax.swing.JPanel();
         jLabel14 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -965,7 +782,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         jPanel16.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jPanel17.setBorder(javax.swing.BorderFactory.createTitledBorder(" My Address "));
+        jPanel17.setBorder(javax.swing.BorderFactory.createTitledBorder("Company Information"));
 
         jLabel16.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel16.setText("Co Name");
@@ -989,7 +806,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         jLabel39.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel39.setText("Tax ID");
 
-        showTaxIdCheckBox.setText("Tax ID on Invoice");
+        showTaxIdCheckBox.setText("Show tax ID on invoice");
 
         jLabel54.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         jLabel54.setText("Address Format:");
@@ -1015,23 +832,27 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(jLabel19, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                        .add(countryCombo, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jLabel54))
-                    .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, cityStateZipField)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel17Layout.createSequentialGroup()
-                            .add(phoneField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 149, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                            .add(companyFontButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, companyNameField)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, address2Field)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, address1Field)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel17Layout.createSequentialGroup()
-                            .add(taxIdField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(showTaxIdCheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap(189, Short.MAX_VALUE))
+                    .add(jPanel17Layout.createSequentialGroup()
+                        .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel17Layout.createSequentialGroup()
+                                .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                    .add(countryCombo, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .add(jLabel54))
+                                .add(18, 18, 18)
+                                .add(companyFontButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 87, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                                .add(org.jdesktop.layout.GroupLayout.LEADING, cityStateZipField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE)
+                                .add(org.jdesktop.layout.GroupLayout.LEADING, companyNameField)
+                                .add(org.jdesktop.layout.GroupLayout.LEADING, address2Field)
+                                .add(org.jdesktop.layout.GroupLayout.LEADING, address1Field)))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jPanel17Layout.createSequentialGroup()
+                        .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, taxIdField)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, phoneField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(showTaxIdCheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         jPanel17Layout.setVerticalGroup(
             jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1051,8 +872,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel19)
-                    .add(phoneField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(companyFontButton))
+                    .add(phoneField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(taxIdField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1061,8 +881,10 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jLabel54)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(countryCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(73, Short.MAX_VALUE))
+                .add(jPanel17Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(countryCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(companyFontButton))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jLabel56.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -1085,7 +907,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel16Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel17, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel56, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel56, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 343, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1118,17 +940,17 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(org.jdesktop.layout.GroupLayout.LEADING, companyInfoPanelLayout.createSequentialGroup()
                         .add(logoBrowse)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(logoField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 718, Short.MAX_VALUE))
+                        .add(logoField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 741, Short.MAX_VALUE))
                     .add(org.jdesktop.layout.GroupLayout.LEADING, companyInfoPanelLayout.createSequentialGroup()
                         .add(screenLogoBrowse)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(companyInfoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(screenPicField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 718, Short.MAX_VALUE)
-                            .add(jLabel44, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 718, Short.MAX_VALUE)))
+                            .add(screenPicField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 741, Short.MAX_VALUE)
+                            .add(jLabel44, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 741, Short.MAX_VALUE)))
                     .add(org.jdesktop.layout.GroupLayout.LEADING, companyInfoPanelLayout.createSequentialGroup()
                         .add(90, 90, 90)
                         .add(companyInfoPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 697, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 720, Short.MAX_VALUE)
                             .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 504, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
@@ -1226,10 +1048,10 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel42, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(emailAddressField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 665, Short.MAX_VALUE)
-                    .add(emailUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 665, Short.MAX_VALUE)
+                    .add(emailAddressField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 688, Short.MAX_VALUE)
+                    .add(emailUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 688, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel19Layout.createSequentialGroup()
-                        .add(emailServerField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 570, Short.MAX_VALUE)
+                        .add(emailServerField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 593, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 37, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1291,7 +1113,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(EDIPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel19, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(showRemoteMessageCheckbox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 787, Short.MAX_VALUE)
+                    .add(showRemoteMessageCheckbox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 810, Short.MAX_VALUE)
                     .add(configEDIButton))
                 .addContainerGap())
         );
@@ -1358,10 +1180,10 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(secondaryButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(dataFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 689, Short.MAX_VALUE)
+                    .add(dataFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 712, Short.MAX_VALUE)
                     .add(secondaryCheckBox)
-                    .add(secondaryBackupFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 689, Short.MAX_VALUE)
-                    .add(backupFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 689, Short.MAX_VALUE))
+                    .add(secondaryBackupFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 712, Short.MAX_VALUE)
+                    .add(backupFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 712, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1438,7 +1260,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel11Layout.createSequentialGroup()
-                        .add(jSeparator5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 771, Short.MAX_VALUE)
+                        .add(jSeparator5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
                         .addContainerGap())
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1648,7 +1470,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .add(currencyField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(printZerosCheckBox)))
-                .addContainerGap(189, Short.MAX_VALUE))
+                .addContainerGap(212, Short.MAX_VALUE))
         );
         jPanel12Layout.setVerticalGroup(
             jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1803,7 +1625,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .add(jLabel23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 79, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel62, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 464, Short.MAX_VALUE)
+                    .add(jLabel62, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
                     .add(jPanel14Layout.createSequentialGroup()
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                             .add(interestGracePeriodField)
@@ -1909,7 +1731,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(invoiceLayoutComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 197, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layoutPathField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 686, Short.MAX_VALUE))
+                    .add(layoutPathField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
@@ -1985,7 +1807,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(jPanel15Layout.createSequentialGroup()
                         .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(jPanel15Layout.createSequentialGroup()
-                                .add(jLabel21, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 142, Short.MAX_VALUE)
+                                .add(jLabel21, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                 .add(markupField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
@@ -2119,7 +1941,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .add(reportOutputFolderField)
                         .add(quoteOutputFolderField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
                         .add(invoiceOutputFolderField)))
-                .addContainerGap(139, Short.MAX_VALUE))
+                .addContainerGap(162, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2391,14 +2213,23 @@ public class SettingsDialog extends javax.swing.JDialog {
 
             jPanel8.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Local Settings"));
 
-            jLabel38.setText("Operating system user:");
-
-            userLabel.setText("User Info");
+            jLabel38.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+            jLabel38.setText("OS user");
 
             jLabel18.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+            jLabel18.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
             jLabel18.setText("Theme");
 
             themeComboBox.setToolTipText("If you have problems after switching themes you need to restart Nevitium");
+
+            jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+            jLabel4.setText("Connection string");
+
+            currentConnectionStringTextField.setEditable(false);
+
+            jButton1.setText("Advanced");
+
+            operatingSystemUserTextField.setEditable(false);
 
             org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
             jPanel8.setLayout(jPanel8Layout);
@@ -2407,29 +2238,37 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .add(jPanel8Layout.createSequentialGroup()
                     .addContainerGap()
                     .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(jLabel38, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jLabel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 113, Short.MAX_VALUE)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                         .add(jPanel8Layout.createSequentialGroup()
-                            .add(jLabel38)
+                            .add(currentConnectionStringTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 556, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(userLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(580, 580, 580))
-                        .add(jPanel8Layout.createSequentialGroup()
-                            .add(jLabel18)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(themeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 196, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .add(jButton1))
+                        .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, operatingSystemUserTextField)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, themeComboBox, 0, 179, Short.MAX_VALUE)))
+                    .addContainerGap())
             );
             jPanel8Layout.setVerticalGroup(
                 jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                 .add(jPanel8Layout.createSequentialGroup()
                     .addContainerGap()
                     .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel38)
-                        .add(userLabel))
-                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel18)
                         .add(themeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(operatingSystemUserTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel38))
+                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel4)
+                        .add(currentConnectionStringTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jButton1))
+                    .addContainerGap(86, Short.MAX_VALUE))
             );
 
             jPanel10.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Nevitium Invoice Manager"));
@@ -2536,7 +2375,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(jPanel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                     .add(jPanel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(168, Short.MAX_VALUE))
+                    .addContainerGap(42, Short.MAX_VALUE))
             );
 
             org.jdesktop.layout.GroupLayout infoPanelLayout = new org.jdesktop.layout.GroupLayout(infoPanel);
@@ -2591,9 +2430,9 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .addContainerGap()
                     .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 496, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel50, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
-                        .add(saveButton))
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(saveButton)
+                        .add(jLabel50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .addContainerGap())
             );
 
@@ -2607,41 +2446,27 @@ public class SettingsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_checkUpdatesButtonActionPerformed
     private void checkForUpdates() {
 
-        String localString = DV.readFile("ver.inf");
-
         String siteData = "";
 
-        siteData = DVNET.HTTPGetFile("http://www.datavirtue.com/nevitium/update/nevupdate.html", "Problem retreiving update status.", false);
+        siteData = DVNET.HTTPGetFile("http://www.datavirtue.com/nevitium/update/nevupdate.html", "Problem retrieving update status.", false);
         if (!siteData.contains("ERR:")) {
-            float currentVersion = 0.0f;
-            float localVersion = 0.0f;
+            String remoteVersion = siteData;
+            String localVersion;
             try {
-
-                currentVersion = Float.parseFloat(siteData);
-
-            } catch (NumberFormatException ex) {
-                javax.swing.JOptionPane.showMessageDialog(null,
-                        "There was a problem processing the remote update data. >>" + siteData);
+                localVersion = appSettingsService.getObject().getSoftwareVersion().getVersionString();
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error fetching software version from database");
+                return;
             }
 
-            try {
-
-                localVersion = Float.parseFloat(localString);
-
-            } catch (NumberFormatException ex) {
-                javax.swing.JOptionPane.showMessageDialog(null,
-                        "There was a problem processing the local version data. >>" + localString);
-            }
-
-            if (localVersion < currentVersion) {
+            if (!localVersion.equals(remoteVersion)) {
                 String nl = System.getProperty("line.separator");
                 javax.swing.JOptionPane.showMessageDialog(null,
-                        "Your Version: " + localVersion + "     Current Release: " + currentVersion + nl
+                        "Your Version: " + localVersion + "     Current Release: " + remoteVersion + nl
                         + "Visit datavirtue.com to download the latest version.");
-
             } else {
 
-                javax.swing.JOptionPane.showMessageDialog(null, "No updates needed. Visit the website for Hot Builds.");
+                javax.swing.JOptionPane.showMessageDialog(null, "No updates needed.");
             }
         }
     }
@@ -2696,89 +2521,23 @@ public class SettingsDialog extends javax.swing.JDialog {
 }//GEN-LAST:event_invoiceColorFieldMouseClicked
 
     private void manageUsersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageUsersButtonActionPerformed
-        if (accessKey.isMaster()) {
-            new com.datavirtue.nevitium.ui.SecurityManager(null, true, db).setVisible(true);
-        } else {
-            accessKey.showMessage("Security");
-        }
+       new com.datavirtue.nevitium.ui.SecurityManager(null, true).setVisible(true);
 
     }//GEN-LAST:event_manageUsersButtonActionPerformed
 
     private void pdfRevertButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pdfRevertButtonActionPerformed
 
-        pdfReaderBinField.setText(props.getProp("ACROEXE"));
+        pdfReaderBinField.setText("");
         pdfRevertButton.setEnabled(false);
 
     }//GEN-LAST:event_pdfRevertButtonActionPerformed
 
     private void pdfAutoFindButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pdfAutoFindButtonActionPerformed
 
-        pdfReaderBinField.setText(getAdobe());
+        pdfReaderBinField.setText("");
         pdfRevertButton.setEnabled(true);
 
     }//GEN-LAST:event_pdfAutoFindButtonActionPerformed
-
-    private String getAdobe() {
-
-        String usrdir = System.getProperty("user.dir");
-
-        String adobe = ".";
-
-        String drv = usrdir.substring(0, usrdir.indexOf(fileSep));
-
-        if (System.getProperty("os.name").contains("Windows")) {
-
-            adobe = drv + "\\Program Files\\Adobe\\";
-
-            if (new File(adobe).exists()) {
-
-                File ad = new File(adobe);
-
-                String[] ls = ad.list();
-                if (ls.length > 1) {
-                    int lnk[] = DV.whichContains(ls, "Acrobat");
-
-                    int w = 0;
-                    String tmp;
-                    float v = 1.0f;
-
-                    for (int i = 0; i < lnk.length; i++) {
-
-                        tmp = ls[i].substring(ls[i].length() - 3);
-
-                        if (DV.validFloatString(tmp)) {
-
-                            if (Float.valueOf(tmp) > v) {
-
-                                v = Float.valueOf(tmp);
-                                w = i;
-                            }
-
-                        }
-
-                    }
-
-                    if (w == 0); else {
-                        adobe = adobe + ls[w] + "\\Reader\\AcroRd32.exe";
-                    }
-
-                } else {
-                    adobe = adobe + ls[0] + "\\Reader\\AcroRd32.exe";
-                }
-
-            }
-
-        }//end Windows setup
-
-        if (System.getProperty("os.name").contains("nux")) {
-
-            adobe = "evince";
-
-        }
-
-        return adobe;
-
-    }
 
 
     private void jLabel12MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel12MouseClicked
@@ -2932,14 +2691,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     private void companyFontButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_companyFontButtonActionPerformed
 
-        FontDialog fd = new FontDialog(null, true, companyNameField.getFont());
-        fd.setVisible(true);
-        java.awt.Font f = fd.getChosenFont();
-        //fontLabel.setFont(f);
-        companyNameField.setFont(f);
-        fd.dispose();
-
-        /* Store these */
+        this.getCompanyFontFromUser();
 
     }//GEN-LAST:event_companyFontButtonActionPerformed
 
@@ -3069,14 +2821,7 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
 
     }
 
-    private java.awt.Frame parentWin;
-    private java.awt.Font companyFont = new java.awt.Font("Roman", Font.PLAIN, 12);
-    private KeyCard accessKey;
-    private Settings props;
-    private String fileSep = System.getProperty("file.separator");
-    private String nl = System.getProperty("line.separator");
-    private Cursor defaultCursor;
-    private Image winIcon;
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel EDIPanel;
@@ -3105,6 +2850,7 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JButton configEDIButton;
     private javax.swing.JComboBox countryCombo;
     private javax.swing.JTextField currencyField;
+    private javax.swing.JTextField currentConnectionStringTextField;
     private javax.swing.JTextField dataFolderField;
     private javax.swing.JRadioButton defaultScanCodeRadio;
     private javax.swing.JRadioButton defaultScanDescriptionRadio;
@@ -3128,6 +2874,7 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JTextField invoiceOutputFolderField;
     private javax.swing.JPanel invoicePanel;
     private javax.swing.JTextField invoicePrefixField;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel12;
@@ -3157,6 +2904,7 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel38;
     private javax.swing.JLabel jLabel39;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel40;
     private javax.swing.JLabel jLabel41;
     private javax.swing.JLabel jLabel42;
@@ -3215,6 +2963,7 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JTextField logoField;
     private javax.swing.JButton manageUsersButton;
     private javax.swing.JTextField markupField;
+    private javax.swing.JTextField operatingSystemUserTextField;
     private javax.swing.JPanel outputPanel;
     private javax.swing.JButton paymentSystemBinPathBrowseButton;
     private javax.swing.JCheckBox paymentSystemIsWebCheckbox;
@@ -3259,7 +3008,6 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JCheckBox usePaymentSystemForChecksCheckbox;
     private javax.swing.JCheckBox useSystemDefaultPdfReaderCheckbox;
     private javax.swing.JCheckBox useWatermarkOnReportsCheckbox;
-    private javax.swing.JLabel userLabel;
     private javax.swing.JButton watermarkBrowse;
     private javax.swing.JTextField watermarkImagePathField;
     // End of variables declaration//GEN-END:variables

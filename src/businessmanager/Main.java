@@ -12,8 +12,6 @@
 package businessmanager;
 
 import com.datavirtue.nevitium.ui.ControlCenter;
-import com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme;
-import com.formdev.flatlaf.intellijthemes.FlatHighContrastIJTheme;
 import com.datavirtue.nevitium.services.DiService;
 import java.awt.Toolkit;
 import java.sql.SQLException;
@@ -22,7 +20,6 @@ import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.TestDataService;
 import com.datavirtue.nevitium.ui.LocalSettingsDialog;
-import com.formdev.flatlaf.intellijthemes.FlatDarkPurpleIJTheme;
 
 /**
  *
@@ -59,11 +56,13 @@ public class Main {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    control.setVisible(true);                
+                    System.out.println("running ControlCenter");
+                    control.display();                
                 }catch(java.lang.UnsupportedClassVersionError e){
                     javax.swing.JOptionPane.showMessageDialog(null,
                             "Nevitium encountered: Unsupported Class Version error. Try updating Java.");
                 }catch(Exception e) {//consume linux exceptions
+                    e.printStackTrace();
                 }                 
             }
         });

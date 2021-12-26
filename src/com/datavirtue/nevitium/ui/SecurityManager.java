@@ -26,7 +26,7 @@ public class SecurityManager extends javax.swing.JDialog {
 
     private final UserService userService;
     
-    public SecurityManager(java.awt.Frame parent, boolean modal, DbEngine db) {
+    public SecurityManager(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
@@ -37,17 +37,12 @@ public class SecurityManager extends javax.swing.JDialog {
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
 
-        
-        
         Injector injector = DiService.getInjector();
         userService = injector.getInstance(UserService.class);
-
-        this.db = db;
+        
         init();
-
     }
-    private DbEngine db;
-
+  
     private void init() {
         refreshTable();
         setSecurityStatus();
@@ -99,7 +94,7 @@ public class SecurityManager extends javax.swing.JDialog {
                 String cipher = PBE.encrypt(one.toCharArray(), one);
                 String uncipher = PBE.decrypt(one.toCharArray(), cipher);
                 if (uncipher.equals(one)) {
-                    savePassword(one);
+                    savePassword(cipher);
                     return;
                 } else {
                     javax.swing.JOptionPane.showMessageDialog(null, "The cipher did not compute!");

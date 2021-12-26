@@ -3,198 +3,68 @@
  *
  * Created on July 27, 2007, 10:40 PM
  */
-
 package com.datavirtue.nevitium.ui;
-import RuntimeManagement.KeyCard;
 
+import com.datavirtue.nevitium.models.security.User;
+import com.datavirtue.nevitium.services.DiService;
+import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.exceptions.DuplicateUserNameException;
+import com.datavirtue.nevitium.services.exceptions.FailedPasswordException;
 import datavirtue.*;
-import java.util.*;
+import java.sql.SQLException;
 import javax.swing.JOptionPane;
+import lombok.Getter;
 
 /**
  *
- * @author  Data Virtue
+ * @author Data Virtue
  */
 public class AccessDialog extends javax.swing.JDialog {
-    
-    /** Creates new form AccessDialog */
-    public AccessDialog(java.awt.Frame parent, boolean modal, DbEngine db, String path) {
+
+    private UserService userService;
+    @Getter
+    private User user;
+    @Getter
+    private boolean securityEnabled = false;
+
+    public AccessDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-    
-        workingPath = path;
-        pathField.setText(workingPath);
-        
-        this.db = db;
-        checkUsers();
-        
+
+        var injector = DiService.getInjector();
+        userService = injector.getInstance(UserService.class);
+
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-        
+
         this.setLocation(dim.width, dim.height);
-        
+
         passField.requestFocus();
-        
-        if (secure) this.setVisible(true);
-                
+
     }
-    private String workingPath="";
-    
-    private KeyCard keycard;
-    private DbEngine db;
-    private boolean secure = false;
-    
-    private void checkUsers() {
-        
-        ArrayList al;
-        Object [] rec;
-        
-        al = db.search("users", 1, "master", false);
-        
-        if (al != null){
-           
-            rec = db.getRecord("users", (Integer)al.get(0));
-            
-            String pk = (String)rec[2];
-            
-            if (pk.equals("")){
-                
-                secure = false;
 
-                allowed = true;
-                return;
-            }
-            else{
-                
-                secure = true;
-                return;
-            }
-            
-                        
-        }else {
-            
-            /* Setup first master user */
-            
-            int a = JOptionPane.showConfirmDialog(null,
-                    "The security database does not have a 'Master' user." + nl +
-                    "Would you like to create a new Master user?"+nl+nl+
-                    "It is recommended that you create a Master user."+nl+
-                    "Security will not be enabled though until you set a" +nl+
-                    "password for the Master user."+nl+
-                    "File--> Settings--> Security --> [Manage Users]",
-                    "Security",  JOptionPane.YES_NO_OPTION);
-            if (a == 0){
-
-                Object [] user = new Object [12];
-                user[0] = new Integer(0);
-                user[1] = new String("Master");
-                user[2] = new String("");//password
-                user[3] = new Boolean(true);//master
-                user[4] = new Long(300);
-                user[5] = new Long(300);
-                user[6] = new Long(500);
-                user[7] = new Long(300);
-                user[8] = new Long(100);
-                user[9] = new Long(100);
-                user[10] = new Long(100);
-                user[11] = new Long(100);
-                db.saveRecord("users", user, false);
-
-            }else {
-                /* Exit the system?? */
-                //System.exit(-6);
-                secure = false;
-                return;
-            }
-
-
-            
-        }
-        
-    }
-    
-    private void getUser(String user, char[] password) {
-        
-        ArrayList al; 
-        String decrypted=null;
-        
-        al = db.search("users", 1, user, false);
-        if (al != null){
-            
-            /* Get user record and access setttings. */
-            Object [] rec = db.getRecord("users", (Integer)al.get(0));
-            
-            String cipher = (String)rec[2];
-            boolean master = (Boolean)rec[3];
-
-            try {
-                decrypted = PBE.decrypt(password, cipher);
-                //System.out.println(decrypted);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            if (decrypted != null){
-                
-                if (decrypted.equals(new String(password))){
-                    
-                    secure = true;
-                    allowed = true;
-                    keycard = new KeyCard(rec);
-                    this.setVisible(false);
-                    
-                }else {
-                    
-                    secure = true;
-                    allowed = false;
-                    keycard = null;
-                    this.setVisible(false);
-                    
-                }
-                
-            }else {
-                
-                allowed = false;
-                secure = true;
-                keycard = null;
-                this.setVisible(false);
-                
-            } 
-            
-        }else {
-            
-            javax.swing.JOptionPane.showMessageDialog(null, "User: "+user+" was not found.");
-            secure = true;
-            this.setVisible(false);
-        }
-        
-    }
-    
-    public boolean isSecure() {
-        
-        return secure;
-        
-    }
-    
-    private boolean allowed = false;
-    
-    public boolean isAllowed() {
-        
-        return allowed;
-        
-    }
-        
-    public boolean isCanceled(){
+    public boolean wasCanceled() {
         return canceled;
     }
-    public KeyCard getKeyCard() {
-        
-        return keycard;
-                
+
+    public void display() {
+
+        try {
+            securityEnabled = userService.isSecurityEnabled();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching security details from database");
+            return;
+        }
+        if (securityEnabled) {
+            this.setVisible(true);
+        }
+
     }
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -232,7 +102,7 @@ public class AccessDialog extends javax.swing.JDialog {
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jLabel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 103, Short.MAX_VALUE)
+                .add(jLabel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -242,7 +112,7 @@ public class AccessDialog extends javax.swing.JDialog {
 
         jLabel2.setText("Password");
 
-        userField.setText("master");
+        userField.setText("admin");
         userField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 userFieldFocusGained(evt);
@@ -287,7 +157,7 @@ public class AccessDialog extends javax.swing.JDialog {
                             .add(jPanel2Layout.createSequentialGroup()
                                 .add(jLabel1)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .add(jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 61, Short.MAX_VALUE))
+                            .add(jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
                                 .add(tryButton)
@@ -349,46 +219,55 @@ public class AccessDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void userFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_userFieldFocusGained
-        
         userField.selectAll();
-        
-        
     }//GEN-LAST:event_userFieldFocusGained
 
     private void passFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_passFieldKeyPressed
-        
-        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER){
-           
-            
-               go();
-           
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+
+            this.authenticate();
         }
-        
+
     }//GEN-LAST:event_passFieldKeyPressed
-private boolean canceled = false;
+    private boolean canceled = false;
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        
-        secure = true;
-        allowed = false;
+
         canceled = true;
         this.setVisible(false);
-        
+
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void tryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tryButtonActionPerformed
-        
-        go();
-        
-        
+
+        authenticate();
+
     }//GEN-LAST:event_tryButtonActionPerformed
-    
-   private void go () {
-       
-       getUser(userField.getText().trim(), passField.getPassword());
-       
-   }
-    private String nl = System.getProperty("line.separator");
-    
+
+    private void authenticate() {
+
+        try {
+            this.user = userService.authenticateUser(this.userField.getText().trim(), this.passField.getPassword());
+        } catch (FailedPasswordException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Password failed");
+            return;
+        } catch (DuplicateUserNameException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Data error ");
+            this.setVisible(false);
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching user from database");
+            this.setVisible(false);
+        }
+
+        if (this.user == null) {
+            JOptionPane.showMessageDialog(this, "The username does not exist in the database.", "User not found", JOptionPane.OK_OPTION);
+            return;
+        } else {
+            this.setVisible(false);
+        }
+    }
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel jLabel1;
@@ -402,5 +281,5 @@ private boolean canceled = false;
     private javax.swing.JButton tryButton;
     private javax.swing.JTextField userField;
     // End of variables declaration//GEN-END:variables
-    
+
 }

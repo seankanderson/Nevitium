@@ -1,6 +1,5 @@
 package com.datavirtue.nevitium.models.settings;
 
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,4 +22,8 @@ public class SoftwareVersion {
     private String subversion;
     
     private String relaseDate;
+    
+    public String getVersionString() {
+        return major + "." + minor + "." + subversion;
+    }
 }

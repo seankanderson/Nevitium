@@ -1,6 +1,6 @@
 BUGS:
 
-screen calculation for dual-extended support
+screen calculation for dual-extended support (I think this fixed itself in Java/swing realeases over the years...seems to work now)
 
 check invoice for status before initiating any comand affected by changes during a "view" in the invoice manager
 
@@ -11,13 +11,14 @@ The 31st invoice item is not being printed!!!! Fixed???
 
 add ability to attach more files to a quote or invoice email!
 
-scan My Connections to make sure phone number, email, address, address2  is unique before saving!!
+scan contacts to make sure phone number, email, address, address2  is unique before saving!!
 
 Inventory search functions
 
 More ways to search? inventory invoices customers suppliers
 
-establish a unique return feature for DBEngine search (no duplicate results)
+establish a unique return feature for DBEngine search (no duplicate results)...no longer needed
+    application has been updated to Java 11 and ORMLite, targeting H2 by default
 
 
 invoice aux screen, finish integration
@@ -29,14 +30,29 @@ finish EDI for email feature (version 1.6)
 
 
 add feature to output invoices to a ftp location with pages and folders set with permissions for clients 
+    add secure ftp configurations for users to send files
+       add features to generate files to spec and send via ftp  
 (basic page with a list of availble invoices as links--branded with custom CSS ability)
 
 
 Integration:
-My Connectors
-export columns from a table to a XHTML/CSV/XML files uploaded to a server
-build a folder tree for customers and an index page with htaccess file and email users their password! ftp it for em!
-provide triggers to activate the compilation and upload, create a new dialog with tabs to handle each connector
+
+    send files (Excel / CSV) to analytics and reporting service (which sergvices?: PowerBI, Excel, DataIku, Airtable, another SQL server...Azure and AWS analytics)
+
+API economy connectors
+export columns from a table to a XHTML/CSV/XML files uploaded to a server...html templating where use can plug in certain fields (and make calculations?) ...are we doing too much here? 
+   *** maybe users just need plugged into a service like Stripe where inventory can be kept in sync if the user wishes...and those services offer ecommerce pages etc...
+start with integration (AirTable and ) and add raw solution enablers like FTP and templating (with an eye toward supporting EDI) later
+    templating is allowing the user to supply any text files where a triggered action would replace specific tokens in the text file with data from the app...and then send it somewhere
+     this includes AirTable integration etc...maybe even target live edited excel sheets etc
+provide triggers to activate the compilation and upload, 
+create a new dialog with tabs to handle each connector
+    need a better strategy for managing configurations (API keys, passwords...very sensitive data)
+        need to make sure user authentication and authorization are locked down
+            possible scheme is to make each client request a database password (that expires...maintenance task....weak point) 
+                the generated user name and password are passed back over (sweet...sweet mutual capable) tls connection to the client ...
+                    who then includes that in the connection string...for the hopefully mutually encrypted connection to the hopefully-encrypted database
+                    
 
 
 need to copy standard layout files to new companies!
@@ -59,6 +75,7 @@ Make sure each document element is switchable on/off
 Need recurring billing/payment system
 
 Need a list of sent emails, an email log!
+    Need to plug into email services for invoicing and marketing pushes.
 
 ----------------------------------------
 
@@ -80,7 +97,7 @@ NewEmail object line 69 introduce email checking and prompt
 move sch files into a zip file and calculate a MD5 that is stored in binary for comparison
 
 cash drawer utility
-if no email address is found for a contact as k for one!!!!!!!!!!!
+if no email address is found for a contact as k for one
   
 Create a custom invoice layout for pre-printed forms
 Create a css form builder for custom invoices/workorders/quotes.
@@ -92,12 +109,12 @@ Create a one-off label utility for single labels inappropriate for the database
 
 Allow the user to send a quick text/file email from my connections.
 
-Need more phone numbers and document management features.
+Need more phone numbers and document management features. Really?
+    storing and attaching documents to invoices and contacts and inventory...manuals, images, digital assets/products
 
-when you cast a object and insert it into another object type container you need to check for err
 build a check register to track "printed" checks
 
-inventory labels need to go in workingPath
+inventory labels need to go in workingPath ...death to workingPath
 inventory groups need managed and barcode label ability
 inventory calc inventory cost needs to be made manual
 
@@ -112,7 +129,7 @@ need image managemnet in inventory, allow them to select files and rename them,
 allow multiple pics and slideshow ability.  rename files based on code
 when selecting multiple file display a list of files with a preview at the right, allow
 the user to change the order of the files as they will be renamed CODE#_1, CODE#_2, etc...
-tell them they are being renamed and copied to path
+tell them they are being renamed and copied to path...death to path
 check for upc and code and display them in radio format to select auto renaming,
 if none of either is found display a text box for the user to provide a name.
 Put the files in a folder under the base name, this way the user can run slide
