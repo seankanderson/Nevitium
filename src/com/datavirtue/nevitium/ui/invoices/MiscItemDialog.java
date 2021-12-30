@@ -3,122 +3,156 @@
  *
  * Created on December 10, 2006, 4:29 PM
  */
-
 package com.datavirtue.nevitium.ui.invoices;
+
 import RuntimeManagement.GlobalApplicationDaemon;
+import com.datavirtue.nevitium.models.invoices.InvoiceItem;
+import com.datavirtue.nevitium.models.settings.AppSettings;
+import com.datavirtue.nevitium.models.settings.LocalAppSettings;
+import com.datavirtue.nevitium.services.AppSettingsService;
+import com.datavirtue.nevitium.services.DiService;
+import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.InventoryService;
+import com.datavirtue.nevitium.services.LocalSettingsService;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.ui.VATCalculator;
-import javax.swing.table.*;
 import datavirtue.*;
+import java.sql.SQLException;
 import javax.swing.JOptionPane;
-import java.util.ArrayList;
+import java.util.Date;
+import java.util.prefs.BackingStoreException;
 
 /**
  *
- * @author  Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007, 2008 All Rights Reserved.
+ * @author Sean K Anderson - Data Virtue
+ * @rights Copyright Data Virtue 2006, 2007, 2008, 2022 All Rights Reserved.
  */
 public class MiscItemDialog extends javax.swing.JDialog {
-    private GlobalApplicationDaemon application;
-    private Settings props;
-    /** Creates new form MiscItemDialog */
-    public MiscItemDialog(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, Object [] edit) {
-        super(parent, modal);
-        initComponents();
-        java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-        this.setLocation(dim.width, dim.height);
-        this.application = application;
 
-        db = application.getDb();
-        props = application.getProps();
+    private AppSettingsService appSettingsService;
+    private AppSettings appSettings;
+    private InventoryService inventoryService;
+    private LocalAppSettings localSettings;
+    private InvoiceItem currentItem;
+    
+    private String itemLongNote = "";
+
+    public MiscItemDialog(java.awt.Frame parent, boolean modal, InvoiceItem item) {
+        super(parent, modal);
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+
+                try {
+                    recordWindowSizeAndPosition();
+                } catch (BackingStoreException ex) {
+                    ExceptionService.showErrorDialog(e.getComponent(), ex, "Error saving local screen preferences");
+                }
+            }
+        });
+        initComponents();
+
+        var injector = DiService.getInjector();
+        appSettingsService = injector.getInstance(AppSettingsService.class);
+        appSettingsService.setObjectType(AppSettings.class);
+        inventoryService = injector.getInstance(InventoryService.class);
+        
+        item = item == null ? new InvoiceItem() : item;
+        
+        populate(item);        
+
+    }
+
+    private void recordWindowSizeAndPosition() throws BackingStoreException {
+        var screenSettings = localSettings.getScreenSettings();
+        var sizeAndPosition = LocalSettingsService.getWindowSizeAndPosition(this);
+        screenSettings.setInvoiceMiscItem(sizeAndPosition);
+        LocalSettingsService.saveLocalAppSettings(localSettings);
+    }
+
+    private void restoreSavedWindowSizeAndPosition() throws BackingStoreException {
+        var screenSettings = localSettings.getScreenSettings().getInvoiceMiscItem();
+        LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
+    }
+
+    public void display() throws BackingStoreException {
+        this.localSettings = LocalSettingsService.getLocalAppSettings();
+        restoreSavedWindowSizeAndPosition();
+        try {
+            appSettings = appSettingsService.getObject();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching app settings from database");
+        }
 
         unitField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
-        /* Allow the price field to accept negative numbers */
-        JTextFieldFilter tf = (JTextFieldFilter)unitField.getDocument();
+        JTextFieldFilter tf = (JTextFieldFilter) unitField.getDocument();
         tf.setNegativeAccepted(true);
 
         costField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
-        
+
         descField.setDocument(new LimitedDocument(50));
         longNoteBox.setDocument(new LimitedDocument(1000));
-        
+
         this.populateItemList();
-        
-        tax1Box.setText(props.getProp("TAX1NAME"));
-        tax2Box.setText(props.getProp("TAX2NAME"));
-        
-        if (edit != null) populate(edit);
-        
+
+        tax1Box.setText(appSettings.getInvoice().getTax1Name());
+        tax2Box.setText(appSettings.getInvoice().getTax2Name());
+
         this.setVisible(true);
-       
     }
-    
-    private void populate(Object [] edit){
-        
-        //45679
-        //desc price tax1 tax2 cost
-        descField.setText((String)edit[4]);
-        unitField.setText(DV.money((Float)edit[5]));
-        tax1Box.setSelected((Boolean)edit[6]);
-        tax2Box.setSelected((Boolean)edit[7]);
-        costField.setText(DV.money((Float)edit[9]));
+
+    private void populate(InvoiceItem item) {
+        descField.setText(item.getDescription());
+        unitField.setText(DV.money(item.getUnitPrice()));
+        tax1Box.setSelected(item.isTaxable1());
+        tax2Box.setSelected(item.isTaxable2());
+        costField.setText(DV.money(item.getCost()));
         descField.requestFocus();
-        
+        currentItem = item;
     }
-    
+
     private java.util.ArrayList itemList;
-    
-    private void populateItemList () {
-        
-         itemList = new java.util.ArrayList();
-        itemList.trimToSize();
-        
-        TableModel cat_tm = db.createTableModel("miscitems");
-        
-        if (cat_tm != null && cat_tm.getRowCount() > 0){
-            
-            for (int r = 0; r < cat_tm.getRowCount(); r++){
-            
-                itemList.add((String) cat_tm.getValueAt(r, 1));
-                
-            }
-        
-         
-        }else {
-            
-            itemList.add("N/A");
-        }
-        
-        descField.setDocument(new AutoCompleteDocument( descField, itemList ));
-        
-        
+
+    private void populateItemList() {
+
+//        itemList = new java.util.ArrayList();
+//        itemList.trimToSize();
+//
+//        TableModel cat_tm = db.createTableModel("miscitems");
+//
+//        if (cat_tm != null && cat_tm.getRowCount() > 0) {
+//
+//            for (int r = 0; r < cat_tm.getRowCount(); r++) {
+//                itemList.add((String) cat_tm.getValueAt(r, 1));
+//            }
+//        } else {
+//
+//            itemList.add("N/A");
+//        }
+//
+//        descField.setDocument(new AutoCompleteDocument(descField, itemList));
     }
-    
+
     private void normalizeItemList(String s) {
-        
-        
-        String txm;
-        
-        java.util.ArrayList al;
-        
-        al = db.search("miscitems", 1, s, false);
-        
-        if (al == null){
-            
-            db.saveRecord("miscitems",new Object [] {new Integer(0), new String (s)} ,false);
-           
-        }
-        
-        
+
+//        String txm;
+//
+//        java.util.ArrayList al;
+//
+//        al = db.search("miscitems", 1, s, false);
+//
+//        if (al == null) {
+//
+//            db.saveRecord("miscitems", new Object[]{new Integer(0), new String(s)}, false);
+//
+//        }
     }
-    
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -320,19 +354,21 @@ public class MiscItemDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void itemNoteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemNoteActionPerformed
-        
+
         toggleItemNote();
-        
-        
+
+
     }//GEN-LAST:event_itemNoteActionPerformed
 
-    
     private void toggleItemNote() {
         boolean sw;
-        
-        if (itemNote.isSelected()) sw = false;
-        else sw = true;
-        
+
+        if (itemNote.isSelected()) {
+            sw = false;
+        } else {
+            sw = true;
+        }
+
         unitField.setText("0.00");
         unitField.setEnabled(sw);
         costField.setText("0.00");
@@ -341,83 +377,67 @@ public class MiscItemDialog extends javax.swing.JDialog {
         tax2Box.setSelected(false);
         tax1Box.setEnabled(sw);
         tax2Box.setEnabled(sw);
+
+    }
+
+    private void addItemAndExit() throws SQLException {
+        var description = descField.getText().trim();
+
+        if (description.equals("") || description.length() < 5) {
+            JOptionPane.showMessageDialog(this, "Please provide a thorough description.", "Important Field", JOptionPane.OK_OPTION);
+            return;
+        }
+
+        var descriptionAlreadyExists = inventoryService.doesInventoryByDescriptionExist(description);
+
+        if (descriptionAlreadyExists) {
+
+            javax.swing.JOptionPane.showMessageDialog(null, "Duplicate description found in inventory database, action cancelled.");
+            descField.requestFocus();
+            descField.selectAll();
+            return;
+        }
+
+        String price = unitField.getText().trim();
+        String cost = costField.getText().trim();
+
+        if (DV.validFloatString(price)); else {
+            JOptionPane.showMessageDialog(this, "Please enter a valid Unit Price: '0.00' numbers and decimal only.", price, JOptionPane.OK_OPTION);
+            return;
+        }
+
+        if (DV.validFloatString(cost)); else {
+            JOptionPane.showMessageDialog(this, "Please enter a valid Cost Price: '0.00' numbers and decimal only.", cost, JOptionPane.OK_OPTION);
+            return;
+        }
+
+        double unit = 0.00f;
+        double costf = 0.00f;
+        costf = Float.parseFloat(cost);
+        unit = Float.parseFloat(price);
+
+        currentItem.setCode("MISC");
+        currentItem.setDate(new Date());
+        currentItem.setCost(costf);
+        currentItem.setUnitPrice(unit);
+        currentItem.setDescription(description);
+
+        itemLongNote = longNoteBox.getText();
+
+        this.normalizeItemList(description);
+        this.VATButton.setVisible(appSettings.getInvoice().getTax1Name().equalsIgnoreCase("vat"));
+        this.setVisible(false);
         
     }
     
-    
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
-        //verify each field and bitch
-        //format everything properly
-        //convert all fields to their proper format
-        //then assing new vals to miscItem
-        ArrayList al;
-        
-        String desc = descField.getText().trim();
-        
-        
-        /* check for duplicates in inventory*/
-        
-        al = db.searchFast("inventory", 3, desc, false );
-        if (al != null){
-            
-            javax.swing.JOptionPane.showMessageDialog(null, "Duplicate description found in inventory, action canceled.");
-            return;
+        try {
+            this.addItemAndExit();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error checking inventory database");
+            this.setVisible(false);
         }
         
-        
-        String price = unitField.getText().trim();
-        String cost = costField.getText().trim();
-        
-        
-        if (DV.validFloatString(price)); 
-        else {JOptionPane.showMessageDialog(this, "Please enter a valid Unit Price: '0.00' numbers and decimal only.", price,  JOptionPane.OK_OPTION); return;}
-        
-        if (DV.validFloatString(cost)); 
-        else {JOptionPane.showMessageDialog(this, "Please enter a valid Cost Price: '0.00' numbers and decimal only.", cost,  JOptionPane.OK_OPTION); return;}
-        
-        if (desc.equals("") || desc.length() < 5 || desc.length() > 50){
-            
-          JOptionPane.showMessageDialog(this, "Please enter a good Description, up to 50 characters.", "Important Field",  JOptionPane.OK_OPTION);
-          return;
-        }
-        
-        al = db.search("inventory", 3, desc, false );
-        
-        if (al == null);
-        else {
-            
-          JOptionPane.showMessageDialog(this, "The Description you provided was found in Inventory." + nl +
-                  " Please use another.", "Invalid Description",  JOptionPane.OK_OPTION);
-          
-          descField.requestFocus();
-          descField.selectAll();
-          
-          return;
-            
-        }
-        
-        float unit  = 0.00f;
-        float costf = 0.00f;
-        costf = Float.parseFloat(cost);
-        unit = Float.parseFloat(price);
-        
-        miscItem [2] = "MISC";  //code
-        
-        String note = desc;
-        //if (!itemNote.isSelected()) note = desc.toUpperCase().trim();
-        
-        miscItem [3] = note;  //desc
-        miscItem [7] = new Float (costf);  //cost
-        miscItem [8] = new Float (unit);  //unit
-        miscItem [13] = tax1Box.isSelected();  //t1
-        miscItem [14] = tax2Box.isSelected();  //t2
-        itemLongNote = longNoteBox.getText();
-        
-        stat = true;
-        
-        this.normalizeItemList(descField.getText());        
-        this.VATButton.setVisible(DV.parseBool(application.getProps().getProp("VAT"), true));
-        this.setVisible(false);
     }//GEN-LAST:event_addButtonActionPerformed
 
     private void unitFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_unitFieldFocusGained
@@ -433,31 +453,18 @@ public class MiscItemDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_descFieldFocusGained
 
     private void VATButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_VATButtonActionPerformed
-        new VATCalculator(null, true, DV.parseFloat(props.getProp("TAX1")));
+        new VATCalculator(null, true, appSettings.getInvoice().getTax1Rate());
     }//GEN-LAST:event_VATButtonActionPerformed
-    
-    public boolean getStat() {
-        
-        return stat;
-        
+
+    public InvoiceItem getItem() {
+        return currentItem;
     }
-    
-    public Object [] getItem () {
-        
-        return miscItem;
-        
-    }
-    
-    public String getLongNote(){
+
+    public String getLongNote() {
         return itemLongNote;
     }
-    private Object [] miscItem = new Object [16];  //the size of an inventory record
-    private boolean stat = false;
-    private DbEngine db;
-    private String nl = System.getProperty("line.separator");
-    private String itemLongNote = "";
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton VATButton;
     private javax.swing.JButton addButton;
@@ -477,5 +484,5 @@ public class MiscItemDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox tax2Box;
     private javax.swing.JTextField unitField;
     // End of variables declaration//GEN-END:variables
-    
+
 }

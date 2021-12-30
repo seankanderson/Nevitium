@@ -85,11 +85,19 @@ public class Tools {
     public static boolean isDecimal(float f) {
         Float flt = new Float(f);
         int sig = flt.intValue();
-        //System.out.println("Mantissa??   :"+sig);
         if (f > sig) {
             return true;
         }
 
+        return false;
+    }
+    
+    public static boolean isDecimal(double v) {
+        Double d = v;
+        int sig = d.intValue();
+        if (v > sig) {
+            return true;
+        }
         return false;
     }
 

@@ -19,9 +19,9 @@ import datavirtue.DV;
  * @author dataVirtue
  */
 public class VATCalculator extends javax.swing.JDialog {
-private float tax_rate = .15f;
+private double tax_rate = .15d;
     /** Creates new form VATCalculator */
-    public VATCalculator(java.awt.Frame parent, boolean modal,float tax_rate) {
+    public VATCalculator(java.awt.Frame parent, boolean modal,double tax_rate) {
         super(parent, modal);
         initComponents();
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
@@ -130,9 +130,9 @@ private float tax_rate = .15f;
 
     private void entryFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_entryFieldKeyReleased
 
-        float entry = DV.parseFloat(entryField.getText());
-        float base = (entry * (100/(100+(tax_rate*100)) ) );
-        float with = (entry + (entry * tax_rate));
+        double entry = DV.parseFloat(entryField.getText());
+        double base = (entry * (100/(100+(tax_rate*100)) ) );
+        double with = (entry + (entry * tax_rate));
 
         baseField.setText(DV.money(base));
         VATAddedField.setText(DV.money(with));

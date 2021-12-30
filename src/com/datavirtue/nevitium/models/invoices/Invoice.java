@@ -15,9 +15,10 @@ import lombok.Setter;
  *
  * @author SeanAnderson
  */
-@Getter @Setter
+@Getter
+@Setter
 @DatabaseTable(tableName = "invoices", daoClass = InvoiceDao.class)
-public class Invoice extends BaseModel{
+public class Invoice extends BaseModel {
 
     @DatabaseField
     private String invoiceNumber;
@@ -25,6 +26,10 @@ public class Invoice extends BaseModel{
     private Date invoiceDate;
     @DatabaseField
     private String customer;
+
+    @DatabaseField
+    private String shiptToAddress;
+
     @DatabaseField
     private UUID customerId;
     @DatabaseField
@@ -36,10 +41,12 @@ public class Invoice extends BaseModel{
     @DatabaseField
     private double shippingFee;
     @DatabaseField
-    private boolean isQuote;
-    
+    private boolean quote;
+
     @ForeignCollectionField(eager = true)
     private Collection<InvoiceItem> items;
-    
-    
+
+    @ForeignCollectionField(eager = true)
+    private Collection<InvoiceItem> returns;
+
 }

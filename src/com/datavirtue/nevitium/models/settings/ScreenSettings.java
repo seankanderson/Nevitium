@@ -13,6 +13,7 @@ public class ScreenSettings {
     WindowSizeAndPosition contacts;
     WindowSizeAndPosition inventory;
     WindowSizeAndPosition invoices;
+    WindowSizeAndPosition invoiceMiscItem;
     WindowSizeAndPosition invoiceManager;
     WindowSizeAndPosition checkPrinter;
     WindowSizeAndPosition settings;    

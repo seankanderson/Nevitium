@@ -9,9 +9,6 @@ package com.datavirtue.nevitium.ui;
 
 import com.datavirtue.nevitium.ui.util.NewEmail;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
-import com.datavirtue.nevitium.ui.util.Tools;
-import RuntimeManagement.GlobalApplicationDaemon;
-import RuntimeManagement.KeyCard;
 import java.io.*;
 import datavirtue.*;
 import java.awt.*;
@@ -33,6 +30,7 @@ import com.datavirtue.nevitium.models.settings.SecuritySettings;
 import com.datavirtue.nevitium.services.DatabaseService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
+import com.datavirtue.nevitium.services.UserService;
 import java.util.Locale;
 import java.util.prefs.BackingStoreException;
 
@@ -49,8 +47,7 @@ public class SettingsDialog extends javax.swing.JDialog {
     private Cursor defaultCursor;
     private Image winIcon;
     
-    public SettingsDialog(java.awt.Frame parent, boolean modal,
-            GlobalApplicationDaemon application, boolean safe, int tabIndex) {
+    public SettingsDialog(java.awt.Frame parent, boolean modal, int tabIndex) {
         super(parent, modal);
         parentWin = parent;
         
@@ -64,10 +61,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         appSettingsService = injector.getInstance(AppSettingsService.class);
         appSettingsService.setObjectType(AppSettings.class);
 
-        if (!safe) {
-            configEDIButton.setEnabled(false);
-        }
-
+       
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
 
@@ -98,7 +92,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         invoicePrefixField.setDocument(new LimitedDocument(3));
         quotePrefixField.setDocument(new LimitedDocument(3));
         jTabbedPane1.setSelectedIndex(tabIndex);
-        init();
+        
     }
 
     private void addTab(int index, String title, String iconRes) {
@@ -113,7 +107,16 @@ public class SettingsDialog extends javax.swing.JDialog {
         jTabbedPane1.setTabComponentAt(index, lbl);
     }
 
-    private void init() {
+    public void display() {
+        
+        var user = UserService.getCurrentUser();
+        
+        if (!user.isAdmin() && user.getSettings() < 500){
+            JOptionPane.showMessageDialog(this, "Please see the admin about permissions.", "Access denied", JOptionPane.OK_OPTION);
+            this.dispose();
+            return;
+        }
+        
         posPrinterPaperWidthSpinner.getModel().setValue(80);
         ///boolean settingsFileExists = (new File(workingPath + "settings.ini")).exists();
         try {
@@ -127,6 +130,9 @@ public class SettingsDialog extends javax.swing.JDialog {
         } catch (SQLException e) {
             ExceptionService.showErrorDialog(this, e, "Error loading settings");
         }
+        
+        this.setVisible(true);      
+
     }
 
     private void createNewDefaultSettings() throws SQLException {

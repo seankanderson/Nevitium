@@ -44,7 +44,7 @@ public class InvoiceItemsTableModel extends AbstractCollectionTableModel<Invoice
                 item.setTaxable2((Boolean) value);
                 break;
             case 7:
-
+                
                 break;
 
         }
@@ -80,7 +80,7 @@ public class InvoiceItemsTableModel extends AbstractCollectionTableModel<Invoice
                 return item.isTaxable2();
 
             case 7:
-                return (item.getQuantity() * item.getUnitPrice());
+                return (item.getQuantity() * item.getUnitPrice()); // TODO: add taxable logic
 
         }
         return null;

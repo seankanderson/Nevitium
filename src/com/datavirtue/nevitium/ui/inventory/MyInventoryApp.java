@@ -12,12 +12,9 @@
  */
 package com.datavirtue.nevitium.ui.inventory;
 
-import RuntimeManagement.KeyCard;
-import RuntimeManagement.GlobalApplicationDaemon;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.models.inventory.InventoryTableModel;
 import com.datavirtue.nevitium.ui.StatusDialog;
 import datavirtue.*;
@@ -33,6 +30,8 @@ import java.awt.*;
 import java.math.BigDecimal;
 import java.util.Date;
 import com.datavirtue.nevitium.models.inventory.Inventory;
+import com.datavirtue.nevitium.models.settings.AppSettings;
+import com.datavirtue.nevitium.models.settings.LocalAppSettings;
 import com.datavirtue.nevitium.services.InventoryService;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -43,46 +42,50 @@ import com.datavirtue.nevitium.models.settings.WindowSizeAndPosition;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
+import com.datavirtue.nevitium.services.UserService;
 import org.apache.commons.lang3.StringUtils;
 
 public class MyInventoryApp extends javax.swing.JDialog {
 
-    private KeyCard accessKey;
-    private boolean debug = false;
     private InventoryService inventoryService;
-    private AppSettingsService appSettings;
+    private AppSettingsService appSettingsService;
+    private AppSettings appSettings;
+    private LocalAppSettings localSettings;
     private Inventory currentItem = new Inventory();
+
+    private java.util.List<Inventory> returnValue;
+    private long lastRecvDate;
+    private long lastSaleDate;
+    private boolean service = false;
+    private java.awt.Image winIcon;
+    private java.awt.Frame parentWin;
+    private boolean selectMode;
+    private TableModel tm;
+    private String nl = System.getProperty("line.separator");
 
     /**
      * Creates new form InventoryDialog
      */
-    public MyInventoryApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, boolean select) {
+    public MyInventoryApp(java.awt.Frame parent, boolean modal, boolean select) {
 
         super(parent, modal);
 
         initComponents();
         var injector = DiService.getInjector();
         inventoryService = injector.getInstance(InventoryService.class);
-        appSettings = injector.getInstance(AppSettingsService.class);
+        appSettingsService = injector.getInstance(AppSettingsService.class);
+        appSettingsService.setObjectType(AppSettings.class);
 
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(MyInventoryApp.class.getResource("/businessmanager/res/Orange.png"));
         this.setIconImage(winIcon);
 
-        this.application = application;
-        accessKey = application.getKey_card();
-
         //Adjust references, to this context, for the needed objects 
         selectMode = select;
-
-        workingPath = application.getWorkingPath();
 
         if (selectMode) {
             receiveModeBox.setVisible(false);
         }
-        props = new Settings(workingPath + "settings.ini");
-        String coName = props.getProp("CO NAME");
-        this.setTitle(coName + " Inventory Manager");
 
         /* Limit field characters */
         qtyTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
@@ -102,11 +105,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
         weightTextField.setDocument(new LimitedDocument(15));
         catTextField.setDocument(new LimitedDocument(20));
 
-        //Version 1.5
-        /* Set tax names */
-        taxCheckBox.setText(props.getProp("TAX1NAME"));
-        tax2CheckBox.setText(props.getProp("TAX2NAME"));
-
         /* Set the spinner  */
  /*                                              val min max  incr      */
         SpinnerNumberModel model = new SpinnerNumberModel(0, 0, null, 1);
@@ -114,14 +112,14 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-
+              
                 try {
-                    recordScreenPosition();
-                } catch (Exception exception) {
-
+                    recordWindowSizeAndPosition();
+                } catch (BackingStoreException ex) {
+                    ExceptionService.showErrorDialog(e.getComponent(), ex, "Error saving local screen preferences");
                 }
-
-                // props.setProp("INVENTORY SEARCH", Integer.toString(searchFieldCombo.getSelectedIndex()));
+                    
+              
             }
         });
 
@@ -148,76 +146,66 @@ public class MyInventoryApp extends javax.swing.JDialog {
             toggleButton.setText("More");
 
         }
-        this.populateCategoryList();
-
-        SwingWorker worker = new SwingWorker() {
-
-            public Object doInBackground() {
-                StatusDialog sd = new StatusDialog(parentWin, false, "Please Wait", false);
-                sd.changeMessage("Initializing Inventory");
-                sd.addStatus("Building inventory table...");
-                //tm = db.createTableModel("inventory", iTable);//time consuming
-                try {
-                    var allInventory = inventoryService.getAll();
-                    tm = new InventoryTableModel(allInventory);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-
-                sd.addStatus("Inventory table Complete.");
-                sd.addStatus("Configuring inventory table...");
-                return sd;
-            }
-
-            public void done() {
-                iTable.setModel(tm);
-                init();
-                StatusDialog d = null;
-                try {
-                    d = (StatusDialog) get();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(MyInventoryApp.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ExecutionException ex) {
-                    Logger.getLogger(MyInventoryApp.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                d.addStatus("<<< Complete >>>");
-                d.dispose();
-            }
-        };
-        worker.execute();
-
-        /*  (new Thread(){
-            public void run(){
-            final StatusDialog sd = new StatusDialog(parentWin, false, "Please Wait", false);
-            sd.changeMessage("Initializing Inventory");
-            sd.addStatus("Building inventory table...");
-            tm = db.createTableModel("inventory", iTable);//time consuming
-            sd.addStatus("Inventory table Complete.");
-            sd.addStatus("Configuring inventory table...");
-            // Place the GUI update code back on the EDT
-            SwingUtilities.invokeLater(new Runnable() {
-            public void run()  {
-            iTable.setModel(tm);
-            init();
-            sd.dispose();
-            }});
-            }}).start();*/
-        if (this.checkForScreenSettings()) {
-            this.restoreScreenPosition();//restore saved screen size
-        } else {
-            java.awt.Dimension d = DV.computeCenter((java.awt.Window) this);
-            this.setLocation(d.width, d.height);
-        }
-
-        this.setVisible(true);//release to the user
 
     }//end constructor
 
-    private String workingPath = "";
+    SwingWorker worker = new SwingWorker() {
 
+        public Object doInBackground() {
+            StatusDialog sd = new StatusDialog(parentWin, false, "Please Wait", false);
+            sd.changeMessage("Initializing Inventory");
+            sd.addStatus("Building inventory table...");
+            //tm = db.createTableModel("inventory", iTable);//time consuming
+            try {
+                var allInventory = inventoryService.getAll();
+                tm = new InventoryTableModel(allInventory);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            sd.addStatus("Inventory table Complete.");
+            sd.addStatus("Configuring inventory table...");
+            return sd;
+        }
+
+        public void done() {
+            iTable.setModel(tm);
+
+            StatusDialog d = null;
+            try {
+                d = (StatusDialog) get();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MyInventoryApp.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ExecutionException ex) {
+                Logger.getLogger(MyInventoryApp.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            d.addStatus("<<< Complete >>>");
+            d.dispose();
+        }
+    };
 
     /* My initializer method */
-    private void init() {
+    public void display() throws SQLException, BackingStoreException {
+
+        try {
+            this.localSettings = LocalSettingsService.getLocalAppSettings();
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching local settings");
+        }
+
+        appSettings = appSettingsService.getObject();
+        var user = UserService.getCurrentUser();
+
+        if (!user.isAdmin() && user.getInventory() < 300) {
+            JOptionPane.showMessageDialog(this, "Please see the admin about permissions.", "Access denied", JOptionPane.OK_OPTION);
+            this.dispose();
+            return;
+        }
+
+        this.setTitle(appSettings.getCompany().getCompanyName() + " Inventory Manager");
+
+        taxCheckBox.setText(appSettings.getInvoice().getTax1Name());
+        tax2CheckBox.setText(appSettings.getInvoice().getTax2Name());
 
         if (selectMode) {
             /* Setup Select Mode */
@@ -235,107 +223,34 @@ public class MyInventoryApp extends javax.swing.JDialog {
             setFieldsEnabled(false);
         }
 
-        int c = Tools.getStringInt(props.getProp("INVENTORY SEARCH"), 2); //default to desc
-        searchFieldCombo.setSelectedIndex(c);
+        searchFieldCombo.setSelectedItem(appSettings.getInventory().getDefaultInventorySearchField());
 
-        taxCheckBox.setToolTipText(props.getProp("TAX1"));
-        tax2CheckBox.setToolTipText(props.getProp("TAX2"));
+        taxCheckBox.setToolTipText(appSettings.getInvoice().getTax1Name());
+        tax2CheckBox.setToolTipText(appSettings.getInvoice().getTax2Name());
 
         findTextField.requestFocus();
 
-        //qtyTextField.setInputVerifier(new DecimalPrecisionInputVerifier(2));
+        worker.execute();
+
+        this.populateCategoryList();
+
+        this.restoreSavedWindowSizeAndPosition();
+
+        this.setVisible(true);
+
     }
 
-    private void recordScreenPosition() throws BackingStoreException, Exception {
-
-        Point screenLocation = this.getLocationOnScreen();
-        Dimension sizeOnScreen = this.getSize();
-
-        var localSettings = LocalSettingsService.getLocalAppSettings();
-        if (localSettings == null) {
-            throw new Exception("Settings are missing");
-        }
-
-        var screenSettings = localSettings.getScreenSettings();
-        if (screenSettings == null) {
-            screenSettings = new ScreenSettings();
-        }
-
-        var position = new WindowSizeAndPosition();
-        position.setLocation(screenLocation);
-        position.setSize(sizeOnScreen);
-
-        screenSettings.setInventory(position);
+    private void recordWindowSizeAndPosition() throws BackingStoreException {
+        var screenSettings = localSettings.getScreenSettings();     
+        var sizeAndPosition = LocalSettingsService.getWindowSizeAndPosition(this);
+        screenSettings.setInventory(sizeAndPosition);
         LocalSettingsService.saveLocalAppSettings(localSettings);
-
     }
 
-    private Point defaultScreenPosition;
-    private Dimension defaultWindowSize;
+    private void restoreSavedWindowSizeAndPosition() throws BackingStoreException {
 
-    private boolean checkForScreenSettings() {
-        String pt = props.getProp("INVTPOS");
-        String dim = props.getProp("INVTSIZE");
-        if (pt.equals("")) {
-            return false;
-        }
-        if (dim.equals("")) {
-            return false;
-        }
-        if ((Tools.parsePoint(pt)) == null) {
-            return false;
-        }
-        if ((Tools.parseDimension(dim)) == null) {
-            return false;
-        }
-        return true;
-
-    }
-
-    private void storeDefaultScreen() {
-
-        try {
-            defaultScreenPosition = this.getLocationOnScreen();
-        } catch (Exception e) {
-            defaultScreenPosition = new Point(0, 0);
-        }
-
-        defaultWindowSize = this.getSize();
-
-    }
-
-    private void restoreDefaultScreenSize() {
-
-        this.setSize(this.defaultWindowSize);
-    }
-
-    private void restorDefaultScreen() {
-        restoreDefaultScreenSize();
-        restoreDefaultScreenLocation();
-    }
-
-    private void restoreDefaultScreenLocation() {
-        this.setLocation(this.defaultScreenPosition);
-    }
-
-    private void restoreScreenPosition() {
-
-        String pt = props.getProp("INVTPOS");
-        String dim = props.getProp("INVTSIZE");
-        Point p = Tools.parsePoint(pt);
-        if (p == null) {
-            p = this.defaultScreenPosition;
-        }
-        if (p == null) {
-            p = new Point(0, 0);
-        }
-        this.setLocation(p);
-        Dimension d = Tools.parseDimension(dim);
-        if (d == null) {
-            d = this.defaultWindowSize;
-        }
-        this.setSize(d);
-
+        var screenSettings = localSettings.getScreenSettings().getInventory();       
+        LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
     }
 
     private void populateCategoryList() {
@@ -359,11 +274,11 @@ public class MyInventoryApp extends javax.swing.JDialog {
             } catch (SQLException sqlException) {
                 ExceptionService.showErrorDialog(this, sqlException, "Error fetching default markup value settings");
             }
-            
+
         }
 
     }
-    
+
     private void setFieldsEnabled(boolean enabled) {
 
         upcTextField.setEnabled(enabled);
@@ -669,7 +584,8 @@ public class MyInventoryApp extends javax.swing.JDialog {
         weightTextField.setText(currentItem.getWeight());
         qtyTextField.setText(Double.toString(currentItem.getQuantity()));
 
-        if (accessKey.checkInventory(300)) {
+        if (UserService.getCurrentUser().isAdmin()
+                || UserService.getCurrentUser().getInventory() >= 300) {
             costTextField.setText(DV.money(currentItem.getCost()));
         }
         priceTextField.setText(DV.money(currentItem.getPrice()));
@@ -794,7 +710,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }
 
     /* Public method to grab the needed value in Select Mode */
-    public int[] getReturnValue() {
+    public java.util.List<Inventory> getReturnValue() {
 
         return returnValue;
 
@@ -1712,7 +1628,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             v[i] = (Integer) iTable.getModel().getValueAt(a[i], 0);
 
         }
-        new InventoryGroupDialog(null, true, v, workingPath).setVisible(true);
+        //new InventoryGroupDialog(null, true, v, workingPath).setVisible(true);
 
 
     }//GEN-LAST:event_groupButtonActionPerformed
@@ -1794,8 +1710,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (iTable.getSelectedRow() > -1) {
 
-            new InventoryLabelsDialog(null, true, iTable.getModel(), iTable.getSelectedRows(), workingPath, props);
-
+            //new InventoryLabelsDialog(null, true, iTable.getModel(), iTable.getSelectedRows(), workingPath, props);
         } else {
 
             javax.swing.JOptionPane.showMessageDialog(null, "Select rows from the Inventory table to create labels.");
@@ -1910,10 +1825,10 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (!upcTextField.isEnabled()) {
 
-            if (!accessKey.checkInventory(200)) {
-                accessKey.showMessage("Create");
-                return;
-            }
+//            if (!accessKey.checkInventory(200)) {
+//                accessKey.showMessage("Create");
+//                return;
+//            }
 
             /* A new record has begun */
             currentItem = new Inventory();
@@ -1961,7 +1876,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) {
             return;
         }
-        //Version 1.5
+
         if (selectMode) {
 
             if (evt.getClickCount() == 2) {
@@ -1969,8 +1884,9 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 int row = iTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
 
                 if (iTable.getSelectedRow() > -1) {
-                    returnValue = new int[1];
-                    returnValue[0] = (Integer) tm.getValueAt(row, 0);
+                    returnValue = new ArrayList();
+                    var tableModel = (InventoryTableModel) this.iTable.getModel();
+                    returnValue.add((Inventory) tableModel.getValueAt(row));
                     this.setVisible(false);
                 }
 
@@ -1987,19 +1903,18 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     private void voidButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_voidButtonActionPerformed
 
-        returnValue = new int[]{-1};
+        returnValue = null;
         setVisible(false);
 
     }//GEN-LAST:event_voidButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
 
-        if (!accessKey.checkInventory(500)) {
-
-            accessKey.showMessage("Delete");
-            return;
-        }
-
+//        if (!accessKey.checkInventory(500)) {
+//
+//            accessKey.showMessage("Delete");
+//            return;
+//        }
         if (iTable.getSelectedRow() > -1) {
 
             int a = JOptionPane.showConfirmDialog(this, "Delete Selected Record?", "DELETE", JOptionPane.YES_NO_OPTION);
@@ -2047,19 +1962,19 @@ public class MyInventoryApp extends javax.swing.JDialog {
         boolean isNewItem = currentItem.getId() == null;
 
         if (currentItem.getId() == null) {
-            if (!accessKey.checkInventory(200)) {
-                accessKey.showMessage("Create");
-                clearFields();
-                return;
-            }
+//            if (!accessKey.checkInventory(200)) {
+//                accessKey.showMessage("Create");
+//                clearFields();
+//                return;
+//            }
         }
 
         if (currentItem.getId() != null) {
-            if (!accessKey.checkInventory(400)) {
-                accessKey.showMessage("Edit");
-                clearFields();
-                return;
-            }
+//            if (!accessKey.checkInventory(400)) {
+//                accessKey.showMessage("Edit");
+//                clearFields();
+//                return;
+//            }
         }
 
         //call validateForm() before this method
@@ -2269,35 +2184,14 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     private void setReturnValue() {
 
-        int tmp[] = iTable.getSelectedRows();
-        returnValue = new int[tmp.length];
+        var selectedRowIndexes = iTable.getSelectedRows();
+        var tableModel = (InventoryTableModel) iTable.getModel();
+        returnValue = new ArrayList();
 
-        for (int i = 0; i < tmp.length; i++) {
-
-            if (debug) {
-                System.out.println("InventoryDialog:Selected Row " + tmp[i]);
-            }
-            returnValue[i] = (Integer) tm.getValueAt(tmp[i], 0);
-            //System.out.println(returnValue[i]);
-            /* build inventoryDAO and store in an ArrayList */
-            //store in application DAO list
-            /* call the implemented method! which triggers action on the list of DAOs */
-
- /* Dispose this */
+        for (int i = 0; i < selectedRowIndexes.length; i++) {
+            returnValue.add((Inventory) tableModel.getValueAt(i));
         }
     }
-
-    private GlobalApplicationDaemon application;
-    private int[] returnValue = new int[]{-1};
-    private long lastRecvDate;
-    private long lastSaleDate;
-    private boolean service = false;
-    private java.awt.Image winIcon;
-    private java.awt.Frame parentWin;
-    private boolean selectMode;
-    private TableModel tm;
-    private Settings props;
-    private String nl = System.getProperty("line.separator");
 
     /* NetBeans generated privates */
 

@@ -29,12 +29,15 @@ import java.io.IOException;
 import javax.swing.JOptionPane;
 import javax.swing.JFileChooser;
 import com.datavirtue.nevitium.models.settings.AppSettings;
+import com.datavirtue.nevitium.models.settings.LocalAppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.DatabaseService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
 import com.google.inject.Inject;
 import java.sql.SQLException;
+import java.util.prefs.BackingStoreException;
 
 /**
  *
@@ -46,8 +49,9 @@ public class ControlCenter extends javax.swing.JFrame {
     private KeyCard accessKey;
     private Toolkit tools = Toolkit.getDefaultToolkit();
     @Inject
-    private final AppSettingsService appSettingsService=null;
+    private final AppSettingsService appSettingsService = null;
     private AppSettings appSettings;
+    private LocalAppSettings localSettings;
     @Inject
     private UserService userService;
 
@@ -59,6 +63,11 @@ public class ControlCenter extends javax.swing.JFrame {
         //this.getLookAndFeel();
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
+                try {
+                    recordWindowSizeAndPosition();
+                } catch (BackingStoreException ex) {
+                    ExceptionService.showErrorDialog(e.getComponent(), ex, "Error saving local screen preferences");
+                }
                 closeAll();
             }
         });
@@ -66,31 +75,46 @@ public class ControlCenter extends javax.swing.JFrame {
         System.setProperty("http.agent", "Nevitium");
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
-        
         buildMenu();
+         
     }
     
-    public void display() {
+    private void recordWindowSizeAndPosition() throws BackingStoreException {
+        var screenSettings = localSettings.getScreenSettings();     
+        var sizeAndPosition = LocalSettingsService.getWindowSizeAndPosition(this);
+        screenSettings.setMain(sizeAndPosition);
+        LocalSettingsService.saveLocalAppSettings(localSettings);
+    }
+
+    private void restoreSavedWindowSizeAndPosition() throws BackingStoreException {
+        var screenSettings = localSettings.getScreenSettings().getMain();       
+        LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
+    }
+
+
+    public void display() throws BackingStoreException {
         
-        appSettingsService.setObjectType(AppSettings.class);   
-                
-        mainToolbar.setLayout(new FlowLayout());      
+        appSettingsService.setObjectType(AppSettings.class);
+        localSettings = LocalSettingsService.getLocalAppSettings();
+        
+        mainToolbar.setLayout(new FlowLayout());
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
-        
+
         try {
-            
+
             appSettings = this.appSettingsService.getObject();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error fetching settings from database");
         }
-        updateMessage();        
+        updateMessage();
         setBG();
+        restoreSavedWindowSizeAndPosition();
         this.setVisible(true);
         this.authenticateUser();
     }
- 
-    private void setBG()  {
+
+    private void setBG() {
 
         try {
             String screenPic = appSettingsService.getObject().getCompany().getMainScreenLogo();
@@ -103,7 +127,6 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void updateMessage() {
 
-        
         if (!appSettings.getInternet().isShowRemoteMessage()) {
             internetStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Disconnect.png")));
         } else {
@@ -121,38 +144,34 @@ public class ControlCenter extends javax.swing.JFrame {
 
         }
     }
-  
-  
 
     private void backup() {
-        
+
     }
 
     private void restore() {
 
-        
     }
 
-    private void authenticateUser() {        
+    private void authenticateUser() {
         try {
-           if (this.userService.isSecurityEnabled()) {
-               var accessDialog = new AccessDialog(this, true);
-                              
-               accessDialog.display();
-               
-               if (accessDialog.wasCanceled() || accessDialog.getUser() == null) {
-                   System.exit(0);
-               }else {
-                   UserService.setCurrentUser(accessDialog.getUser());
-               }
-           }
-                     
-            
+            if (this.userService.isSecurityEnabled()) {
+                var accessDialog = new AccessDialog(this, true);
+
+                accessDialog.display();
+
+                if (accessDialog.wasCanceled() || accessDialog.getUser() == null) {
+                    System.exit(0);
+                } else {
+                    UserService.setCurrentUser(accessDialog.getUser());
+                }
+            }
+
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error checking security status in database");
         }
     }
-   
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -330,7 +349,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
         cd.dispose();
         ReportFactory.generateCustomerStatement(application, contact);
-       
+
     }
 
     private boolean getCoDialog(boolean exitOnCancel) {
@@ -359,8 +378,6 @@ public class ControlCenter extends javax.swing.JFrame {
         return false;
 
     }
-
-   
 
     private boolean newCompany() {
 
@@ -403,25 +420,21 @@ public class ControlCenter extends javax.swing.JFrame {
     }
 
     private boolean createCompany(String path) {
-       
+
         return true;
     }
 
     private boolean openCompany() {
 
-     return true;
+        return true;
     }
-
-   
-
-   
 
     /* Used by openCompany, newCompany, getCoDialog, Constructor */
     private boolean setCompany() {
 
         return true;
     }
-   
+
     private void upgradeImport() {
 
         JFileChooser fileChooser = DV.getFileChooser("..");
@@ -797,42 +810,29 @@ public class ControlCenter extends javax.swing.JFrame {
     }
 
     private void settingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_settingsButtonActionPerformed
-        if (UserService.getCurrentUser().isAdmin() || UserService.getCurrentUser().getSettings() == 500) {
-            new SettingsDialog(this, true, application, true, 0).setVisible(true);            
-            updateMessage();               
-            setBG();            
-        } else {
-
-            accessKey.showMessage("Settings");
-
-        }
+        var settingsDialog = new SettingsDialog(this, true, 0);
+        settingsDialog.display();
+        updateMessage();
+        setBG();
     }//GEN-LAST:event_settingsButtonActionPerformed
 
     private void connectionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectionsButtonActionPerformed
         //Tools.playSound(getClass().getResource("/businessmanager/res/slip.wav"));
         ContactsApp cd = new ContactsApp(this, true, application, false, true, true);
-        
-        
+
         try {
             cd.display();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error getting contacts");
         }
-        
+
     }//GEN-LAST:event_connectionsButtonActionPerformed
 
     private void invoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceButtonActionPerformed
-        if (!accessKey.checkInvoice(300)) {
-            accessKey.showMessage("Invoice/Quote");
-            return;
-        }
-
-        InvoiceApp id = new InvoiceApp(this, true, null, application); //no select            id.setVisible(true);
-        id.setVisible(true);
-        sys_stat = id.getStat();
-        id.dispose();
-        id = null;
         
+        var invoiceDialog = new InvoiceApp(this, true);
+        invoiceDialog.display();
+        invoiceDialog.dispose();
     }//GEN-LAST:event_invoiceButtonActionPerformed
 
     private void activityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_activityButtonActionPerformed
@@ -849,19 +849,11 @@ public class ControlCenter extends javax.swing.JFrame {
 
         i.dispose();
 
-        
+
     }//GEN-LAST:event_activityButtonActionPerformed
 
     private void inventoryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_inventoryButtonActionPerformed
-
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                MyInventoryApp id = new MyInventoryApp(null, true, application, false);
-
-            }
-        });
-
-        
+        launchInventoryApp();
 
     }//GEN-LAST:event_inventoryButtonActionPerformed
 
@@ -870,10 +862,10 @@ public class ControlCenter extends javax.swing.JFrame {
     }//GEN-LAST:event_exitButtonActionPerformed
 
     private void closeAll() {
-        DatabaseService.closeDatabaseConnections();
-        System.exit(0);
+       DatabaseService.closeDatabaseConnections();       
+       System.exit(0);
     }
-    
+
     private void openInvoiceReport() {
 
         if (!accessKey.checkReports(300)) {
@@ -889,20 +881,17 @@ public class ControlCenter extends javax.swing.JFrame {
             sys_stat = "";
         }
 
-        
     }
 
     private void goSettings() {
 
-        if (accessKey.checkConfig(500)) {
-            new SettingsDialog(this, true, application, true, 8).setVisible(true);            
-            updateMessage();
-            setBG();            
-        } else {
-            accessKey.showMessage("Settings");
-        }
+        var settingsDialog = new SettingsDialog(this, true, 8);
+        settingsDialog.display();
+        updateMessage();
+        setBG();
+
     }
-  
+
     private String file_sep = System.getProperty("file.separator");
 
     private void launchPaymentSystem() {
@@ -974,7 +963,6 @@ public class ControlCenter extends javax.swing.JFrame {
         }
     }
 
-   
     public void buildMenu() {
 
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -1381,11 +1369,10 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private boolean debug = false;
 
-        
     private GlobalApplicationDaemon application = new GlobalApplicationDaemon();
-    
+
     private Image winIcon;
-        
+
     private String nl = System.getProperty("line.separator");
     private String sys_stat = "";
 
@@ -1534,7 +1521,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         sys_stat = ReportFactory.generateReorderReport(null, null);
-        
+
     }//event_reorderReportActionPerformed
 
     private void vendorListActionPerformed(java.awt.event.ActionEvent evt) {//event_vendorListActionPerformed
@@ -1544,7 +1531,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         sys_stat = ReportFactory.generateCustomerReport(null, null, true);
-        
+
     }//event_vendorListActionPerformed
 
     private void VendorPhoneListActionPerformed(java.awt.event.ActionEvent evt) {//event_VendorPhoneListActionPerformed
@@ -1555,7 +1542,7 @@ public class ControlCenter extends javax.swing.JFrame {
         }
 
         sys_stat = ReportFactory.generatePhoneList(null, null, false, 11);
-        
+
     }//event_VendorPhoneListActionPerformed
 
     private void CustPhoneListActionPerformed(java.awt.event.ActionEvent evt) {//event_CustPhoneListActionPerformed
@@ -1565,7 +1552,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         sys_stat = ReportFactory.generatePhoneList(null, null, true, 11);
-        
+
     }//event_CustPhoneListActionPerformed
 
     private void manualItemActionPerformed(java.awt.event.ActionEvent evt) {//event_manualItemActionPerformed
@@ -1606,7 +1593,7 @@ public class ControlCenter extends javax.swing.JFrame {
         }
 
         sys_stat = ReportFactory.generateInventoryStatusReport(null, null);
-        
+
     }//event_inventoryReportItemActionPerformed
 
     private void newCompanyItemActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1632,7 +1619,7 @@ public class ControlCenter extends javax.swing.JFrame {
             return;
         }
         sys_stat = ReportFactory.generateCustomerReport(null, null, false);
-        
+
     }//event_custReportActionPerformed
 
     private void salesItemActionPerformed(java.awt.event.ActionEvent evt) {//event_salesItemActionPerformed
@@ -1645,18 +1632,10 @@ public class ControlCenter extends javax.swing.JFrame {
     }//event_salesItemActionPerformed
 
     private void quickItemActionPerformed(java.awt.event.ActionEvent evt) {//event_quickItemActionPerformed
-
-        if (!accessKey.checkInvoice(300)) {
-            accessKey.showMessage("Invoice/Quote");
-            return;
-        }
-        var invoice = new Invoice();
-        InvoiceApp id = new InvoiceApp(this, true, invoice, application);
-        id.setVisible(true);
-        sys_stat = id.getStat();
-        id.dispose();
-        id = null;
         
+        var invoiceDialog = new InvoiceApp(this, true);
+        invoiceDialog.display();
+        invoiceDialog.dispose();
     }//event_quickItemActionPerformed
 
     private void invoiceItemActionPerformed(java.awt.event.ActionEvent evt) {//event_invoiceItemActionPerformed
@@ -1678,13 +1657,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void inventoryItemActionPerformed(java.awt.event.ActionEvent evt) {//event_inventoryItemActionPerformed
 
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                MyInventoryApp id = new MyInventoryApp(null, true, application, false);
-
-            }
-        });
-       
+     this.launchInventoryApp();
 
     }//event_inventoryItemActionPerformed
 
@@ -1692,7 +1665,7 @@ public class ControlCenter extends javax.swing.JFrame {
         Tools.playSound(getClass().getResource("/businessmanager/res/slip.wav"));
         ContactsApp cd = new ContactsApp(this, true, application, false, true, true);
         //cd.setVisible(true);
-        
+
     }//event_connectionsItemActionPerformed
 
     private void settingsItemActionPerformed(java.awt.event.ActionEvent evt) {//event_settingsItemActionPerformed
@@ -1721,7 +1694,7 @@ public class ControlCenter extends javax.swing.JFrame {
     }//event_prepaidItemActionPerformed
 
     private void conversionImportActionPerformed(java.awt.event.ActionEvent evt) {//event_conversionImportActionPerformed
-        
+
     }//event_conversionImportActionPerformed
 
     private void toolsMenuMouseClicked(java.awt.event.MouseEvent evt) {//event_toolsMenuMouseClicked
@@ -1759,5 +1732,16 @@ public class ControlCenter extends javax.swing.JFrame {
     private javax.swing.JButton settingsButton;
     private javax.swing.JPanel statusMessagePanel;
     // End of variables declaration//GEN-END:variables
+
+    private void launchInventoryApp() {
+         var inventoryApp = new MyInventoryApp(null, true, false);
+        try {
+            inventoryApp.display();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error starting the inventory app");
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching local settings from the OS");
+        }
+    }
 
 }

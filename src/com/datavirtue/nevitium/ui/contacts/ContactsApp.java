@@ -38,9 +38,8 @@ import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ContactJournalService;
 import com.datavirtue.nevitium.services.ContactService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.UserService;
 import java.util.Locale;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -55,7 +54,7 @@ public class ContactsApp extends javax.swing.JDialog {
     private Contact currentContact = new Contact();
     private final ContactService contactService;
     private final ContactJournalService journalService;
-    private final AppSettingsService appSettings;
+    private final AppSettingsService appSettingsService;
 
     Settings props;
     private Contact returnValue = null;
@@ -66,8 +65,7 @@ public class ContactsApp extends javax.swing.JDialog {
     private DbEngine zip;
     private String nl = System.getProperty("line.separator");
     private Image winIcon;
-    private boolean small = false;
-    private int searchColumn = 1;
+   
 
     /**
      * Creates new form ConnectionsDialog
@@ -79,8 +77,8 @@ public class ContactsApp extends javax.swing.JDialog {
         Injector injector = DiService.getInjector();
         contactService = injector.getInstance(ContactService.class);
         journalService = injector.getInstance(ContactJournalService.class);
-        appSettings = injector.getInstance(AppSettingsService.class);
-        appSettings.setObjectType(AppSettings.class);
+        appSettingsService = injector.getInstance(AppSettingsService.class);
+        appSettingsService.setObjectType(AppSettings.class);
 
         this.application = g;
 
@@ -160,13 +158,19 @@ public class ContactsApp extends javax.swing.JDialog {
 
     public void display() throws SQLException {
 
-        accessKey = application.getKey_card();
-
-        var settings = appSettings.getObject();
+        var user = UserService.getCurrentUser();
+        
+        if (!user.isAdmin() && user.getContacts() < 300){
+            JOptionPane.showMessageDialog(this, "Please see the admin about permissions.", "Access denied", JOptionPane.OK_OPTION);
+            this.dispose();
+            return;
+        }
+        
+        var settings = appSettingsService.getObject();
         var company = settings.getCompany();
         this.setTitle(company.getCompanyName() + " Business Contacts");
 
-        var contactSettings = appSettings.getObject().getContacts();
+        var contactSettings = appSettingsService.getObject().getContacts();
         var defaultSearchField = contactSettings != null
                 ? contactSettings.getContactDefaultSearchField()
                 : "Company";
@@ -179,7 +183,7 @@ public class ContactsApp extends javax.swing.JDialog {
         contactDetailTabPane.setSelectedIndex(0);
         findField.requestFocus();
 
-        var invoiceSettings = appSettings.getObject().getInvoice();
+        var invoiceSettings = appSettingsService.getObject().getInvoice();
         tax1CheckBox.setText(invoiceSettings.getTax1Name());
         tax2CheckBox.setText(invoiceSettings.getTax2Name());
 
@@ -308,7 +312,7 @@ public class ContactsApp extends javax.swing.JDialog {
         CompanySettings settings = null;
         
         try {
-            settings = appSettings.getObject().getCompany();
+            settings = appSettingsService.getObject().getCompany();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error fetching settings");
             

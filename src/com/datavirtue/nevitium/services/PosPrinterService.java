@@ -39,10 +39,10 @@ public class PosPrinterService {
     private int usedLines = 0;
     private int availableLines = 0;
     private Font font;
-    private float inches;
-
+    private double inches;
+    public static final double metricToInchesConversionFactor = 0.0393700787f;
     /* Create a new instance of LinePrinter */
-    public PosPrinterService(Font fnt, boolean prompt, float width) {
+    public PosPrinterService(Font fnt, boolean prompt, double width) {
 
         this.setFont(fnt);
 

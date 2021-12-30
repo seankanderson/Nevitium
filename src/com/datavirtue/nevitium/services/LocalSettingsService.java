@@ -5,9 +5,14 @@ import com.google.gson.Gson;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import com.datavirtue.nevitium.models.settings.LocalAppSettings;
+import com.datavirtue.nevitium.models.settings.WindowSizeAndPosition;
 import com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme;
 import com.formdev.flatlaf.intellijthemes.FlatDarkPurpleIJTheme;
 import com.formdev.flatlaf.intellijthemes.FlatHighContrastIJTheme;
+import datavirtue.DV;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
 import javax.swing.UnsupportedLookAndFeelException;
 
 /**
@@ -72,7 +77,7 @@ public class LocalSettingsService {
             try {
                 javax.swing.UIManager.setLookAndFeel(new FlatArcOrangeIJTheme());
             } catch (UnsupportedLookAndFeelException ex) {
-                
+
             }
             return;
         }
@@ -94,6 +99,25 @@ public class LocalSettingsService {
         }
         // may not set a look and feel      
 
+    }
+
+    public static WindowSizeAndPosition getWindowSizeAndPosition(Component window) throws BackingStoreException {
+        Point screenLocation = window.getLocationOnScreen();
+        Dimension sizeOnScreen = window.getSize();
+        var sizeAndPosition = new WindowSizeAndPosition();
+        sizeAndPosition.setLocation(screenLocation);
+        sizeAndPosition.setSize(sizeOnScreen);
+        return sizeAndPosition;
+    }
+
+    public static void applyScreenSizeAndPosition(WindowSizeAndPosition sizeAndPosition, Component window) throws BackingStoreException {
+        
+        if (sizeAndPosition == null) {
+            var dimension = DV.computeCenter((java.awt.Window) window);
+            window.setLocation(dimension.width, dimension.height);
+        }
+        window.setLocation(sizeAndPosition.getLocation());
+        window.setSize(sizeAndPosition.getSize());
     }
 
 }

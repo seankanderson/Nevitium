@@ -32,7 +32,11 @@ public class InvoiceItem extends BaseModel {
     @DatabaseField
     private boolean taxable1;
     @DatabaseField
+    private double taxable1Rate;
+    @DatabaseField
     private boolean taxable2;
+    @DatabaseField
+    private double taxable2Rate;
     @DatabaseField
     private double cost;
     

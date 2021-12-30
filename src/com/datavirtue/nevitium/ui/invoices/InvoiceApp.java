@@ -7,64 +7,57 @@
 package com.datavirtue.nevitium.ui.invoices;
 
 import com.datavirtue.nevitium.services.PosPrinterService;
-import RuntimeManagement.KeyCard;
-import RuntimeManagement.GlobalApplicationDaemon;
 import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.database.reports.ReportModel;
 import com.datavirtue.nevitium.database.reports.ReportFactory;
-import com.datavirtue.nevitium.database.reports.ReportDialog;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.contacts.ContactsApp;
 import com.datavirtue.nevitium.ui.contacts.ContactShippingDialog;
 import com.datavirtue.nevitium.ui.util.NewEmail;
 import com.datavirtue.nevitium.models.invoices.old.OldInvoice;
-import com.datavirtue.nevitium.models.invoices.old.InvoiceModel;
 import com.datavirtue.nevitium.ui.VATCalculator;
 import com.datavirtue.nevitium.ui.inventory.MyInventoryApp;
-import com.datavirtue.nevitium.ui.layoutdesigner.DocumentElementTable;
-import com.datavirtue.nevitium.ui.layoutdesigner.DocumentLayout;
-import com.datavirtue.nevitium.ui.layoutdesigner.InvoicePrintPanel;
-import com.datavirtue.nevitium.ui.layoutdesigner.PrintPreview;
-import com.datavirtue.nevitium.models.invoices.old.PDFInvoice;
 import com.datavirtue.nevitium.models.invoices.old.PaymentActivityDialog;
 import com.datavirtue.nevitium.models.invoices.old.Quote;
 
 import datavirtue.*;
 import java.beans.PropertyVetoException;
-import java.net.MalformedURLException;
 import javax.swing.JTextField;
 import javax.swing.table.*;
 import javax.swing.JOptionPane;
-import java.io.*;
 import java.util.ArrayList;
 import java.text.DateFormat;
 import java.util.Date;
-import com.lowagie.text.pdf.*;
-import com.lowagie.text.pdf.PdfPCell;
 import java.awt.event.*;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 import javax.swing.Action;
 import javax.swing.AbstractAction;
-import com.lowagie.text.*;
-import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Point;
 import java.awt.Toolkit;
-import java.awt.print.Book;
-import java.awt.print.PageFormat;
-import java.awt.print.Paper;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import com.datavirtue.nevitium.models.contacts.Contact;
+import com.datavirtue.nevitium.models.inventory.Inventory;
 import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.models.invoices.InvoiceItem;
+import com.datavirtue.nevitium.models.invoices.InvoiceItemsTableModel;
+import com.datavirtue.nevitium.models.settings.AppSettings;
+import com.datavirtue.nevitium.models.settings.LocalAppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ContactService;
+import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.InventoryService;
 import com.datavirtue.nevitium.services.InvoiceItemService;
 import com.datavirtue.nevitium.services.InvoiceService;
+import com.datavirtue.nevitium.services.LocalSettingsService;
+import com.datavirtue.nevitium.services.UserService;
+import com.formdev.flatlaf.util.StringUtils;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.prefs.BackingStoreException;
 
 /**
  *
@@ -73,49 +66,193 @@ import com.datavirtue.nevitium.services.InvoiceService;
  */
 public class InvoiceApp extends javax.swing.JDialog {
 
-    private KeyCard accessKey;
-    private boolean debug = false;
-    private GlobalApplicationDaemon application;
     private boolean addCategoryInfo = false;
-    private Invoice currentInvoice;
+    private Invoice currentInvoice = null;
     private Contact customer;
     private AppSettingsService settingsService;
+    private AppSettings appSettings;
     private InvoiceService invoiceService;
+    private InventoryService inventoryService;
+    private LocalAppSettings localSettings;
     private InvoiceItemService itemService;
     private ContactService contactService;
 
-    public InvoiceApp(java.awt.Frame parent, boolean modal, com.datavirtue.nevitium.models.invoices.Invoice quote, GlobalApplicationDaemon application) {
+    private boolean VAT = false;
 
+    private String invoiceMessage = "Thank You!";
+    private javax.swing.table.DefaultTableModel tm;
+    private java.awt.Frame parentWin;
+    private boolean hold = false;
+    private boolean _void = false;
+    private String nl = System.getProperty("line.separator");
+    private boolean viewPrint = false;
+
+    private java.awt.Image winIcon;
+
+    public InvoiceApp(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
-        accessKey = application.getKey_card();
-        workingPath = application.getWorkingPath();
-        db = application.getDb();
-        this.application = application;
-        setVAT();
-        Toolkit tools = Toolkit.getDefaultToolkit();
-        winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
-
-        initComponents();
-        optionsToolbar.setLayout(new FlowLayout());
-
-        qtyTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
-        toolBar.add(paymentButton);
-        toolBar.add(statementButton);
-        toolBar.add(historyButton);
-
-        /*statementButton.setVisible(false);
-        paymentButton.setVisible(false);
-        historyButton.setVisible(false);*/
-        toolBar.setVisible(false);
-        printReceiptButton.setVisible(false);
-
+        parentWin = parent;
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
 
-                recordScreenPosition();
-
+                try {
+                    recordWindowSizeAndPosition();
+                } catch (BackingStoreException ex) {
+                    ExceptionService.showErrorDialog(e.getComponent(), ex, "Error saving local screen preferences");
+                }
             }
         });
+        initComponents();
+    }
+
+    /**
+     *
+     * Pass in an invoice before calling display() to load an existing invoice.
+     *
+     * @param invoice
+     */
+    public void setInvoice(Invoice invoice) {
+        currentInvoice = invoice;
+    }
+
+    public void display() {
+
+        var user = UserService.getCurrentUser();
+
+        if (!user.isAdmin() && user.getInvoices() < 300) {
+            JOptionPane.showMessageDialog(this, "Please see the admin about permissions.", "Access denied", JOptionPane.OK_OPTION);
+            this.dispose();
+            return;
+        }
+
+        try {
+            this.commonInit();
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching local settings");
+        }
+
+        if (currentInvoice.getId() == null) {
+            this.newInvoiceInit();
+        } else {
+            if (currentInvoice.isQuote()) {
+                this.viewQuoteInit();
+            } else {
+                this.viewInvoiceInit();
+            }
+            this.populateInvoiceForm();
+        }
+
+        try {
+            restoreSavedWindowSizeAndPosition();
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching local screen settings");
+        }
+        this.setVisible(true);
+
+    }
+
+    private void recordWindowSizeAndPosition() throws BackingStoreException {
+        var screenSettings = localSettings.getScreenSettings();
+        var sizeAndPosition = LocalSettingsService.getWindowSizeAndPosition(this);
+        screenSettings.setInvoices(sizeAndPosition);
+        LocalSettingsService.saveLocalAppSettings(localSettings);
+    }
+
+    private void restoreSavedWindowSizeAndPosition() throws BackingStoreException {
+
+        var screenSettings = localSettings.getScreenSettings().getInvoices();
+        LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
+    }
+
+    /**
+     * All required setup for creating / viewing invoices and quotes.
+     */
+    private void commonInit() throws BackingStoreException {
+
+        this.localSettings = LocalSettingsService.getLocalAppSettings();
+
+        try {
+            appSettings = this.settingsService.getObject();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching app settings from database");
+        }
+
+        if (currentInvoice == null) {
+            currentInvoice = new Invoice();
+        }
+        optionsToolbar.setLayout(new FlowLayout());
+
+        Toolkit tools = Toolkit.getDefaultToolkit();
+        winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
+
+        var dimension = DV.computeCenter((java.awt.Window) this);
+        this.setLocation(dimension.width, 1);
+
+        qtyTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
+        addCategoryInfo = appSettings.getInventory().isAddCategoryLineToInvoiceItems();
+        custButton.setText(appSettings.getInvoice().getBillToLabel());
+
+        paymentCheckBox.setSelected(appSettings.getInvoice().isProcessPaymentOnPosting());
+
+        var tax1Name = appSettings.getInvoice().getTax1Name();
+        var tax2Name = appSettings.getInvoice().getTax2Name();
+        invTable.getColumn(invTable.getColumnName(6)).setHeaderValue(tax1Name);
+        invTable.getColumn(invTable.getColumnName(7)).setHeaderValue(tax2Name);
+        t1Label.setText(tax1Name);
+        t2Label.setText(tax2Name);
+
+        /* Set currency field alignment justification */
+        itemTotalField.setHorizontalAlignment(JTextField.RIGHT);
+        t1Field.setHorizontalAlignment(JTextField.RIGHT);
+        t2Field.setHorizontalAlignment(JTextField.RIGHT);
+        grandTotalField.setHorizontalAlignment(JTextField.RIGHT);
+
+        if (!appSettings.getInvoice().isShowTax2()) {
+            t2Field.setVisible(false);
+            t2Label.setVisible(false);
+        }
+
+        VAT = appSettings.getInvoice().getTax1Name().equalsIgnoreCase("vat");
+        this.VATButton.setVisible(VAT);
+
+        String scanField = appSettings.getInvoice().getDefaultBarcodeScanField();
+        if (scanField.equalsIgnoreCase("UPC")) {
+            upcCombo.setSelectedItem("UPC");
+        }
+        if (scanField.equalsIgnoreCase("CODE")) {
+            upcCombo.setSelectedItem("Code");
+        }
+        if (scanField.equalsIgnoreCase("DESC")) {
+            upcCombo.setSelectedItem("Desc");
+        }
+
+        DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
+        datePicker1.setDateFormat(df);
+
+        setDefaultMessage();
+        computePrices();
+
+    }
+
+    /**
+     * Required setup for only viewing a saved quote
+     */
+    private void viewQuoteInit() {
+        toolBar.setVisible(false);
+        printReceiptButton.setVisible(false);
+        currentInvoice.setCustomer("S A L E");
+        invoiceNumberEditCheckBox.setEnabled(false);
+        convertButton.setVisible(true);
+        postButton.setEnabled(false);
+        closeButton.setText("CLOSE");
+        clearFields();
+        viewReturnsButton.setVisible(false);
+    }
+
+    /**
+     * Required setup for new invoice that may become a quote
+     */
+    private void newInvoiceInit() {
         /* Close dialog on escape */
         javax.swing.ActionMap am = getRootPane().getActionMap();
         javax.swing.InputMap imap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -130,265 +267,15 @@ public class InvoiceApp extends javax.swing.JDialog {
                     setVisible(false);
                     dispose();
                 }
-                return;  //no exit
+                return;  //cancels the exit
+
             }
         };
-
         imap.put(windowCloseStroke, windowCloseKey);
         am.put(windowCloseKey, windowCloseAction);
         /**/
 
-        java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-        this.setLocation(dim.width, 1);
-
-        invoice = new OldInvoice(application);  //blank invoice object
-        invoice.setVAT(VAT);
-        invoice.setTaxes(taxRate1, taxRate2);
-
-        invoice.setInvoiceDialogModel((DefaultTableModel) invTable.getModel());
-        theQuote = new Quote(db);//blank quote object
-        theQuote.setItemModel((DefaultTableModel) invTable.getModel());
-
-        parentWin = parent;
-        tm = invoice.getItems();  //assign the netbeans tablemodel to the 'global tm'
-
-        //create a property file instance
-        props = application.getProps();
-
-        addCategoryInfo = Tools.getStringBool(props.getProp("CATLINE"));
-        custButton.setText(props.getProp("BILLTO"));
-
-        ignore_qty = DV.parseBool(props.getProp("IGNOREQTY"), false);
-
-        init();
-        //voidBox.setVisible(false);
-
-        paymentCheckBox.setSelected(Boolean.parseBoolean(props.getProp("PROCESSPAYMENT")));
-
-        invoicePrefix = props.getProp("INVOICE PREFIX");
-        quotePrefix = props.getProp("QUOTE PREFIX");
-
-        if (quote == null) {
-            //Set Tax rates & date for New Invoice/Quote
-            invoice.setCustomer("S A L E");
-
-            setDefaultMessage();
-
-            custTextArea.setText(invoice.getCustomer());
-            convertButton.setVisible(false);
-            printButton.setVisible(false);
-            quote.setQuote(true);
-            savedQuote = false;
-            setInvoiceNumber();
-
-        } else {
-            //load saved quote
-            getQuote(quoteKey);
-            //quote = true;
-            savedQuote = true;
-            invoiceNumberEditCheckBox.setEnabled(false);
-            convertButton.setVisible(true);
-            postButton.setEnabled(false);
-            //printButton.setVisible(false);
-            closeButton.setText("CLOSE");
-        }
-
-        String c = props.getProp("SCAN FIELD");
-        if (c.equalsIgnoreCase("UPC")) {
-            upcCombo.setSelectedItem("UPC");
-        }
-        if (c.equalsIgnoreCase("CODE")) {
-            upcCombo.setSelectedItem("Code");
-        }
-        if (c.equalsIgnoreCase("DESC")) {
-            upcCombo.setSelectedItem("Desc");
-        }
-
-        //Version 1.5
-        DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
-
-        datePicker1.setDateFormat(df);
-
-        getTaxRates();
-        invoice.setTaxes(taxRate1, taxRate2);
-        theQuote.setTaxes(taxRate1, taxRate2);
-        computePrices();
-        setView();
-
-        clearFields();
-
-        /* Quote mode is the default until the user posts the invoice,
-         db loaded invoices should not be set to quote mode,
-         this mode is triggered by a diff constructor though*/
-
- /* This prints the invoice as a quote without creating a quote! */
-        //quote = true;
-        //paidCheckBox.setVisible(false);
-        viewReturnsButton.setVisible(false);
-
-        if (this.checkForScreenSettings()) {
-            this.restoreScreenPosition();//restore saved screen size
-        } else {
-            java.awt.Dimension d = DV.computeCenter((java.awt.Window) this);
-            this.setLocation(d.width, d.height);
-        }
-
-    }
-
-    /* This constructor is for viewing an invoice <---ONLY!! */
-    public InvoiceApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, Invoice invoice) {
-
-        super(parent, modal);
-
-        Toolkit tools = Toolkit.getDefaultToolkit();
-        winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
-
-        initComponents();
-        optionsToolbar.setLayout(new FlowLayout());
-        this.addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent e) {
-
-                recordScreenPosition();
-
-            }
-        });
-
-        accessKey = application.getKey_card();
-        toolBar.add(paymentButton);
-        toolBar.add(statementButton);
-        toolBar.add(historyButton);
-        java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-        this.setLocation(dim.width, 1);
-        qtyTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
-
-        currentInvoice = invoice == null ? new com.datavirtue.nevitium.models.invoices.Invoice() : invoice;
-
-        if (currentInvoice.getId() == null) {
-
-            /* Close dialog on escape */
-            javax.swing.ActionMap am = getRootPane().getActionMap();
-            javax.swing.InputMap imap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-            Object windowCloseKey = new Object();
-            KeyStroke windowCloseStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
-            Action windowCloseAction = new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-
-                    int a = javax.swing.JOptionPane.showConfirmDialog(null, "Discard this invoice?", "Exit", JOptionPane.YES_NO_OPTION);
-
-                    if (a == 0) {
-
-                        setVisible(false);
-                        dispose();
-
-                    }
-                    return;  //no exit
-
-                }
-            };
-            imap.put(windowCloseStroke, windowCloseKey);
-            am.put(windowCloseKey, windowCloseAction);
-            /**/
-
-        } else {
-
-            javax.swing.ActionMap am = getRootPane().getActionMap();
-            javax.swing.InputMap imap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-            Object windowCloseKey = new Object();
-            KeyStroke windowCloseStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
-            Action windowCloseAction = new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    setVisible(false);
-                    dispose();
-                }
-            };
-            imap.put(windowCloseStroke, windowCloseKey);
-            am.put(windowCloseKey, windowCloseAction);
-
-            autoInvoiceNumberButton.setEnabled(false);
-            invoiceNumberEditCheckBox.setEnabled(false);
-            datePicker1.setEnabled(false);
-            receiptCheckBox.setEnabled(false);
-        }
-        workingPath = application.getWorkingPath();
-        db = application.getDb();
-        this.application = application;
-        setVAT();
-        parentWin = parent;
-        props = new Settings(workingPath + "settings.ini");
-        init();
-
-        //Version 1.5
-        //getInvoice(invoice_key); //Get invoice to view
-        populateInvoice();
-        //invoice .setItemModel((DefaultTableModel)invTable.getModel());
-        viewPrint = true;
-
-        saveButton.setEnabled(false);
-        postButton.setEnabled(false);
-        upcCombo.setEnabled(false);
-        upcField.setEnabled(false);
-        miscButton.setVisible(false);
-
-        calcButton.setVisible(false);
-        removeButton.setVisible(false);
-
-        custButton.setVisible(false);
-
-        discountButton.setVisible(false);
-        //shippingButton.setVisible(false);
-        //packingslipButton.setVisible(false);
-        messageButton.setVisible(false);
-        paymentCheckBox.setVisible(false);
-
-        custTextArea.setEditable(false);
-        shipToTextArea.setEditable(false);
-
-        shipToButton.setVisible(false);
-        clearShipToButton.setVisible(false);
-        copyBillToButton.setVisible(false);
-        convertButton.setVisible(false);
-
-        qtyTextField.setEditable(false);
-
-        //jTextArea1.setEditable (false);
-        messageButton.setEnabled(false);
-
-        closeButton.setText("CLOSE");
-
-        // TODO: Get returns for invoice
-        
-//        if (invoice.getReturnCount() > 0) {
-//            viewReturnsButton.setVisible(true);
-//        } else {
-//            viewReturnsButton.setVisible(false);
-//        }
-
-            
-        if (this.checkForScreenSettings()) {
-            this.restoreScreenPosition();//restore saved screen size
-        } else {
-            java.awt.Dimension d = DV.computeCenter((java.awt.Window) this);
-            this.setLocation(d.width, d.height);
-        }
-
-    }
-
-    private void setVAT() {
-
-        boolean vat = DV.parseBool(application.getProps().getProp("VAT"), false);
-        VAT = vat;
-    }
-
-    private void init() {
-
-        invTable.getColumn(invTable.getColumnName(6)).setHeaderValue(props.getProp("TAX1NAME"));
-        invTable.getColumn(invTable.getColumnName(7)).setHeaderValue(props.getProp("TAX2NAME"));
-        t1Label.setText(props.getProp("TAX1NAME"));
-        t2Label.setText(props.getProp("TAX2NAME"));
-
-        pos = Boolean.parseBoolean(props.getProp("POS"));
-
-        if (pos) {
+        if (appSettings.getInvoice().isPointOfSaleMode()) {
             receiptCheckBox.setSelected(true);
             paymentCheckBox.setSelected(true);
             receiptCheckBox.setEnabled(false);
@@ -401,98 +288,65 @@ public class InvoiceApp extends javax.swing.JDialog {
             viewReturnsButton.setVisible(false);
         }
 
-        /* Set currency field alignment justification */
-        itemTotalField.setHorizontalAlignment(JTextField.RIGHT);
-        t1Field.setHorizontalAlignment(JTextField.RIGHT);
-        t2Field.setHorizontalAlignment(JTextField.RIGHT);
-        grandTotalField.setHorizontalAlignment(JTextField.RIGHT);
-
-        if (!DV.parseBool(props.getProp("SHOW TAX 2"), true)) {
-            t2Field.setVisible(false);
-            t2Label.setVisible(false);
-        }
-
-        this.VATButton.setVisible(DV.parseBool(application.getProps().getProp("VAT"), true));
-
+        custTextArea.setText(currentInvoice.getCustomer());
+        convertButton.setVisible(false);
+        printButton.setVisible(false);
+        setInvoiceNumber();
     }
 
-    private void recordScreenPosition() {
+    /**
+     * Required setup for viewing posted/saved invoices
+     */
+    private void viewInvoiceInit() {
 
-        Point p = this.getLocationOnScreen();
-        Dimension d = this.getSize();
+        toolBar.add(paymentButton);
+        toolBar.add(statementButton);
+        toolBar.add(historyButton);
 
-        props.setProp("INVPOS", p.x + "," + p.y);
-        props.setProp("INVSIZE", d.width + "," + d.height);
+        javax.swing.ActionMap am = getRootPane().getActionMap();
+        javax.swing.InputMap imap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        Object windowCloseKey = new Object();
+        KeyStroke windowCloseStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        Action windowCloseAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                setVisible(false);
+                dispose();
+            }
+        };
+        imap.put(windowCloseStroke, windowCloseKey);
+        am.put(windowCloseKey, windowCloseAction);
 
-    }
+        autoInvoiceNumberButton.setEnabled(false);
+        invoiceNumberEditCheckBox.setEnabled(false);
+        datePicker1.setEnabled(false);
+        receiptCheckBox.setEnabled(false);
 
-    private Point defaultScreenPosition;
-    private Dimension defaultWindowSize;
+        saveButton.setEnabled(false);
+        postButton.setEnabled(false);
+        upcCombo.setEnabled(false);
+        upcField.setEnabled(false);
+        miscButton.setVisible(false);
+        calcButton.setVisible(false);
+        removeButton.setVisible(false);
+        custButton.setVisible(false);
+        discountButton.setVisible(false);
+        messageButton.setVisible(false);
+        paymentCheckBox.setVisible(false);
+        custTextArea.setEditable(false);
+        shipToTextArea.setEditable(false);
+        shipToButton.setVisible(false);
+        clearShipToButton.setVisible(false);
+        copyBillToButton.setVisible(false);
+        convertButton.setVisible(false);
+        qtyTextField.setEditable(false);
+        messageButton.setEnabled(false);
+        closeButton.setText("CLOSE");
 
-    private boolean checkForScreenSettings() {
-        String pt = props.getProp("INVPOS");
-        String dim = props.getProp("INVSIZE");
-        if (pt.equals("")) {
-            return false;
-        }
-        if (dim.equals("")) {
-            return false;
-        }
-        if ((Tools.parsePoint(pt)) == null) {
-            return false;
-        }
-        if ((Tools.parseDimension(dim)) == null) {
-            return false;
-        }
-        return true;
-
-    }
-
-    private void storeDefaultScreen() {
-
-        try {
-            defaultScreenPosition = this.getLocationOnScreen();
-        } catch (Exception e) {
-            defaultScreenPosition = new Point(0, 0);
-        }
-
-        defaultWindowSize = this.getSize();
-
-    }
-
-    private void restoreDefaultScreenSize() {
-
-        this.setSize(this.defaultWindowSize);
-    }
-
-    private void restorDefaultScreen() {
-        restoreDefaultScreenSize();
-        restoreDefaultScreenLocation();
-    }
-
-    private void restoreDefaultScreenLocation() {
-        this.setLocation(this.defaultScreenPosition);
-    }
-
-    private void restoreScreenPosition() {
-
-        String pt = props.getProp("INVPOS");
-        String dim = props.getProp("INVSIZE");
-        //System.out.println("Point "+pt+"  Dim"+dim);
-        Point p = Tools.parsePoint(pt);
-        if (p == null) {
-            p = this.defaultScreenPosition;
-        }
-        if (p == null) {
-            p = new Point(0, 0);
-        }
-        this.setLocation(p);
-        Dimension d = Tools.parseDimension(dim);
-        if (d == null) {
-            d = this.defaultWindowSize;
-        }
-        this.setSize(d);
-
+//        if (invoice.getReturnCount() > 0) {
+//            viewReturnsButton.setVisible(true);
+//        } else {
+//            viewReturnsButton.setVisible(false);
+//        }
     }
 
     private void setDefaultMessage() {
@@ -500,945 +354,75 @@ public class InvoiceApp extends javax.swing.JDialog {
         //search for mesage
         //if found set, otherwise leave program default in place.
 
-        String msg = props.getProp("DEFAULT MSG");
-
-        if (msg != null && msg.length() > 0) {
-            ArrayList al = db.search("messages", 1, msg, false);
-            if (al != null) {
-                Object[] m = db.getRecord("messages", ((Integer) al.get(0)));
-                invoiceMessage = (String) m[2];
-
-            } else {
-
-            }
-
-        }
-
-        messageButton.setToolTipText(invoiceMessage);
+//        String msg = props.getProp("DEFAULT MSG");
+//
+//        if (msg != null && msg.length() > 0) {
+//            ArrayList al = db.search("messages", 1, msg, false);
+//            if (al != null) {
+//                Object[] m = db.getRecord("messages", ((Integer) al.get(0)));
+//                invoiceMessage = (String) m[2];
+//
+//            } else {
+//
+//            }
+//
+//        }
+//
+//        messageButton.setToolTipText(invoiceMessage);
     }
 
-    private void getInvoice(int key) {
+    private void populateInvoiceForm() {
 
-        quote = false;
-        //printButton.setText("Print to PDF");
+        documentNumberField.setText(currentInvoice.getInvoiceNumber());
 
-        invoice = new OldInvoice(application, key);
-        invoice.setVAT(VAT);
-        /* Removed 06-02-2011 */
-        //invoice.setTaxes(taxRate1, taxRate2);
+        var tableModel = new InvoiceItemsTableModel(new ArrayList(currentInvoice.getItems()));
+        invTable.setModel(tableModel);
 
-        if (!invoice.isPopulated()) {
-
-            javax.swing.JOptionPane.showMessageDialog(null, "Invoice was not found.");
-            invoice = null;
-            this.dispose();
-
-        }
-
-        //get items sold
-        TableModel items = invoice.getItems();
-        //when a blank invoice is voided this tm is null
-
-        /* This table layout was setup in netbeans so we must insert the items into
-         it instead of just passing a tablemodel */
-        tm = (DefaultTableModel) invTable.getModel();
-
-        tm.setRowCount(items.getRowCount());
-
-        int rows = tm.getRowCount();
-        int cols = tm.getColumnCount();
-
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                tm.setValueAt(items.getValueAt(row, col), row, col);  //skip key?
-            }
-        }
-        invTable.setModel(tm);
-
-        //add the other data detail
-        numberField.setText(invoice.getInvoiceNumber());
         try {
 
-            datePicker1.setDate(new Date(invoice.getDate()));  //Version 1.5
+            datePicker1.setDate(currentInvoice.getInvoiceDate());
 
         } catch (PropertyVetoException ex) {
             ex.printStackTrace();
         }
 
-        custTextArea.setText(invoice.getCustomer());
+        custTextArea.setText(currentInvoice.getCustomer());
 
-        String sta = invoice.getShipToAddress();
-        if (!sta.equals("")) {
-            shipToTextArea.setText(sta);
+        if (!StringUtils.isEmpty(currentInvoice.getShiptToAddress())) {
+            shipToTextArea.setText(currentInvoice.getShiptToAddress());
         }
 
-        /*
-         *  Find any 'Ship To' data and plug into interface.
-         */
-        invoiceMessage = invoice.getMessage();
-
-        taxRate1 = invoice.getTax1Rate();
-        taxRate2 = invoice.getTax2Rate();
-        //voidBox.setSelected(invoice.isVoid());
-
-        cust_key = invoice.getCustKey();
-
-        //paidCheckBox.setSelected(invoice.isPaid());
         setView();
         computePrices();
-
-    }
-
-    private void populateInvoice() {
-        quote = false;
-        //printButton.setText("Print to PDF");
-
-        TableModel items = invoice.getItems();
-
-        tm = (DefaultTableModel) invTable.getModel();
-
-        tm.setRowCount(items.getRowCount());
-
-        int rows = tm.getRowCount();
-        int cols = tm.getColumnCount();
-
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                tm.setValueAt(items.getValueAt(row, col), row, col);  //skip key?
-            }
-        }
-        invTable.setModel(tm);
-
-        //add the other data detail
-        numberField.setText(invoice.getInvoiceNumber());
-        try {
-
-            datePicker1.setDate(new Date(invoice.getDate()));  //Version 1.5
-
-        } catch (PropertyVetoException ex) {
-            ex.printStackTrace();
-        }
-
-        custTextArea.setText(invoice.getCustomer());
-
-        String sta = invoice.getShipToAddress();
-        if (!sta.equals("")) {
-            shipToTextArea.setText(sta);
-        }
-
-        /*
-         *  Find any 'Ship To' data and plug into interface.
-         */
-        invoiceMessage = invoice.getMessage();
-
-        taxRate1 = invoice.getTax1Rate();
-        taxRate2 = invoice.getTax2Rate();
-        //voidBox.setSelected(invoice.isVoid());
-
-        cust_key = invoice.getCustKey();
-
-        //paidCheckBox.setSelected(invoice.isPaid());
-        setView();
-        computePrices();
-
-    }
-
-    private void getQuote(int key) {
-
-        quote = true;
-
-        theQuote = new Quote(db, key);
-
-        if (!theQuote.isPopulated()) {
-
-            javax.swing.JOptionPane.showMessageDialog(null, "Quote was not found.");
-            theQuote = null;
-            this.dispose();
-
-        }
-
-        //get items
-        TableModel items = theQuote.getItems();
-        //when a blank quote is voided this tm is null ?*?
-
-        /* This table layout was setup in netbeans so we must insert the items into
-         it instead of just passing a tablemodel */
-
- /* Set the global items tm to the invTable model */
-        tm = (DefaultTableModel) invTable.getModel();
-
-        tm.setRowCount(items.getRowCount());
-        if (debug) {
-            System.out.println("qitems row count in id getQuote() :" + items.getRowCount());
-        }
-
-        //TODO:WORKING
-        int rows = tm.getRowCount();
-        int cols = tm.getColumnCount();
-
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                tm.setValueAt(items.getValueAt(row, col), row, col);  //skip key?
-            }
-        }
-        //invTable.setModel(tm);
-        theQuote.setItemModel((DefaultTableModel) invTable.getModel());
-
-        //add the other data detail
-        numberField.setText(theQuote.getQuoteNumber());
-
-        try {
-
-            datePicker1.setDate(new Date(theQuote.getDate()));  //Version 1.5
-
-        } catch (PropertyVetoException ex) {
-            ex.printStackTrace();
-        }
-
-        custTextArea.setText(theQuote.getCustomer());
-        custTextArea.setEditable(false);
-
-        String sta = theQuote.getShipToAddress();
-        if (!sta.equals("")) {
-            shipToTextArea.setText(sta);
-        }
-        /*
-         *  Find any 'Ship To' data and plug into interface.
-         */
-
-        invoiceMessage = theQuote.getMessage();
-        messageButton.setToolTipText(invoiceMessage);
-
-        taxRate1 = theQuote.getTax1Rate();
-        taxRate2 = theQuote.getTax2Rate();
-        //voidBox.setSelected(theQuote.isVoid());
-
-        cust_key = theQuote.getCustKey();
-
-        //paidCheckBox.setSelected(false);
-        setView();
-        computePrices();
-
-    }
-
-    private void getTaxRates() {
-        try {
-
-            taxRate1 = Float.parseFloat(props.getProp("TAX1"));
-
-        } catch (NumberFormatException ex) {
-
-            taxRate1 = 0.00f;
-
-        }
-
-        try {
-
-            taxRate2 = Float.parseFloat(props.getProp("TAX2"));
-
-        } catch (NumberFormatException ex) {
-
-            taxRate2 = 0.00f;
-
-        }
-
-    }
-
-    private void testPrintLayout() {
-
-        String currency = props.getProp("SYM");
-        PageFormat pageFormat = new PageFormat();
-        Paper paper = new Paper();
-
-        DocumentLayout layout = new DocumentLayout(application.getWorkingPath() + "layouts/layout.invoice.xml");
-
-        float[] pageSize = layout.getElement("pageSettings").getPaperSize();
-        boolean portrait = layout.getElement("pageSettings").isPortrait();
-
-        paper.setImageableArea(0, 0, pageSize[0], pageSize[1]);
-        pageFormat.setPaper(paper);
-        int orientation = PageFormat.PORTRAIT;
-        if (portrait) {
-            orientation = PageFormat.PORTRAIT;
-        } else {
-            orientation = PageFormat.LANDSCAPE;
-        }
-        pageFormat.setOrientation(orientation);
-
-        final Book invoiceStack = new Book();
-
-        DocumentElementTable tbl = (DocumentElementTable) layout.getElement("itemTable").getTable();
-
-        int max_per_page = tbl.getRow_count();//how many items can the invoice hold per page?
-        max_per_page--; //???
-
-        if (debug) {
-            System.out.println("max per page: " + max_per_page);
-        }
-
-        int number_of_invoice_items = invoice.getItemCount(); //actual: num_items - 1
-
-        if (debug) {
-            System.out.println("number of invoice items: " + number_of_invoice_items);
-        }
-
-        /* This only counts the base with no remainder */
-        int number_of_pages = number_of_invoice_items / max_per_page;
-
-        if (debug) {
-            System.out.println("number of calculated pages: " + number_of_pages);
-        }
-
-        /* see if we need to tack on a page do to a remainder */
-        if ((number_of_invoice_items % max_per_page) > 0) {
-            number_of_pages++;
-        }
-
-        System.out.println("number of calculated pages (plus remainder): " + number_of_pages);
-
-        if (max_per_page >= invoice.getItemCount()) {//                                               ???
-            invoiceStack.append(new InvoicePrintPanel(layout, this.invoice, 0, invoice.getItemCount() - 1, 1.0), pageFormat);
-            new PrintPreview(invoiceStack, pageSize);
-            /*java.awt.EventQueue.invokeLater(new Runnable() {
-
-                public void run() {
-                    new PrintPreviewFrame(invoiceStack).setVisible(true);
-                }
-            });*/
-            return; //we are done, the page has been added to the stack 
-
-        }
-
-        int start = 1;  //<---WOW! Don't start at zero. DUH!
-        int end = 0;
-
-        if (number_of_invoice_items <= max_per_page) {
-            end = number_of_invoice_items;
-        } else {
-            if (number_of_invoice_items >= max_per_page) {
-                end = max_per_page;
-            }
-        }
-
-        for (int p = 1; p <= number_of_pages; p++) {
-
-            //System.out.println("Adding new page: start:"+start+"  End:"+end);
-            invoiceStack.append(new InvoicePrintPanel(layout, this.invoice, start, end, 1.0), pageFormat);
-            if (p + 1 < number_of_pages) {
-                start = end + 1;
-                end = end + max_per_page;
-            } else {
-                start = end + 1;
-                end = (number_of_invoice_items - 1);
-            }
-
-        }
-
-        new PrintPreview(invoiceStack, pageSize);
-
-    }
-
-    private void testprintPDF() {
-
-        String currency = props.getProp("SYM");
-
-        boolean ink = Boolean.parseBoolean(props.getProp("INK SAVER"));
-
-        String color = props.getProp("INCOLOR");
-
-        java.awt.Color rowColor = Tools.stringToColor(color);
-
-        float std_row_height = 14f;  //row height to account for added rows to fill incomplete pages
-        int headerwidths[] = {8, 16, 49, 11, 2, 2, 12};  //header widths for invoice detail
-        String nl = System.getProperty("line.separator");
-
-        String num = "";
-        String type = "";
-        String folder = "";
-
-        if (quote) {
-
-            num = "Quote_" + numberField.getText();
-            type = props.getProp("QUOTE NAME");
-            folder = props.getProp("QUOTE FOLDER");
-
-        } else {
-
-            num = "Invoice_" + numberField.getText();
-            type = props.getProp("INVOICE NAME");
-            folder = props.getProp("INVOICE FOLDER");
-        }
-        if (type.trim().equals("") && quote) {
-            type = "Q U O T E";
-        }
-        if (type.trim().equals("") && !quote) {
-            type = "I N V O I C E";
-        }
-
-        ReportDialog rd = new ReportDialog(null, true, folder, false,
-                type + " PDF", props, true, false);
-        if (!rd.getState()) {
-
-            if (viewPrint || savedQuote) {
-                return;
-            }
-            javax.swing.JOptionPane.showMessageDialog(null, num + ".pdf was NOT generated. Action canceled by user." + nl + "The invoice WAS posted.");
-
-            return;
-        }
-
-        String file = rd.getFile() + num + ".pdf";  //folder + invoice number + extension
-
-        if (!DV.isFileAccessible(file, "PDF file")) {
-            return;
-        }
-
-        num = numberField.getText();
-
-        /*  START TABLE WORK  */
-        String company = props.getProp("CO NAME") + nl
-                + props.getProp("CO OTHER") + nl
-                + props.getProp("CO ADDRESS") + nl
-                + props.getProp("CO CITY") + nl
-                + props.getProp("CO PHONE");
-
-        String statement = " BAL DUE";
-
-        if (invoice.isPaid()) {
-            statement = " P A I D";
-        }
-
-        PdfPTable head = new PdfPTable(2);  //setup a two col header table
-
-        PdfPTable foot = new PdfPTable(2); //Setup a three col footer table
-
-        PDFInvoice inv = new PDFInvoice(file, null);;
-
-        try {
-
-            //company info font
-            String prop_font = props.getProp("FONT");
-            String prop_font_size = props.getProp("FONT SIZE");
-            String prop_font_style = props.getProp("FONT STYLE");
-
-            int pts = 14;  //default
-            int sty = Font.NORMAL;
-
-            try {
-
-                pts = Integer.parseInt(prop_font_size);
-
-            } catch (NumberFormatException ex) {
-
-                pts = 14; //default
-
-            }
-
-            Font font;
-
-            if (prop_font.equalsIgnoreCase("Times New Roman") || prop_font.equalsIgnoreCase("Roman")) {
-                font = new Font(Font.TIMES_ROMAN, pts, sty);
-
-            } else if (prop_font.equalsIgnoreCase("Helvetica")) {
-                font = new Font(Font.HELVETICA, pts, sty);
-
-            } else if (prop_font.equalsIgnoreCase("Courier")) {
-
-                font = new Font(Font.COURIER, pts, sty);
-
-            } else {
-
-                font = new Font(Font.HELVETICA, pts, sty);
-
-            }
-
-            PdfPCell cell;
-
-            /**
-             *
-             * Build the header table
-             *
-             */
-            File f = new File(props.getProp("LOGO"));
-
-            if (f.exists()) {
-
-                cell = new PdfPCell(Image.getInstance(props.getProp("LOGO")), true);
-
-            } else {
-
-                cell = new PdfPCell(new Phrase(company, font));
-
-            }
-
-            cell.setBorder(Rectangle.NO_BORDER);
-            cell.setFixedHeight(100);
-            head.addCell(cell);
-
-            font = new Font(Font.COURIER, 10, Font.NORMAL);
-
-
-            /* Create a table to hold two cells */
-            PdfPTable trHeader = new PdfPTable(1);
-
-            PdfPCell titleCell = new PdfPCell(new Phrase(type));
-
-            titleCell.setBorder(Rectangle.NO_BORDER);
-            titleCell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
-            titleCell.setFixedHeight(50);
-
-            Barcode128 code = new Barcode128();
-            code.setCode(num);
-
-            PdfPCell barcodeCell = new PdfPCell(code.createImageWithBarcode(inv.getContentByte(), null, null));
-
-            barcodeCell.setBorder(Rectangle.NO_BORDER);
-            barcodeCell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
-            barcodeCell.setFixedHeight(50);
-
-            trHeader.addCell(titleCell);
-            trHeader.addCell(barcodeCell);
-
-            cell = new PdfPCell(trHeader);
-
-            cell.setBorder(Rectangle.NO_BORDER);
-            cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
-            cell.setFixedHeight(100);
-            head.addCell(cell);
-
-            String s = "BILL TO:";
-            if (quote) {
-                s = "FOR:";
-            }
-            if (!props.getProp("BILLTO").equals("")) {
-                s = props.getProp("BILLTO");
-            }
-
-            cell = new PdfPCell(new Phrase(s + nl + custTextArea.getText(), font));
-            //cell = new PdfPCell (new Phrase(custTextArea.getText(), font));
-            cell.setBorder(Rectangle.NO_BORDER);
-            cell.setFixedHeight(80);
-            cell.setVerticalAlignment(Rectangle.TOP);
-
-            head.addCell(cell);
-
-            /**
-             * Ship To CEll *
-             */
-            if (shipToTextArea.getText().trim().length() > 0) {
-                s = "SHIP TO:";
-                cell = new PdfPCell(new Phrase(s + nl + shipToTextArea.getText(), font));
-                //cell = new PdfPCell (new Phrase(shipToTextArea.getText(), font));
-            } else {
-                cell = new PdfPCell(new Phrase(""));
-            }
-
-            cell.setBorder(Rectangle.NO_BORDER);
-            cell.setFixedHeight(80);
-            head.addCell(cell);
-
-            PdfPTable dateline = new PdfPTable(3);
-
-            dateline.getDefaultCell().setBorder(Rectangle.NO_BORDER);
-
-            int[] widths = new int[]{33, 33, 33};
-            dateline.setWidths(widths);
-
-            font = new Font(Font.COURIER, 12, Font.NORMAL);  //get new font
-            //Version 1.5
-
-            DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
-
-            cell = new PdfPCell(new Phrase(df.format(datePicker1.getDate().getTime()), font));
-            cell.setBorder(Rectangle.BOX);
-            cell.setHorizontalAlignment(Rectangle.ALIGN_CENTER);
-            cell.setVerticalAlignment(Rectangle.ALIGN_TOP);
-            cell.setPaddingBottom(3);
-            dateline.addCell(cell);
-
-            dateline.addCell("");
-
-            cell = new PdfPCell(new Phrase("Doc# " + num, font));
-            cell.setBorder(Rectangle.BOX);
-            cell.setHorizontalAlignment(Rectangle.ALIGN_CENTER);
-            cell.setVerticalAlignment(Rectangle.ALIGN_TOP);
-            cell.setPaddingBottom(3);
-            dateline.addCell(cell);
-
-            dateline.setTotalWidth(com.lowagie.text.PageSize.LETTER.width());
-
-            cell = new PdfPCell(dateline);  //put this tble in a cell
-
-            cell.setBorder(Rectangle.BOX);
-            cell.setColspan(2);
-
-            head.addCell(cell);  //magic method
-
-
-            /*  END HEADER TABLE */
-            /**
-             *
-             * Build the Item header for the last row of the header table
-             *
-             */
-            PdfPTable itemHeader = new PdfPTable(7);
-
-            itemHeader.setWidths(headerwidths);
-
-            font = new Font(Font.TIMES_ROMAN, 10, Font.BOLD);
-
-            cell = new PdfPCell(new Phrase("Qty", font));
-
-            cell.setVerticalAlignment(Rectangle.ALIGN_TOP);
-
-            itemHeader.addCell(cell);
-
-            cell = new PdfPCell(new Phrase("Code", font));
-
-            itemHeader.addCell(cell);
-
-            cell = new PdfPCell(new Phrase("Description", font));
-
-            itemHeader.addCell(cell);
-
-            cell = new PdfPCell(new Phrase("Unit " + currency, font));
-
-            itemHeader.addCell(cell);
-
-            //Version 1.5
-            String tax1 = props.getProp("TAX1NAME");
-            String tax2 = props.getProp("TAX2NAME");
-            if (tax2.equals("")) {
-                tax2 = " ";
-            }
-            if (tax1.equals("")) {
-                tax1 = " ";
-            }
-            itemHeader.addCell(new PdfPCell(new Phrase(tax1.substring(0, 1), font)));
-            itemHeader.addCell(new PdfPCell(new Phrase(tax2.substring(0, 1), font)));
-            itemHeader.addCell(new PdfPCell(new Phrase("Total " + currency, font)));
-
-            itemHeader.setTotalWidth(com.lowagie.text.PageSize.LETTER.width() - 72);
-
-            cell = new PdfPCell(itemHeader);
-            cell.setColspan(2);
-
-            cell.setPaddingTop(5);      //space between itemheader and dateline
-
-            cell.setBorder(Rectangle.NO_BORDER);
-
-            head.addCell(cell);
-
-            inv.setHeader(head);
-            inv.setWatermarkEnabled(false);
-
-            /*  END ITEM HEADER TABLE */
-            /**
-             *
-             * build the summary table
-             *
-             */
-            int ftheaderwidths[] = {70, 30};
-            font = new Font(Font.COURIER, 10, Font.NORMAL);
-
-            foot.setWidths(ftheaderwidths);
-
-            cell = new PdfPCell(new Phrase(invoiceMessage, font));  //this stays
-            foot.addCell(cell);
-
-            /*
-          * check paidCheckBox
-          * if paid get last payment and balance due
-          * if not config default vals
-
-             */
-            //Version 1.5
-            float payment = 0.00f;
-            float balance_due = 0.00f;
-
-            balance_due = Math.abs(invoice.getInvoiceDueNow()); //assure positive display
-
-            payment = invoice.getTotalPayments();
-
-            PdfPTable totals = new PdfPTable(2);
-
-            totals.addCell(new Phrase("Sub-Total", font));
-            totals.addCell(new Phrase(itemTotalField.getText(), font));
-
-            if (tax1.equalsIgnoreCase("GST")) {
-                tax1 = "GST Content";
-            }
-            if (tax1.equalsIgnoreCase("VAT")) {
-                tax1 = "VAT Content";
-            }
-
-            totals.addCell(new Phrase(tax1, font));
-            totals.addCell(new Phrase(t1Field.getText(), font));
-
-            totals.addCell(new Phrase(tax2, font));
-            totals.addCell(new Phrase(t2Field.getText(), font));
-
-            totals.addCell(new Phrase("TOTAL", font));
-            totals.addCell(new Phrase(grandTotalField.getText(), font));
-
-            totals.addCell(new Phrase("Payment", font));
-
-            totals.addCell(new Phrase(DV.money(payment), font));
-
-            totals.addCell(new Phrase("BAL DUE  " + currency, font));
-            totals.addCell(new Phrase(DV.money(balance_due), font));
-
-            //Changed to 180 from 130
-            totals.setTotalWidth(130);
-
-            foot.addCell(totals);
-
-            inv.addTagline(props.getProp("CO NAME") + " / " + props.getProp("CO ADDRESS") + " / "
-                    + props.getProp("CO CITY") + " / " + props.getProp("CO PHONE"));
-
-            cell = new PdfPCell(new Phrase("Page: ", inv.getDocFont(-4, 0)));
-            cell.setColspan(2);
-
-            foot.addCell(cell);
-
-            inv.setFooter(foot);  //magic method
-
-        } catch (MalformedURLException ex) {
-            ex.printStackTrace();
-        } catch (BadElementException ex) {
-            ex.printStackTrace();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        } catch (DocumentException ex) {
-            ex.printStackTrace();
-        }
-
-        /*  END SUMMARY TABLE */
-        /**
-         * Build actual Items table
-         *
-         */
-        boolean print_zeros = Tools.getStringBool(props.getProp("PRINT ZEROS"));
-        ReportModel rm = new ReportModel(invTable.getModel());
-
-        int cols = invTable.getModel().getColumnCount();
-        int rows = invTable.getModel().getRowCount();
-
-        PdfPTable items = new PdfPTable(7);
-
-        try {
-
-            //items.setTotalWidth(com.lowagie.text.PageSize.LETTER.width()-72);
-            items.setWidths(headerwidths);
-
-        } catch (DocumentException ex) {
-            ex.printStackTrace();
-        }
-
-        Font f = new Font(Font.COURIER, 10, Font.NORMAL);
-        PdfPCell cell;
-        int a = 1;
-        String cellData = "";
-        String qty, code, unit, tot;
-        do {
-
-            for (int i = 2; i < cols - 1; i++) {   //start grabbing data after invoice and inventory keys
-
-                cellData = rm.getValueAt(i);
-
-                //System.out.println("Cell Data: "+cellData+ "  COL:"+i);
-                qty = rm.getValueAt(2);//qty
-                code = rm.getValueAt(3);//code
-                unit = rm.getValueAt(5); //price
-                tot = rm.getValueAt(8);
-                /* id misc and zero do not print qty or zeros, if print zeros then print only zeros for non MISC items */
-
-                if (i == 5 && code.equals("MISC") && unit.equals("0.00")) { //get rid of price if zero
-                    cellData = " ";
-                }
-                if (i == 3 && code.equals("MISC") && unit.equals("0.00")) { //get rid of misc code if zero
-                    cellData = " ";
-                }
-                if (i == 2 && code.equals("MISC") && unit.equals("0.00")) { //get rid of qty if misc and zero
-                    cellData = " ";
-                }
-                if (i == 8 && code.equals("MISC") && unit.equals("0.00")) {
-                    cellData = " ";
-                }
-                if ((i == 8 && cellData.equals("0.00")) || (i == 5 && cellData.equals("0.00"))) {
-                    if (!print_zeros) {
-                        cellData = " ";
-                    }
-                }
-
-                cell = new PdfPCell(new Phrase(cellData, f));
-
-                cell.setBorder(Rectangle.NO_BORDER);
-
-                if (i == cols - 2 || i == cols - 5) {
-
-                    cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
-
-                }
-
-                /* if qty or code field reduce font size */
-                if (i == 2 || i == 3 || i == 5 || i == 8) {
-                    Font fnt = new Font(Font.COURIER, 8, Font.NORMAL);
-
-                    cell = new PdfPCell(new Phrase(cellData, fnt));
-                    cell.setBorder(Rectangle.NO_BORDER);
-                    cell.setVerticalAlignment(cell.ALIGN_BOTTOM);
-                    if (i == cols - 2 || i == cols - 5) {
-
-                        cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
-
-                    }
-                }
-
-                if ((a % 2) != 0) {
-
-                    //Do not print if inksaver is on
-                    //if (!ink) cell.setGrayFill(.80f);
-                    if (!ink) {
-                        cell.setBackgroundColor(rowColor);
-                    }
-                }
-
-                items.addCell(cell);
-
-            }
-
-            a++;
-
-        } while (rm.next());
-
-        items.setTotalWidth(com.lowagie.text.PageSize.LETTER.width() - 72);
-
-        /*  END ITEMS TABLE */
-        /**
-         *
-         * Make the invoice pretty COSMETICS (Skipped if 1 page or more)
-         *
-         */
-        float pages = inv.howManyPages(items);  //how many pages will it take to write invoice
-
-        if (pages < 1) {   //if less than a full page fill it out
-
-            pages = pages % 1.0f;
-
-            float hf = inv.getHeaderSize() + inv.getFooterSize();
-
-            float bs = inv.getBodySize() - 10;  //fudge
-
-            float remain = bs - items.getTotalHeight();  //how much space is left after the table
-
-            float row_height = std_row_height;    //standard row height??  15points
-
-            float z = remain / row_height;  //how many Standard rows can be written to fill (no remainder)
-
-            boolean odd = true;
-            if (items.getRows().size() % 2 == 0) {
-                odd = false;
-            }
-
-            for (int i = 1; i < z; i++) {
-
-                for (int x = 2; x < cols - 1; x++) {   //simulate the data loop
-
-                    cell = new PdfPCell(new Phrase(" ", f));  //place ' ' instead of data
-
-                    cell.setBorder(Rectangle.NO_BORDER);
-
-                    cell.setFixedHeight(row_height);
-
-                    if (!odd) {
-
-                        //Do not print if inksaver is on
-                        //if (!ink) cell.setGrayFill(.80f);
-                        if (!ink) {
-                            cell.setBackgroundColor(rowColor);
-                        }
-                    }
-
-                    items.addCell(cell);
-                }
-
-                if (odd) {
-                    odd = false;
-                } else {
-                    odd = true;
-                }
-
-            }
-
-        }
-
-        /*  END COSMETICS */
-
- /*  END INVOICE TABLES  */
-        inv.setBody(items);   //add the items table to the PDFInvoice
-
-        inv.build();
-
-        inv.finish();
-
-        if (rd.isView()) {
-
-            stat = ReportFactory.veiwPDF(props.getProp("ACROEXE"), file, props);
-
-        }
-
-        if (rd.getWinPrn()) {
-
-            ReportFactory.windowsFastPrint(file, props);
-            if (rd.isDuplicate()) {
-                ReportFactory.windowsFastPrint(file, props);
-            }
-
-        }
-
-        if (rd.isEmail()) {
-            /* get recipients email address */
-            String ea = "";
-            if (quote) {
-                ea = theQuote.getEmail();
-            } else {
-                ea = invoice.getEmail();
-            }
-
-            /* TODO: Check email address */
-            System.out.println("Invoice reported email address: " + ea);
-            sendEmail(ea, file);
-        }
 
     }
 
     private boolean printReciept() {
 
-        String currency = props.getProp("SYM");
+        String currency = appSettings.getInvoice().getCurrencySymbol();
 
-        int mm;
+        double mm;
 
         try {
 
-            mm = Integer.parseInt(props.getProp("ROLL WIDTH"));
+            mm = appSettings.getInvoice().getRecieptPaperWidthInMm();
 
         } catch (Exception e) {
 
             mm = 80;  //default
         }
 
-        float width = mm * 0.0393700787f;
+        double widthInInches = mm * PosPrinterService.metricToInchesConversionFactor;
 
-        PosPrinterService posPrinter = new PosPrinterService(new java.awt.Font("Courier", java.awt.Font.BOLD, 8), true, width);
-
+        PosPrinterService posPrinter = new PosPrinterService(new java.awt.Font("Courier", java.awt.Font.BOLD, 8), true, widthInInches);
+        var company = appSettings.getCompany();
         posPrinter.newLine();
         posPrinter.newLine();
-        posPrinter.addLine(props.getProp("CO NAME"));
-        posPrinter.addLine(props.getProp("CO OTHER"));
-        posPrinter.addLine(props.getProp("CO ADDRESS"));
-        posPrinter.addLine(props.getProp("CO CITY"));
-        posPrinter.addLine(props.getProp("CO PHONE"));
+        posPrinter.addLine(company.getCompanyName());
+        posPrinter.addLine(company.getAddress1());
+        posPrinter.addLine(company.getAddress2());
+        posPrinter.addLine(company.getCity() + "  " + company.getState() + "  " + company.getPostalCode());
+        posPrinter.addLine(company.getPhoneNumber());
 
         posPrinter.newLine();
         posPrinter.newLine();
@@ -1514,7 +498,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         posPrinter.addLine("GrandTotal: " + currency + " " + grandTotalField.getText());
         posPrinter.newLine();
         posPrinter.newLine();
-        posPrinter.addLine("Reference Number: " + numberField.getText());
+        posPrinter.addLine("Reference Number: " + documentNumberField.getText());
         Calendar cal = Calendar.getInstance();
         DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL,
                 DateFormat.MEDIUM);
@@ -1528,17 +512,16 @@ public class InvoiceApp extends javax.swing.JDialog {
     private boolean print(boolean q) {
 
         computePrices();
-        testprintPDF();
-        //testPrintLayout();
+
         return true;
 
     }
 
     private void setView() {
 
-        String inum = numberField.getText();
-        numberField.setDocument(new LimitedDocument(8));
-        numberField.setText(inum);
+        String inum = documentNumberField.getText();
+        documentNumberField.setDocument(new LimitedDocument(8));
+        documentNumberField.setText(inum);
 
         clearFields();
 
@@ -1577,96 +560,38 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private void clearFields() {
-
         qtyTextField.setText("1.00");
         upcField.setText("");
         upcField.requestFocus();
-        //qtyTextField.requestFocus();  //custom
-
-    }
-
-    private float computeVAT(String inventory_desc, float model_unit_price, boolean model_GST) {
-
-        if (!VAT) {
-            return model_unit_price;
-        }
-
-        /* Build unit prices from tax selection and actual inventory price */
- /* compare inventory price to the one in the table, if lower than the inventory price plus GST - use it and add GST
-             if higher, ?? use inventory price + GST (if GST is selected)*/
-
- /* Search for inventory item with that description */
-        //InventoryDAO dao = new InventoryDAO(application.getDb());
-        ArrayList al = db.searchFast("inventory", 3, inventory_desc, false);
-
-        if (al != null) {
-            Object[] rec = db.getRecord("inventory", ((Long) al.get(0)));
-            /* Get price amount from rec */
-            float inventory_price = (Float) rec[8];//inventory price
-            float price_with_GST = inventory_price + (inventory_price * this.taxRate1);
-            /* Leave the price alone if it appears adjusted by the user (lower than inventory price with GST) */
- /* if (model_unit_price < price_with_GST){
-                return model_unit_price;
-            }*/
-
-            if (model_GST) { //if tax1
-                return price_with_GST;
-            } else {
-                //return inventory_price;
-                return model_unit_price;
-            }
-
-        }
-        return model_unit_price;
     }
 
     private void computePrices() {
 
-        /*TODO calaulation is not changing the table and taxes are not getting set right */
-        int rows = tm.getRowCount();
-        //itemCountLabel.setText(Integer.toString(rows));
+        double totalTax1 = 0.00f;
+        double totalTax2 = 0.00f;
+        double grandTotal = 0.00f;
 
-        float totalTax1 = 0.00f;
-        float totalTax2 = 0.00f;
-        float grandTotal = 0.00f;
-        float total = 0.00f; //scratch
-
-        shipping = 0.00f;
-
-        //run through and build totals on unit * qty
-        String cde;
-
-        for (int r = 0; r < rows; r++) {
-            total = (Float) tm.getValueAt(r, 2) * (Float) tm.getValueAt(r, 5);//qty * unit            
-            tm.setValueAt(Tools.round(total), r, 8);
-        }
-
-        total = invoice.getItemTotal();
-
-        totalTax1 = invoice.getTax1Total();
-        totalTax2 = invoice.getTax2Total();
-        if (debug) {
-            System.out.println("InvoiceDialog: totalTax1" + totalTax1 + " TotalTax2" + totalTax2);
-        }
-        // update tax fields
-
+        totalTax1 = invoiceService.getTax1Total(currentInvoice);
+        totalTax2 = invoiceService.getTax2Total(currentInvoice);
         t1Field.setText(DV.money(totalTax1));
         t2Field.setText(DV.money(totalTax2));
-        itemTotalField.setText(DV.money(total));
 
-        // upadte Grand total
-        grandTotal = invoice.getInvoiceTotal();
+        itemTotalField.setText(DV.money(invoiceService.getSubtotal(currentInvoice)));
+
+        grandTotal = invoiceService.getSubtotal(currentInvoice) + totalTax1 + totalTax2;
         grandTotalField.setText(DV.money(grandTotal));
     }
 
     private void miscAction() {
 
-        MiscItemDialog mi = new MiscItemDialog(null, true, application, null);
+        var miscItemDialog = new MiscItemDialog(null, true, null);
 
-        if (mi.getStat()) {
-            addItem(mi.getItem(), false, -1, -1); //no replace and no insert
-        }
-        mi.dispose();
+        var miscItem = miscItemDialog.getItem();
+
+        this.addItemToInvoiceItemsTable(miscItem);
+
+        miscItemDialog.dispose();
+
         upcField.requestFocus();
     }
 
@@ -1675,29 +600,24 @@ public class InvoiceApp extends javax.swing.JDialog {
         //checks the requested value against inventeory
         Object[] rec = db.getRecord("inventory", inventory_key);
 
-        return isItemValid(rec, needed, chk_availability);
+        return canItemBeSold(rec, needed, chk_availability);
     }
 
-    private boolean ignore_qty = false;
+    private boolean canItemBeSold(Inventory inventory, float qty_needed, boolean chk_availability) {
 
-    private boolean isItemValid(Object[] rec, float qty_needed, boolean chk_availability) {
-
-        boolean rval = true;
-        float status = invoice.checkInventory((Integer) rec[0], qty_needed);
         if (chk_availability) {
 
-            if (status == -1) {
+            if (!inventory.isAvailable()) {
 
-                int a = JOptionPane.showConfirmDialog(this, (String) rec[3] + " is marked as Unavailable. " + nl
+                int a = JOptionPane.showConfirmDialog(this, inventory.getDescription() + " is marked as Unavailable. " + nl
                         + "Would you like to sell it anyway?", "Item Unavailable", JOptionPane.YES_NO_OPTION);
 
-                if (a == 0) {
-                    rval = true;
-                } else {
+                if (a == JOptionPane.NO_OPTION) {
                     return false;
                 }
             }
         }
+
         /**/
         if (status == -3) {
             javax.swing.JOptionPane.showMessageDialog(null,
@@ -1709,7 +629,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         if (qty_needed <= ((Float) rec[6]) || category.equalsIgnoreCase("Service")) {
         } else {
 
-            if (!ignore_qty) {
+            if (!appSettings.getInventory().isIgnoreQuantityWarnings()) {
                 int a = JOptionPane.showConfirmDialog(this, "Not enough in stock to complete the sale. Available: " + ((Float) rec[6]) + nl
                         + "Would you like to add " + '"' + (String) rec[3] + '"' + " anyway?", "Inventory Warning", JOptionPane.YES_NO_OPTION);
                 if (a == 0) {
@@ -1722,7 +642,79 @@ public class InvoiceApp extends javax.swing.JDialog {
         return rval;
     }
 
-    /* getinventory us addItem */
+    // checks inventory availability
+    private void addInvoiceItemFromInventory(double quantityRequired, Inventory inventory
+    ) {
+
+        if (Tools.isDecimal(quantityRequired) && !inventory.isPartialSaleAllowed()) {
+            javax.swing.JOptionPane.showMessageDialog(null, inventory.getDescription() + " cannot be sold in partial decimal quantities.");
+            return;
+        }
+
+        if (!appSettings.getInventory().isIgnoreQuantityWarnings()
+                && checkAvailability(inventory, quantityRequired)) {
+            var invoiceItem = this.mapInventoryToInvoiceItem(quantityRequired, inventory);
+            this.addItemToInvoiceItemsTable(invoiceItem);
+        }
+    }
+
+    private void addItemToInvoiceItemsTable(InvoiceItem item) {
+        var items = this.currentInvoice.getItems();
+
+        for (var i : items) {
+            if (i.getDescription().equals(item.getDescription())) {
+                i.setQuantity(i.getQuantity() + item.getQuantity());
+                return;
+            }
+        }
+        items.add(item);
+    }
+
+    private InvoiceItem mapInventoryToInvoiceItem(double qty, Inventory inventory) {
+
+        var item = new InvoiceItem();
+        item.setCode(inventory.getCode());
+        item.setCost(inventory.getCost());
+        item.setDate(new Date());
+        item.setDescription(inventory.getDescription());
+        item.setInvoice(this.currentInvoice);
+        item.setQuantity(qty);
+        item.setTaxable1(inventory.isTax1());
+        item.setTaxable2(inventory.isTax2());
+        item.setTaxable1Rate(appSettings.getInvoice().getTax1Rate());
+        item.setTaxable2Rate(appSettings.getInvoice().getTax2Rate());
+        item.setUnitPrice(inventory.getPrice());
+        return item;
+    }
+
+    private boolean checkAvailability(Inventory inventory, double quantityRequired) {
+
+        if (!inventory.isAvailable()) {
+            int a = JOptionPane.showConfirmDialog(this, inventory.getDescription() + " is marked as unavailable. " + nl
+                    + "Would you like to sell it anyway?", "Item unavailable", JOptionPane.YES_NO_OPTION);
+
+            if (a == 1) {
+                return false;
+            }
+        }
+
+        if (quantityRequired > inventory.getQuantity()) {
+            int a = JOptionPane.showConfirmDialog(this, "Not enough in stock to complete the sale. Available: " + inventory.getQuantity() + nl
+                    + "Would you like to add " + '"' + quantityRequired + '"' + " anyway?", "Inventory warning", JOptionPane.YES_NO_OPTION);
+            if (a == 1) {
+                return false;
+            }
+        }
+
+        if ((inventory.getQuantity() - quantityRequired) <= inventory.getReorderCutoff()
+                && !(quantityRequired > inventory.getQuantity())) {
+            javax.swing.JOptionPane.showMessageDialog(null, inventory.getDescription()
+                    + " quantity on hand has met, or has gone below, the reorder cut-off amount defined for it.");
+        }
+
+        return true;
+    }
+
     private void addItem(Object[] rec, boolean addCat, int replaceRow, int insert) {
 
         float quantity = DV.parseFloat(qtyTextField.getText());
@@ -1730,15 +722,11 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         //check here to make sure qty and availablity are ok
         if (!code.trim().equals("MISC") && !code.trim().equals("DISC")) {
-
             if (!isItemValid(rec, quantity, true)) {
                 return;
             }
         }
 
-        //boolean taxable1 = false;
-        //if (custTax1 && ((Boolean)rec[13])) taxable1 = true;
-        //if (!cu stTax1 && ((Boolean)rec[13])) taxable1 = true;
         int insertedAt = -1;
         insertedAt = invoice.addItem(rec, quantity, custTax1, custTax2, addCat, replaceRow, insert);
 
@@ -1763,7 +751,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         buttonGroup3 = new javax.swing.ButtonGroup();
         jPanel2 = new javax.swing.JPanel();
         custButton = new javax.swing.JButton();
-        numberField = new javax.swing.JTextField();
+        documentNumberField = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         custTextArea = new javax.swing.JTextArea();
         logoPanel = new javax.swing.JPanel();
@@ -1839,9 +827,9 @@ public class InvoiceApp extends javax.swing.JDialog {
             }
         });
 
-        numberField.setEditable(false);
-        numberField.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
-        numberField.setToolTipText("8 Alphanumeric character max");
+        documentNumberField.setEditable(false);
+        documentNumberField.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        documentNumberField.setToolTipText("8 Alphanumeric character max");
 
         custTextArea.setColumns(20);
         custTextArea.setFont(new java.awt.Font("Courier", 0, 14)); // NOI18N
@@ -1964,7 +952,7 @@ public class InvoiceApp extends javax.swing.JDialog {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(autoInvoiceNumberButton)
                     .add(jPanel2Layout.createSequentialGroup()
-                        .add(numberField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
+                        .add(documentNumberField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(invoiceNumberEditCheckBox))
                     .add(convertButton)
@@ -1996,7 +984,7 @@ public class InvoiceApp extends javax.swing.JDialog {
                         .add(autoInvoiceNumberButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(numberField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(documentNumberField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(invoiceNumberEditCheckBox)))
                     .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 142, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
@@ -2536,27 +1524,28 @@ public class InvoiceApp extends javax.swing.JDialog {
         int r[] = {0, 0, 0, 4, 4, 4};
         int w[] = {50, 100, 300, 80};
 
-        new TableBrowseDialog(parentWin, true, invoice.getReturns(),
-                "Invoice " + invoice.getInvoiceNumber() + " Returns", r, w);
+        new TableBrowseDialog(parentWin, true, currentInvoice.getItemReturns()),
+                "Invoice " + currentInvoice.getInvoiceNumber() + " Returns", r, w
+    );
 
     }//GEN-LAST:event_viewReturnsButtonActionPerformed
 
     private void autoInvoiceNumberButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoInvoiceNumberButtonActionPerformed
 
-        numberField.setText(props.getProp("INVOICE PREFIX") + props.getProp("NEXT NUMBER"));
+        documentNumberField.setText(props.getProp("INVOICE PREFIX") + props.getProp("NEXT NUMBER"));
         invoiceNumberEditCheckBox.setSelected(false);
-        numberField.setEditable(invoiceNumberEditCheckBox.isSelected());
+        documentNumberField.setEditable(invoiceNumberEditCheckBox.isSelected());
 
     }//GEN-LAST:event_autoInvoiceNumberButtonActionPerformed
     private String mem_invoiceNumber = "";
     private void invoiceNumberEditCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceNumberEditCheckBoxActionPerformed
         boolean selected = invoiceNumberEditCheckBox.isSelected();
-        numberField.setEditable(selected);
+        documentNumberField.setEditable(selected);
         autoInvoiceNumberButton.setEnabled(selected);
         if (selected) {
-            mem_invoiceNumber = numberField.getText();
+            mem_invoiceNumber = documentNumberField.getText();
         } else {
-            numberField.setText(mem_invoiceNumber);
+            documentNumberField.setText(mem_invoiceNumber);
         }
 
     }//GEN-LAST:event_invoiceNumberEditCheckBoxActionPerformed
@@ -2663,7 +1652,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private ArrayList calcWeight(boolean show_total) {
 
-        String measure = props.getProp("MEASURE");
+        String measure = appSettings.getInventory().getWeightUnit();
 
         float weight = 0;
         float total_weight = 0;
@@ -2679,7 +1668,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         if (a.length < 1) {
 
             if (show_total) {
-                javax.swing.JOptionPane.showMessageDialog(null, "Please select some items to calculate. (Hold Ctrl and Click each row.)");
+                javax.swing.JOptionPane.showMessageDialog(null, "Please select some items to calculate. (Hold CTRL key, and CLICK each row.)");
             }
             return null;
         }
@@ -2698,10 +1687,6 @@ public class InvoiceApp extends javax.swing.JDialog {
 
                     weight = Float.parseFloat((String) rec[5]);
                     total_weight += (weight * item_qty);
-
-                    if (debug) {
-                        System.out.println("Table row " + a[i]);
-                    }
 
                     items.add(new Object[]{new Integer(a[i]), new Float(weight * item_qty)});
 
@@ -2735,185 +1720,168 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private void miscButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miscButtonActionPerformed
 
-        /*
-         *Bring up a dialog to enter a non-inventory item.
-         *
-         *
-         */
         miscAction();
 
     }//GEN-LAST:event_miscButtonActionPerformed
 
     private void scanAction() {
 
-        int[] rvals = null;
+        if (!DV.validFloatString(qtyTextField.getText())) {
+            JOptionPane.showMessageDialog(this, "Make sure Quantity is a valid number.", "Form Problem!", JOptionPane.OK_OPTION);
+            return;
+        }
 
-        if (DV.validFloatString(qtyTextField.getText())) {
+        if (upcField.getText().trim().equals("")) {   // blank upcField ENTER pressed
 
-            if (upcField.getText().trim().equals("")) {   // blank upcField ENTER pressed
+            var items = addItemFromInventoryApp();
+            if (items != null) {
+                addItems(items);
+                return;
+            }
 
-                MyInventoryApp id = new MyInventoryApp(this.parentWin, true, application, true);
+        } else {  //value entered into upcField and ENTER pressed
 
-                rvals = id.getReturnValue();  //stores one or many item selection(s) from the inventory module
+            if (this.upcField.getText().startsWith("/")) {
+                this.getInventoryGroup();
+            }
 
-                if (rvals == null || rvals[0] == -1) {
+            var searchField = (String) upcCombo.getSelectedItem();
+            var searchText = upcField.getText().trim();
 
-                    clearFields();
-                    return;
-
+            try {
+                List<Inventory> items = null;
+                if (searchField.equals("UPC")) {
+                    items = inventoryService.getAllInventoryByUpc(searchText);
+                } else if (searchField.equals("Code")) {
+                    items = inventoryService.getAllInventoryByCode(searchText);
+                } else if (searchField.equals("Description")) {
+                    items = inventoryService.getAllInventoryByDecription(searchText);
                 }
-                id.dispose();
 
-            } else {  //value entered into upcField and ENTER pressed
-
-                String t = upcField.getText().trim();
-
-                if (t.startsWith("/")) {
-
-                    /* clip everything past 'grp=' & store in grpname */
-                    String grpname = t.substring(1, t.length());
-
-                    /* scan the grps dir for the specified group */
-                    String path = workingPath + "grps/";
-
-                    File dir = new File(path);
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
-                    File f = new File(path + grpname);
-                    String line;
-                    int k = 0;
-                    boolean skip = false;
-                    if (f.exists()) {
-
-                        BufferedReader in = null;
-                        try {
-                            in = new BufferedReader(
-                                    new FileReader(f));
-                            do {
-
-                                skip = false;
-                                line = in.readLine();
-                                try {
-                                    if (line != null) {
-                                        k = Integer.valueOf(line);
-                                    } else {
-                                        skip = true;
-                                    }
-                                } catch (NumberFormatException ex) {
-                                    /* ignore bad numbers */
-                                    skip = true;
-                                }
-
-                                if (!skip) {
-                                    currentItem = db.getRecord("inventory", k);
-                                    this.addItem(currentItem, addCategoryInfo, -1, -1); //neg one means no replace
-                                    /*add category line item here?? added in InvoiceModel  */
-
-                                }
-                                //System.out.println(line);
-
-                            } while (line != null);
-
-                            in.close();
-                            upcField.setText("");
-                            clearFields();
-                            return;
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            javax.swing.JOptionPane.showMessageDialog(null, "An error occured while processing group: " + grpname);
-                            try {
-                                in.close();
-                            } catch (IOException ex) {
-                                ex.printStackTrace();
-                            }
-                            return;
-                        }
-
-                    } else {
-
-                        javax.swing.JOptionPane.showMessageDialog(null, "The group doesn't exist.");
-
-                    }
-
-                }//end group code
-
-//do big fat search: find the product based on the code recieved from upcField
-                int col = 0;
-
-                /*if (upcRadio.isSelected()) col = 1;  //adjust the search based on user settings
-                 else col = 2;
-                 if (upcCombo.getSelectedIndex()==0) col = 1;
-                 if (upcCombo.getSelectedIndex()==1) col = 2;
-                 if (upcCombo.getSelectedIndex()==2) col = 3;*/
-                col = upcCombo.getSelectedIndex() + 1;
-
-                //change searc based on desc col 3
-                /*TODO: Move out of the gui into a DAO */
-                ArrayList al = db.search("inventory", col, upcField.getText(), false);//false means exact search
-
-                if (al != null) {
-
-                    al.trimToSize();
-                    // rvals = (Integer) al.toArray();
-                    rvals = new int[al.size()];
-
-                    for (int i = 0; i < al.size(); i++) {
-                        rvals[i] = (Integer) al.get(i);
-                    }
-
-                } else {
-                    String searchType = "";
-                    if (col == 1) {
-                        searchType = "UPC";
-                    }
-                    if (col == 2) {
-                        searchType = "Code";
-                    }
-
-                    int choice;
-
-                    choice = javax.swing.JOptionPane.showConfirmDialog(null,
+                if (items == null) {
+                    var choice = javax.swing.JOptionPane.showConfirmDialog(null,
                             "Would you like to open the inventory manager?",
-                            searchType + ": " + upcField.getText() + " was not found",
+                            searchField + ": " + upcField.getText() + " was not found",
                             JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
 
                     if (choice == JOptionPane.YES_OPTION) {
-                        MyInventoryApp id = new MyInventoryApp(this.parentWin, true, application, true);
-
-                        rvals = id.getReturnValue();  //stores one or many item selection(s) from the inventory module
-
-                        if (rvals == null || rvals[0] == -1) {
-                            clearFields();
-                            return;
-                        }
-
-                        id.dispose();
-                    } else {
+                        items = addItemFromInventoryApp();
+                        addItems(items);
                         return;
                     }
                 }
-            }
-            if (rvals != null) {
 
-                for (int i = 0; i < rvals.length; i++) {  //process 'all' of the selections
-                    //System.out.println("rvals "+rvals[i]);
-                    currentItem = db.getRecord("inventory", rvals[i]);
-                    //DV.expose(currentItem);
-                    this.addItem(currentItem, addCategoryInfo, -1, -1); //no replace and no insert
-
-                    /* add category line item here */
-                }
-                clearFields();
+            } catch (SQLException e) {
+                ExceptionService.showErrorDialog(this, e, "Error searching inventory database table");
             }
 
-        } else {
-            JOptionPane.showMessageDialog(this, "Make sure Quantity is a valid number.", "Form Problem!", JOptionPane.OK_OPTION);
         }
 
         clearFields();
 
+    }
+
+    private void addItems(List<Inventory> items) {
+        if (items != null) {
+
+            for (var item : items) {
+                addItem(item);
+            }
+            clearFields();
+        }
+
+    }
+
+    private List<Inventory> addItemFromInventoryApp() {
+        var inventoryApp = new MyInventoryApp(this.parentWin, true, true);
+
+        try {
+            inventoryApp.display();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching settings when starting inventory");
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing local settings");
+        }
+
+        var items = inventoryApp.getReturnValue();
+
+        if (items == null || items.size() < 1) {
+            clearFields();
+            return null;
+        }
+        inventoryApp.dispose();
+
+        return items;
+    }
+
+    private void getInventoryGroup() {
+
+//        /* clip everything past 'grp=' & store in grpname */
+//        String grpname = group.substring(1, group.length());
+//
+//        /* scan the grps dir for the specified group */
+//        //String path = workingPath + "grps/";
+//
+//        File dir = new File(path);
+//        if (!dir.exists()) {
+//            dir.mkdirs();
+//        }
+//        File f = new File(path + grpname);
+//        String line;
+//        int k = 0;
+//        boolean skip = false;
+//        if (f.exists()) {
+//
+//            BufferedReader in = null;
+//            try {
+//                in = new BufferedReader(
+//                        new FileReader(f));
+//                do {
+//
+//                    skip = false;
+//                    line = in.readLine();
+//                    try {
+//                        if (line != null) {
+//                            k = Integer.valueOf(line);
+//                        } else {
+//                            skip = true;
+//                        }
+//                    } catch (NumberFormatException ex) {
+//                        /* ignore bad numbers */
+//                        skip = true;
+//                    }
+//
+//                    if (!skip) {
+//                        currentItem = db.getRecord("inventory", k);
+//                        this.addItem(currentItem, addCategoryInfo, -1, -1); //neg one means no replace
+//                        /*add category line item here?? added in InvoiceModel  */
+//
+//                    }
+//                    //System.out.println(line);
+//
+//                } while (line != null);
+//
+//                in.close();
+//                upcField.setText("");
+//                clearFields();
+//                return;
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                javax.swing.JOptionPane.showMessageDialog(null, "An error occured while processing group: " + grpname);
+//                try {
+//                    in.close();
+//                } catch (IOException ex) {
+//                    ex.printStackTrace();
+//                }
+//                return;
+//            }
+//
+//        } else {
+//
+//            javax.swing.JOptionPane.showMessageDialog(null, "The group doesn't exist.");
+//
+//        }
     }
 
     private void upcFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_upcFieldKeyPressed
@@ -2954,19 +1922,12 @@ public class InvoiceApp extends javax.swing.JDialog {
             return;
         }
 
-        if (debug) {
-            System.out.println("Entering InvoiceDialog post() <>");
-        }
-        if (!verifyInvoiceNumber(numberField.getText())) {
+        if (!verifyInvoiceNumber(documentNumberField.getText())) {
             return;
         }
-        if (debug) {
-            System.out.println("InvoiceDialog post(), inv number ok <>");
-        }
+
         int r = tm.getRowCount();
-        if (debug) {
-            System.out.println("InvoiceDialog post(), item row count: " + r);
-        }
+
         if (r < 1) {
             return;
         }
@@ -3015,16 +1976,10 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         if (!postInvoice(paymentCheckBox.isSelected())) {
 
-            quote = true;  //we go back to being a quote if it fails
             return;  //turn back if the invoice post fails.
 
         } else {
-            if (debug) {
-                System.out.println("Next Invoice Number: " + nextAutoInvoiceNumber);
-            }
-            if (debug) {
-                System.out.println("Last Recorded Number: " + lastRecInvNum);
-            }
+
             if (new String(invoicePrefix + nextAutoInvoiceNumber).equals(lastRecInvNum)) {
                 incrInvoice();
             }
@@ -3086,7 +2041,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         email.setAttachment(file);
         email.setRecipent(toAddress);
         email.setText(type + " from " + props.getProp("CO NAME"));
-        email.setSubject(type + " number: " + numberField.getText() + " From " + props.getProp("CO NAME"));
+        email.setSubject(type + " number: " + documentNumberField.getText() + " From " + props.getProp("CO NAME"));
         email.setFrom(props.getProp("EMAIL ADDRESS"));
         email.setServer(props.getProp("EMAIL SERVER"));
         email.setPort(props.getProp("EMAIL PORT"));
@@ -3180,7 +2135,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         theQuote.setMessage(invoiceMessage);
 
-        theQuote.setTaxes(taxRate1, taxRate2);
+        theQuote.setTaxes(appSettings.getInvoice().getTax1Rate(), appSettings.getInvoice().getTax2Rate());
 
         //theQuote.setPaid(false); //paid
         theQuote.setVoid(_void); //void?
@@ -3209,61 +2164,15 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     }
 
-    private void setTaxRates(float tax1, float tax2) {
-
-        taxRate1 = tax1;
-        taxRate2 = tax2;
-
-    }
-
-    /**
-     * This is called once by contructor(s).
-     */
     private void setInvoiceNumber() {
 
-        //ArrayList al;
-        nextAutoInvoiceNumber = props.getProp("NEXT NUMBER");
-
-        /* Check for any possible duplicate invoice numbers */
-        //al = db.search("invoice", 1, invoicePrefix + props.getProp("NEXT NUMBER"), false);
-        if (invoice.checkInvoiceNumber(invoicePrefix + props.getProp("NEXT NUMBER"))) {
-            numberField.setText(invoicePrefix + props.getProp("NEXT NUMBER"));
+        String documentNumber;
+        if (currentInvoice.isQuote()) {
+            documentNumber = invoiceService.getNewInvoiceNumber(appSettings.getInvoice().getQuotePrefix());
         } else {
-            /* If we happen to find a duplicate */
-            while (true) {  //Increase the next invoice number until no duplicate is found.
-
-                incrInvoice();
-
-                if (invoice.checkInvoiceNumber(invoicePrefix + props.getProp("NEXT NUMBER"))) {
-
-                    numberField.setText(invoicePrefix + props.getProp("NEXT NUMBER"));
-                    break;
-
-                }
-
-            }
-
+            documentNumber = invoiceService.getNewInvoiceNumber(appSettings.getInvoice().getInvoicePrefix());
         }
-
-    }
-
-    private void incrInvoice() {
-
-        if (!DV.validIntString(props.getProp("NEXT NUMBER"))) {
-
-            javax.swing.JOptionPane.showMessageDialog(null, " Problem accessing inumber, settings.ini is corrupt or missing!  You need to close Nevitium now. ");
-
-        } else {
-
-            if (debug) {
-                System.out.println("Incrementing the invoice number.");
-            }
-            int inum = Integer.parseInt(props.getProp("NEXT NUMBER").trim());
-            inum++;
-            props.setProp("NEXT NUMBER", Integer.toString(inum));
-
-        }
-
+        this.documentNumberField.setText(documentNumber);
     }
 
     private boolean setQuoteNumber() {
@@ -3275,7 +2184,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         if (savedQuote) {
 
-            theQuote.setQuoteNumber(numberField.getText(), false);
+            theQuote.setQuoteNumber(documentNumberField.getText(), false);
 
             return true;
         }
@@ -3286,9 +2195,9 @@ public class InvoiceApp extends javax.swing.JDialog {
         /* Check for any possible duplicate invoice numbers */
         //al = db.search("quote", 1, quotePrefix + props.getProp("NEXT QUOTE"), false);
         if (theQuote.checkQuoteNumber(quotePrefix + props.getProp("NEXT QUOTE"), true)) {
-            numberField.setText(quotePrefix + props.getProp("NEXT QUOTE"));
+            documentNumberField.setText(quotePrefix + props.getProp("NEXT QUOTE"));
 
-            theQuote.setQuoteNumber(numberField.getText(), true);
+            theQuote.setQuoteNumber(documentNumberField.getText(), true);
             return true;
         } else {
             /* If we happen to find a duplicate */
@@ -3298,8 +2207,8 @@ public class InvoiceApp extends javax.swing.JDialog {
 
                 if (theQuote.checkQuoteNumber(quotePrefix + props.getProp("NEXT QUOTE"), true)) {
 
-                    numberField.setText(quotePrefix + props.getProp("NEXT QUOTE"));
-                    theQuote.setQuoteNumber(numberField.getText(), true);
+                    documentNumberField.setText(quotePrefix + props.getProp("NEXT QUOTE"));
+                    theQuote.setQuoteNumber(documentNumberField.getText(), true);
                     break;
 
                 }
@@ -3347,7 +2256,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         computePrices();
 
         /*this method check and displays warnings */
-        boolean good = invoice.setInvoiceNumber(numberField.getText().trim());
+        boolean good = invoice.setInvoiceNumber(documentNumberField.getText().trim());
         if (!good) {
             return false;
         }
@@ -3604,7 +2513,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         this.currentInvoice.setCustomerId(contact.getId());
 
         cd.dispose();
-        cd = null; 
+        cd = null;
 
         if (contact != null) {
 
@@ -3623,8 +2532,6 @@ public class InvoiceApp extends javax.swing.JDialog {
             custTax1 = true;
             custTax2 = true;
         }
-        
-        
 
         upcField.requestFocus();
     }
@@ -3703,7 +2610,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     }//GEN-LAST:event_upcFieldMouseClicked
 
     private void VATButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_VATButtonActionPerformed
-        new VATCalculator(parentWin, true, this.taxRate1);
+        new VATCalculator(parentWin, true, appSettings.getInvoice().getTax1Rate());
     }//GEN-LAST:event_VATButtonActionPerformed
 
     private void printReceiptButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printReceiptButtonActionPerformed
@@ -3823,7 +2730,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
             accessKey.showMessage("Customer/Supplier Reports");
             return;
         }
-      
+
         if (customer != null) {
             ReportFactory.generateCustomerStatement(application, customer);
         } else {
@@ -3869,10 +2776,8 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
 
         invoice = new OldInvoice(application);
         invoice.setVAT(VAT);
-        invoice.setTaxes(taxRate1, taxRate2);
-        this.setInvoiceNumber();
 
-        invoice.setTaxes(taxRate1, taxRate2);
+        this.setInvoiceNumber();
 
         try {
             datePicker1.setDate(new Date());
@@ -3892,7 +2797,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
 
         invoice.setShipToAddress(theQuote.getShipToAddress());
 
-        invoice.setInvoiceNumber(numberField.getText());
+        invoice.setInvoiceNumber(documentNumberField.getText());
 
         invoice.setMessage(theQuote.getMessage());
 
@@ -3931,43 +2836,6 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     public String getStat() {
         return stat;
     }
-    /* properties */
-    OldInvoice invoice;
-    Quote theQuote;
-    private boolean pos = false;
-    private float taxRate1;
-    private float taxRate2;
-    private boolean VAT = false;
-    private String invoicePrefix = "";
-    private String quotePrefix = "";
-    private float shipping = 0.00f;
-    private int cust_key = 0;
-    private int invoiceKey = 0;
-    private int quoteKey = 0;
-    private boolean quote = false;
-    private boolean savedQuote = false;
-    private String workingPath = "";
-    private String nextAutoInvoiceNumber = "";
-    private String nextAutoQuoteNumber = "";
-    private String invoiceMessage = "Thank You!";
-    //regular instance vars
-    private char dash = '-';
-    private javax.swing.table.DefaultTableModel tm;
-    private Object[] currentItem;
-    private java.awt.Frame parentWin;
-    private DbEngine db;
-    private Object[] dataOut = new Object[12]; //invoice detail
-    private InvoiceModel im = new InvoiceModel();
-    private boolean hold = false;
-    private boolean _void = false;
-    private Settings props;
-    private String nl = System.getProperty("line.separator");
-    private String stat = "";
-    private boolean viewPrint = false;
-
-    private boolean custTax1 = true;
-    private boolean custTax2 = true;
-    private java.awt.Image winIcon;
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -3986,6 +2854,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     private com.michaelbaranov.microba.calendar.DatePicker datePicker1;
     private com.michaelbaranov.microba.calendar.DatePicker datePicker2;
     private javax.swing.JButton discountButton;
+    private javax.swing.JTextField documentNumberField;
     private javax.swing.JTextField grandTotalField;
     private javax.swing.JButton historyButton;
     private javax.swing.JTable invTable;
@@ -4011,7 +2880,6 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     private javax.swing.JPanel logoPanel;
     private javax.swing.JButton messageButton;
     private javax.swing.JButton miscButton;
-    private javax.swing.JTextField numberField;
     private javax.swing.JToolBar optionsToolbar;
     private javax.swing.JButton packingslipButton;
     private javax.swing.JButton paymentButton;

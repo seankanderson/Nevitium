@@ -16,7 +16,7 @@ public class LocalAppSettings {
     
     private String theme;
     
-    private ScreenSettings screenSettings;
+    private ScreenSettings screenSettings = new ScreenSettings();
    
          
 }
