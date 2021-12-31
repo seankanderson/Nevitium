@@ -209,8 +209,7 @@ public class InvoiceApp extends javax.swing.JDialog {
             t2Label.setVisible(false);
         }
 
-        VAT = appSettings.getInvoice().getTax1Name().equalsIgnoreCase("vat");
-        this.VATButton.setVisible(VAT);
+        this.VATButton.setVisible(appSettings.getInvoice().getTax1Name().equalsIgnoreCase("vat"));
 
         String scanField = appSettings.getInvoice().getDefaultBarcodeScanField();
         if (scanField.equalsIgnoreCase("UPC")) {
@@ -592,7 +591,6 @@ public class InvoiceApp extends javax.swing.JDialog {
         upcField.requestFocus();
     }
 
- 
     private boolean canItemBeSold(Inventory inventory, double qtyNeeded, boolean checkAvailability) {
 
         if (checkAvailability) {
@@ -607,15 +605,15 @@ public class InvoiceApp extends javax.swing.JDialog {
                 }
             }
         }
-        
+
         if (!inventory.isPartialSaleAllowed() && Tools.isDecimal(qtyNeeded)) {
             javax.swing.JOptionPane.showMessageDialog(null,
                     inventory.getDescription() + " cannot be sold in partial quantities.");
             return false;
         }
-                
+
         if (qtyNeeded > inventory.getQuantity() && !inventory.getCategory().equalsIgnoreCase("Service")) {
-             if (!appSettings.getInventory().isIgnoreQuantityWarnings()) {
+            if (!appSettings.getInventory().isIgnoreQuantityWarnings()) {
                 int a = JOptionPane.showConfirmDialog(this, "Not enough in stock to complete the sale. Available: " + inventory.getQuantity() + nl
                         + "Would you like to add " + '"' + inventory.getDescription() + '"' + " anyway?", "Inventory warning", JOptionPane.YES_NO_OPTION);
                 if (a == JOptionPane.NO_OPTION) {
@@ -623,10 +621,10 @@ public class InvoiceApp extends javax.swing.JDialog {
                 }
             }
         }
-        
+
         return true;
     }
-    
+
     private void addInvoiceItemFromInventory(double quantityRequired, Inventory inventory) {
 
         if (Tools.isDecimal(quantityRequired) && !inventory.isPartialSaleAllowed()) {
@@ -642,18 +640,18 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private int addItemToInvoiceItemsTable(InvoiceItem newItem) {
-        List<InvoiceItem> items = (List<InvoiceItem>)this.currentInvoice.getItems();
+        List<InvoiceItem> items = (List<InvoiceItem>) this.currentInvoice.getItems();
 
         // update existing item instead of appending
-        for (int index = 0; index < items.size() ; index++) {
-            var item = items.get(index);    
-        if (item.getDescription().equals(newItem.getDescription())) {
+        for (int index = 0; index < items.size(); index++) {
+            var item = items.get(index);
+            if (item.getDescription().equals(newItem.getDescription())) {
                 item.setQuantity(item.getQuantity() + newItem.getQuantity());
                 return index;
             }
         }
         items.add(newItem);
-        return (items.size()-1);
+        return (items.size() - 1);
     }
 
     private InvoiceItem mapInventoryToInvoiceItem(double qty, Inventory inventory) {
@@ -704,14 +702,14 @@ public class InvoiceApp extends javax.swing.JDialog {
     private void addItem(Inventory inventory) {
 
         double quantity = DV.parseFloat(qtyTextField.getText());
-                
+
         if (!inventory.getCode().trim().equals("MISC") && !inventory.getCode().trim().equals("DISC")) {
             if (!canItemBeSold(inventory, quantity, true)) {
                 return;
             }
         }
 
-       var rowIndex = addItemToInvoiceItemsTable(this.mapInventoryToInvoiceItem(quantity, inventory));
+        var rowIndex = addItemToInvoiceItemsTable(this.mapInventoryToInvoiceItem(quantity, inventory));
         if (rowIndex > 0) {
             invoiceItemsTable.changeSelection(rowIndex, 0, false, false);
         }
@@ -1544,23 +1542,26 @@ public class InvoiceApp extends javax.swing.JDialog {
     }//GEN-LAST:event_packingslipButtonActionPerformed
 
     private void createPackingSlip() {
-
-        String measure = props.getProp("MEASURE");
+        var company = appSettings.getCompany();
+        var inventory = appSettings.getInventory();
+        String measure = inventory.getWeightUnit();
         datavirtue.LinePrinter lp = new datavirtue.LinePrinter(true);
         ArrayList al = calcWeight(false);
-        String zone = props.getProp("ADDRESS STYLE");
+        String zone = company.getAddressFormat();
         StringBuilder sb = new StringBuilder();
 
         lp.addLine("P A C K I N G   S L I P" + "                     " + DV.getShortDate());
         lp.newLine();
         lp.addLine("FROM:");
 
-        String[] co_info = new String[]{props.getProp("CO NAME"),
-            props.getProp("CO ADDRESS"),
-            props.getProp("CO CITY"),
-            props.getProp("CO PHONE")};
+        var companyAddress = new String[]{
+            company.getCompanyName(),
+            company.getAddress1(),
+            company.getCity() + " " + company.getState() + " " + company.getPostalCode(),
+            company.getPhoneNumber()
+        };
 
-        lp.addLines(co_info);
+        lp.addLines(companyAddress);
         lp.newLine();
         lp.newLine();
 
@@ -1628,24 +1629,16 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     }//GEN-LAST:event_shippingButtonActionPerformed
 
-    private float totalWeight = 0;
+    private double totalWeight = 0;
 
     private ArrayList calcWeight(boolean show_total) {
 
-        String measure = appSettings.getInventory().getWeightUnit();
+        var measure = appSettings.getInventory().getWeightUnit();
 
-        float weight = 0;
-        float total_weight = 0;
-
-        float item_qty = 0;
-
-        String desc = "";
-        ArrayList al;
-        Object[] rec;
-        int[] a = invoiceItemsTable.getSelectedRows();
+        int[] selectedRows = invoiceItemsTable.getSelectedRows();
         ArrayList items = new ArrayList();
 
-        if (a.length < 1) {
+        if (selectedRows.length < 1) {
 
             if (show_total) {
                 javax.swing.JOptionPane.showMessageDialog(null, "Please select some items to calculate. (Hold CTRL key, and CLICK each row.)");
@@ -1653,35 +1646,20 @@ public class InvoiceApp extends javax.swing.JDialog {
             return null;
         }
 
-        for (int i = 0; i < a.length; i++) {
+        var tableModel = (InvoiceItemsTableModel) invoiceItemsTable.getModel();
+        double totalWeight = 0;
+        for (int i = 0; i < selectedRows.length; i++) {
+            var item = (InvoiceItem) tableModel.getValueAt(selectedRows[i]);
+            var weight = Double.parseDouble(item.getWeight());
+            var soldWeight = (weight * item.getQuantity());
+            totalWeight += soldWeight;
+            items.add(new Object[]{selectedRows[i], soldWeight});
 
-            desc = (String) invoiceItemsTable.getValueAt(a[i], 2);
-            item_qty = (Float) invoiceItemsTable.getValueAt(a[i], 0);
-
-            al = db.searchFast("inventory", 3, desc, false);
-            if (al != null) {
-
-                rec = db.getRecord("inventory", (Long) al.get(0));
-
-                try {
-
-                    weight = Float.parseFloat((String) rec[5]);
-                    total_weight += (weight * item_qty);
-
-                    items.add(new Object[]{new Integer(a[i]), new Float(weight * item_qty)});
-
-                } catch (NumberFormatException ex) {
-
-                    total_weight += 0;
-                    items.add(new Object[]{new Integer(a[i]), new Float(0.00f)});
-
-                }
-            }
         }
-        totalWeight = total_weight;
+        this.totalWeight = totalWeight;
 
         if (show_total) {
-            javax.swing.JOptionPane.showMessageDialog(null, "Total Weight: " + total_weight + ' ' + measure);
+            javax.swing.JOptionPane.showMessageDialog(null, "Total Weight: " + this.totalWeight + ' ' + measure);
         }
 
         return items;
@@ -1865,7 +1843,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private void upcFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_upcFieldKeyPressed
-        
+
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
             scanAction();
         }
@@ -1910,13 +1888,13 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         int a = javax.swing.JOptionPane.showConfirmDialog(null, "Would you like to commit this invoice?", "Post invoice?", JOptionPane.YES_NO_OPTION);
         if (a == JOptionPane.NO_OPTION) {
-           return;
+            return;
         }
 
         /* Re-verify all inventory again without availability check */
         ArrayList al;
         Object[] rec;
-       
+
         for (int x = 0; x < r; x++) {
 
             al = db.search("inventory", 3, (String) tm.getValueAt(x, 4), false);
@@ -1927,7 +1905,6 @@ public class InvoiceApp extends javax.swing.JDialog {
 
                 if (!isItemValid(rec, (Float) tm.getValueAt(x, 2), false)) {
 
-                   
                     invoiceItemsTable.changeSelection(x, 0, false, false);
                     return;
 
@@ -2135,43 +2112,40 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private boolean setQuoteNumber() {
 
-     
     }
 
-   
     private boolean verifyInvoiceNumber(String invoiceNumber) {
-        
+
         return true;
 
     }
-    
+
     private boolean postInvoice(boolean payment) {
-            
+
         computePrices();
-       
+
         this.currentInvoice.setInvoiceDate(datePicker1.getDate());
-        
+
         this.currentInvoice.setCustomer(custTextArea.getText());
 
         this.currentInvoice.setShiptToAddress(shipToTextArea.getText());
-        
+
         this.currentInvoice.setShippingFee(HEIGHT);
 
         this.currentInvoice.setMessage(invoiceMessage);
 
         this.currentInvoice.setPaid(false);
-       
+
         this.currentInvoice.setCustomerId(this.customer.getId());
-      
+
         invoiceService.save(currentInvoice); // TODO: save items ....create postInvoice service method to handle all
-        
+
         if (invoiceKey < 1) {
-           
+
             return false;
         }
 
         lastRecInvNum = invoice.getInvoiceNumber();
-       
 
         //invoice = null;
         if (payment) {

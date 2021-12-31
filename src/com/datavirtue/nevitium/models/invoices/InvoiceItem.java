@@ -28,6 +28,8 @@ public class InvoiceItem extends BaseModel {
     @DatabaseField
     private String description;
     @DatabaseField
+    private String weight;
+    @DatabaseField
     private double unitPrice;
     @DatabaseField
     private boolean taxable1;
