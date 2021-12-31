@@ -77,13 +77,10 @@ public class InvoiceApp extends javax.swing.JDialog {
     private InvoiceItemService itemService;
     private ContactService contactService;
 
-    private boolean VAT = false;
-
     private String invoiceMessage = "Thank You!";
     private javax.swing.table.DefaultTableModel tm;
     private java.awt.Frame parentWin;
     private boolean hold = false;
-    private boolean _void = false;
     private String nl = System.getProperty("line.separator");
     private boolean viewPrint = false;
 
@@ -196,8 +193,8 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         var tax1Name = appSettings.getInvoice().getTax1Name();
         var tax2Name = appSettings.getInvoice().getTax2Name();
-        invTable.getColumn(invTable.getColumnName(6)).setHeaderValue(tax1Name);
-        invTable.getColumn(invTable.getColumnName(7)).setHeaderValue(tax2Name);
+        invoiceItemsTable.getColumn(invoiceItemsTable.getColumnName(6)).setHeaderValue(tax1Name);
+        invoiceItemsTable.getColumn(invoiceItemsTable.getColumnName(7)).setHeaderValue(tax2Name);
         t1Label.setText(tax1Name);
         t2Label.setText(tax2Name);
 
@@ -376,7 +373,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         documentNumberField.setText(currentInvoice.getInvoiceNumber());
 
         var tableModel = new InvoiceItemsTableModel(new ArrayList(currentInvoice.getItems()));
-        invTable.setModel(tableModel);
+        invoiceItemsTable.setModel(tableModel);
 
         try {
 
@@ -430,7 +427,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         StringBuilder line1 = new StringBuilder();
         StringBuilder line2 = new StringBuilder();
 
-        ReportModel rm = new ReportModel(invTable.getModel());
+        ReportModel rm = new ReportModel(invoiceItemsTable.getModel());
 
         String spc = " ";
         String bite = "";
@@ -525,7 +522,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         clearFields();
 
-        TableColumnModel cm = invTable.getColumnModel();
+        TableColumnModel cm = invoiceItemsTable.getColumnModel();
         TableColumn tc;
 
         if (cm.getColumnCount() < 8) {
@@ -533,28 +530,28 @@ public class InvoiceApp extends javax.swing.JDialog {
         }
 
         tc = cm.getColumn(0);
-        invTable.removeColumn(tc);//remove key column
+        invoiceItemsTable.removeColumn(tc);//remove key column
         tc = cm.getColumn(0);
-        invTable.removeColumn(tc);//remove item key column
+        invoiceItemsTable.removeColumn(tc);//remove item key column
         tc = cm.getColumn(7);
-        invTable.removeColumn(tc);//remove cost
+        invoiceItemsTable.removeColumn(tc);//remove cost
 
         /* if (!DV.parseBool(props.getProp("SHOW TAX 2"),true)) {
             tc = cm.getColumn(5);
             invTable.removeColumn(tc);//remove cost
         }*/
-        invTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        invoiceItemsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        TableColumn col = invTable.getColumnModel().getColumn(0);
+        TableColumn col = invoiceItemsTable.getColumnModel().getColumn(0);
         col.setPreferredWidth(30);
-        col = invTable.getColumnModel().getColumn(1);
+        col = invoiceItemsTable.getColumnModel().getColumn(1);
         col.setPreferredWidth(100);
-        col = invTable.getColumnModel().getColumn(2);
+        col = invoiceItemsTable.getColumnModel().getColumn(2);
         col.setPreferredWidth(300);
 
-        col = invTable.getColumnModel().getColumn(4);
+        col = invoiceItemsTable.getColumnModel().getColumn(4);
         col.setPreferredWidth(30);
-        col = invTable.getColumnModel().getColumn(5);
+        col = invoiceItemsTable.getColumnModel().getColumn(5);
         col.setPreferredWidth(30);
 
     }
@@ -595,56 +592,42 @@ public class InvoiceApp extends javax.swing.JDialog {
         upcField.requestFocus();
     }
 
-    private boolean isItemValid(int inventory_key, float needed, boolean chk_availability) {
+ 
+    private boolean canItemBeSold(Inventory inventory, double qtyNeeded, boolean checkAvailability) {
 
-        //checks the requested value against inventeory
-        Object[] rec = db.getRecord("inventory", inventory_key);
-
-        return canItemBeSold(rec, needed, chk_availability);
-    }
-
-    private boolean canItemBeSold(Inventory inventory, float qty_needed, boolean chk_availability) {
-
-        if (chk_availability) {
+        if (checkAvailability) {
 
             if (!inventory.isAvailable()) {
 
-                int a = JOptionPane.showConfirmDialog(this, inventory.getDescription() + " is marked as Unavailable. " + nl
-                        + "Would you like to sell it anyway?", "Item Unavailable", JOptionPane.YES_NO_OPTION);
+                int a = JOptionPane.showConfirmDialog(this, inventory.getDescription() + " is marked as unavailable. " + nl
+                        + "Would you like to sell it anyway?", "Item unavailable", JOptionPane.YES_NO_OPTION);
 
                 if (a == JOptionPane.NO_OPTION) {
                     return false;
                 }
             }
         }
-
-        /**/
-        if (status == -3) {
+        
+        if (!inventory.isPartialSaleAllowed() && Tools.isDecimal(qtyNeeded)) {
             javax.swing.JOptionPane.showMessageDialog(null,
-                    (String) rec[3] + " cannot be sold in partial quantities.");
+                    inventory.getDescription() + " cannot be sold in partial quantities.");
             return false;
         }
-        String category = (String) rec[9];
-        /* if the item is a service or the qty is vazlid ignore warning */
-        if (qty_needed <= ((Float) rec[6]) || category.equalsIgnoreCase("Service")) {
-        } else {
-
-            if (!appSettings.getInventory().isIgnoreQuantityWarnings()) {
-                int a = JOptionPane.showConfirmDialog(this, "Not enough in stock to complete the sale. Available: " + ((Float) rec[6]) + nl
-                        + "Would you like to add " + '"' + (String) rec[3] + '"' + " anyway?", "Inventory Warning", JOptionPane.YES_NO_OPTION);
-                if (a == 0) {
-                    rval = true;
-                } else {
+                
+        if (qtyNeeded > inventory.getQuantity() && !inventory.getCategory().equalsIgnoreCase("Service")) {
+             if (!appSettings.getInventory().isIgnoreQuantityWarnings()) {
+                int a = JOptionPane.showConfirmDialog(this, "Not enough in stock to complete the sale. Available: " + inventory.getQuantity() + nl
+                        + "Would you like to add " + '"' + inventory.getDescription() + '"' + " anyway?", "Inventory warning", JOptionPane.YES_NO_OPTION);
+                if (a == JOptionPane.NO_OPTION) {
                     return false;
                 }
             }
         }
-        return rval;
+        
+        return true;
     }
-
-    // checks inventory availability
-    private void addInvoiceItemFromInventory(double quantityRequired, Inventory inventory
-    ) {
+    
+    private void addInvoiceItemFromInventory(double quantityRequired, Inventory inventory) {
 
         if (Tools.isDecimal(quantityRequired) && !inventory.isPartialSaleAllowed()) {
             javax.swing.JOptionPane.showMessageDialog(null, inventory.getDescription() + " cannot be sold in partial decimal quantities.");
@@ -658,16 +641,19 @@ public class InvoiceApp extends javax.swing.JDialog {
         }
     }
 
-    private void addItemToInvoiceItemsTable(InvoiceItem item) {
-        var items = this.currentInvoice.getItems();
+    private int addItemToInvoiceItemsTable(InvoiceItem newItem) {
+        List<InvoiceItem> items = (List<InvoiceItem>)this.currentInvoice.getItems();
 
-        for (var i : items) {
-            if (i.getDescription().equals(item.getDescription())) {
-                i.setQuantity(i.getQuantity() + item.getQuantity());
-                return;
+        // update existing item instead of appending
+        for (int index = 0; index < items.size() ; index++) {
+            var item = items.get(index);    
+        if (item.getDescription().equals(newItem.getDescription())) {
+                item.setQuantity(item.getQuantity() + newItem.getQuantity());
+                return index;
             }
         }
-        items.add(item);
+        items.add(newItem);
+        return (items.size()-1);
     }
 
     private InvoiceItem mapInventoryToInvoiceItem(double qty, Inventory inventory) {
@@ -715,27 +701,22 @@ public class InvoiceApp extends javax.swing.JDialog {
         return true;
     }
 
-    private void addItem(Object[] rec, boolean addCat, int replaceRow, int insert) {
+    private void addItem(Inventory inventory) {
 
-        float quantity = DV.parseFloat(qtyTextField.getText());
-        String code = (String) rec[2]; //Code
-
-        //check here to make sure qty and availablity are ok
-        if (!code.trim().equals("MISC") && !code.trim().equals("DISC")) {
-            if (!isItemValid(rec, quantity, true)) {
+        double quantity = DV.parseFloat(qtyTextField.getText());
+                
+        if (!inventory.getCode().trim().equals("MISC") && !inventory.getCode().trim().equals("DISC")) {
+            if (!canItemBeSold(inventory, quantity, true)) {
                 return;
             }
         }
 
-        int insertedAt = -1;
-        insertedAt = invoice.addItem(rec, quantity, custTax1, custTax2, addCat, replaceRow, insert);
-
-        if (insertedAt > -1) {
-            invTable.changeSelection(insertedAt, 0, false, false);
+       var rowIndex = addItemToInvoiceItemsTable(this.mapInventoryToInvoiceItem(quantity, inventory));
+        if (rowIndex > 0) {
+            invoiceItemsTable.changeSelection(rowIndex, 0, false, false);
         }
 
         computePrices();
-
     }
 
     /**
@@ -767,7 +748,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         clearShipToButton = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        invTable = new javax.swing.JTable();
+        invoiceItemsTable = new javax.swing.JTable();
         upcField = new javax.swing.JTextField();
         jPanel1 = new javax.swing.JPanel();
         optionsToolbar = new javax.swing.JToolBar();
@@ -995,8 +976,8 @@ public class InvoiceApp extends javax.swing.JDialog {
         jScrollPane2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         jScrollPane2.setOpaque(false);
 
-        invTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        invTable.setModel(new javax.swing.table.DefaultTableModel(
+        invoiceItemsTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        invoiceItemsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -1019,32 +1000,32 @@ public class InvoiceApp extends javax.swing.JDialog {
                 return canEdit [columnIndex];
             }
         });
-        invTable.setInheritsPopupMenu(true);
-        invTable.setSelectionBackground(new java.awt.Color(204, 255, 255));
-        invTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
-        invTable.addMouseListener(new java.awt.event.MouseAdapter() {
+        invoiceItemsTable.setInheritsPopupMenu(true);
+        invoiceItemsTable.setSelectionBackground(new java.awt.Color(204, 255, 255));
+        invoiceItemsTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
+        invoiceItemsTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                invTableMouseClicked(evt);
+                invoiceItemsTableMouseClicked(evt);
             }
         });
-        invTable.addKeyListener(new java.awt.event.KeyAdapter() {
+        invoiceItemsTable.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                invTableKeyPressed(evt);
+                invoiceItemsTableKeyPressed(evt);
             }
         });
-        jScrollPane2.setViewportView(invTable);
+        jScrollPane2.setViewportView(invoiceItemsTable);
 
         upcField.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         upcField.setToolTipText("Double-click or hit ENTER to select from inventory (F12 for Misc)");
         upcField.setNextFocusableComponent(miscButton);
-        upcField.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                upcFieldMouseClicked(evt);
-            }
-        });
         upcField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 upcFieldFocusGained(evt);
+            }
+        });
+        upcField.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                upcFieldMouseClicked(evt);
             }
         });
         upcField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -1524,15 +1505,14 @@ public class InvoiceApp extends javax.swing.JDialog {
         int r[] = {0, 0, 0, 4, 4, 4};
         int w[] = {50, 100, 300, 80};
 
-        new TableBrowseDialog(parentWin, true, currentInvoice.getItemReturns()),
-                "Invoice " + currentInvoice.getInvoiceNumber() + " Returns", r, w
-    );
+//        new TableBrowseDialog(parentWin, true, currentInvoice.getItemReturns()),
+//                "Invoice " + currentInvoice.getInvoiceNumber() + " Returns", r, w);
 
     }//GEN-LAST:event_viewReturnsButtonActionPerformed
 
     private void autoInvoiceNumberButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoInvoiceNumberButtonActionPerformed
 
-        documentNumberField.setText(props.getProp("INVOICE PREFIX") + props.getProp("NEXT NUMBER"));
+        documentNumberField.setText(invoiceService.getNewInvoiceNumber(appSettings.getInvoice().getInvoicePrefix()));
         invoiceNumberEditCheckBox.setSelected(false);
         documentNumberField.setEditable(invoiceNumberEditCheckBox.isSelected());
 
@@ -1612,10 +1592,10 @@ public class InvoiceApp extends javax.swing.JDialog {
                 tableRow = (Integer) itemInfo[0];
                 totalLineWeight = (Float) itemInfo[1];
 
-                String qt = Float.toString((Float) invTable.getModel().getValueAt(tableRow, 2));
+                String qt = Float.toString((Float) invoiceItemsTable.getModel().getValueAt(tableRow, 2));
 
                 sb.append(DV.addSpace(qt, 4, ' '));
-                sb.append(DV.addSpace((String) invTable.getModel().getValueAt(tableRow, 4), 52, ' '));
+                sb.append(DV.addSpace((String) invoiceItemsTable.getModel().getValueAt(tableRow, 4), 52, ' '));
                 sb.append(Float.toString(totalLineWeight) + ' ' + measure);
 
                 lp.addLine(sb.toString());
@@ -1662,7 +1642,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         String desc = "";
         ArrayList al;
         Object[] rec;
-        int[] a = invTable.getSelectedRows();
+        int[] a = invoiceItemsTable.getSelectedRows();
         ArrayList items = new ArrayList();
 
         if (a.length < 1) {
@@ -1675,8 +1655,8 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         for (int i = 0; i < a.length; i++) {
 
-            desc = (String) invTable.getValueAt(a[i], 2);
-            item_qty = (Float) invTable.getValueAt(a[i], 0);
+            desc = (String) invoiceItemsTable.getValueAt(a[i], 2);
+            item_qty = (Float) invoiceItemsTable.getValueAt(a[i], 0);
 
             al = db.searchFast("inventory", 3, desc, false);
             if (al != null) {
@@ -1707,7 +1687,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         return items;
     }
 
-    private void invTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_invTableKeyPressed
+    private void invoiceItemsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_invoiceItemsTableKeyPressed
 
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_DELETE && !viewPrint) {
 
@@ -1716,7 +1696,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         }
 
 
-    }//GEN-LAST:event_invTableKeyPressed
+    }//GEN-LAST:event_invoiceItemsTableKeyPressed
 
     private void miscButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miscButtonActionPerformed
 
@@ -1885,40 +1865,30 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private void upcFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_upcFieldKeyPressed
-
-        //System.out.println("Key Code:" + evt.getKeyCode());
+        
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
-
             scanAction();
-
         }
 
-        if (evt.getKeyCode() == 123) {  //press F12 for misc item
-
+        if (evt.getKeyCode() == 123) {  //F12
             miscAction();
-
         }
 
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_HOME) {
-
             post();
-
         }
 
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_END) {
-
             int a = javax.swing.JOptionPane.showConfirmDialog(null, "Discard this invoice?", "Exit", JOptionPane.YES_NO_OPTION);
 
-            if (a == 0) {
-
+            if (a == JOptionPane.YES_OPTION) {
                 closeInvoiceWindow();
-
             }
         }
     }//GEN-LAST:event_upcFieldKeyPressed
 
     private void post() {
-        if (invTable.getRowCount() < 1) {
+        if (invoiceItemsTable.getRowCount() < 1) {
             return;
         }
 
@@ -1938,19 +1908,15 @@ public class InvoiceApp extends javax.swing.JDialog {
             return;
         }
 
-        int a = javax.swing.JOptionPane.showConfirmDialog(null, "Would you like to commit this invoice?", "Post?", JOptionPane.YES_NO_OPTION);
-        if (a == 0) {
-            quote = false;
-        } else {
-            return;
+        int a = javax.swing.JOptionPane.showConfirmDialog(null, "Would you like to commit this invoice?", "Post invoice?", JOptionPane.YES_NO_OPTION);
+        if (a == JOptionPane.NO_OPTION) {
+           return;
         }
 
         /* Re-verify all inventory again without availability check */
         ArrayList al;
         Object[] rec;
-        if (debug) {
-            System.out.println("InvoiceDialog post(), reverifying inventory <>");
-        }
+       
         for (int x = 0; x < r; x++) {
 
             al = db.search("inventory", 3, (String) tm.getValueAt(x, 4), false);
@@ -1961,10 +1927,8 @@ public class InvoiceApp extends javax.swing.JDialog {
 
                 if (!isItemValid(rec, (Float) tm.getValueAt(x, 2), false)) {
 
-                    if (debug) {
-                        System.out.println("InvoiceDialog post(), item invalid <>");
-                    }
-                    invTable.changeSelection(x, 0, false, false);
+                   
+                    invoiceItemsTable.changeSelection(x, 0, false, false);
                     return;
 
                 }
@@ -1977,12 +1941,6 @@ public class InvoiceApp extends javax.swing.JDialog {
         if (!postInvoice(paymentCheckBox.isSelected())) {
 
             return;  //turn back if the invoice post fails.
-
-        } else {
-
-            if (new String(invoicePrefix + nextAutoInvoiceNumber).equals(lastRecInvNum)) {
-                incrInvoice();
-            }
 
         }
         /* Adjust inventory qty for all items sold  */
@@ -2061,7 +2019,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private void printButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printButtonActionPerformed
 
-        if (invTable.getRowCount() > 0) {
+        if (invoiceItemsTable.getRowCount() > 0) {
 
             if (viewPrint) {
 
@@ -2099,7 +2057,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private void saveQuote() {
 
-        if (invTable.getRowCount() < 1) {
+        if (invoiceItemsTable.getRowCount() < 1) {
             return;
         }
         String qmsg = "this as a quote?";
@@ -2177,120 +2135,43 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private boolean setQuoteNumber() {
 
-        if (converted) {
-            theQuote = new Quote(db);
-            savedQuote = false;
-        }
-
-        if (savedQuote) {
-
-            theQuote.setQuoteNumber(documentNumberField.getText(), false);
-
-            return true;
-        }
-
-        //ArrayList al;
-        nextAutoQuoteNumber = quotePrefix + props.getProp("NEXT QUOTE");
-
-        /* Check for any possible duplicate invoice numbers */
-        //al = db.search("quote", 1, quotePrefix + props.getProp("NEXT QUOTE"), false);
-        if (theQuote.checkQuoteNumber(quotePrefix + props.getProp("NEXT QUOTE"), true)) {
-            documentNumberField.setText(quotePrefix + props.getProp("NEXT QUOTE"));
-
-            theQuote.setQuoteNumber(documentNumberField.getText(), true);
-            return true;
-        } else {
-            /* If we happen to find a duplicate */
-            while (true) {  //Increase the next invoice number until no duplicate is found.
-
-                incrQuote();
-
-                if (theQuote.checkQuoteNumber(quotePrefix + props.getProp("NEXT QUOTE"), true)) {
-
-                    documentNumberField.setText(quotePrefix + props.getProp("NEXT QUOTE"));
-                    theQuote.setQuoteNumber(documentNumberField.getText(), true);
-                    break;
-
-                }
-
-            }
-            return true;
-        }
-
+     
     }
 
-    private void incrQuote() {
-
-        if (!DV.validIntString(props.getProp("NEXT QUOTE"))) {
-
-            javax.swing.JOptionPane.showMessageDialog(null, " Problem accessing qnumber, settings.ini is corrupt or missing!  You need to close Nevitium now. ");
-
-        } else {
-
-            if (debug) {
-                System.out.println("Incrementing the quote number.");
-            }
-            int inum = Integer.parseInt(props.getProp("NEXT QUOTE").trim());
-            inum++;
-            props.setProp("NEXT QUOTE", Integer.toString(inum));
-
-        }
-
-    }
-
+   
     private boolean verifyInvoiceNumber(String invoiceNumber) {
-        //TODO: am I allowing duplicates?
-        invoiceNumber = invoiceNumber.trim();
-
-        return invoice.setInvoiceNumber(invoiceNumber);
+        
+        return true;
 
     }
-    private String lastRecInvNum = "";
-
+    
     private boolean postInvoice(boolean payment) {
-        if (debug) {
-            System.out.println("Entering InvoiceDialog postInvoice() <>");
-        }
-
-        /* ?create a transaction system in case this fails at any point? */
+            
         computePrices();
+       
+        this.currentInvoice.setInvoiceDate(datePicker1.getDate());
+        
+        this.currentInvoice.setCustomer(custTextArea.getText());
 
-        /*this method check and displays warnings */
-        boolean good = invoice.setInvoiceNumber(documentNumberField.getText().trim());
-        if (!good) {
-            return false;
-        }
-        if (debug) {
-            System.out.println("Entering InvoiceDialog postInvoice(), inv num ok <>");
-        }
-        invoice.setDate(new Long(datePicker1.getDate().getTime()));  //Version 1.5
+        this.currentInvoice.setShiptToAddress(shipToTextArea.getText());
+        
+        this.currentInvoice.setShippingFee(HEIGHT);
 
-        invoice.setCustomer(custTextArea.getText());
-        invoice.setShipToAddress(shipToTextArea.getText());
+        this.currentInvoice.setMessage(invoiceMessage);
 
-        invoice.setShipping(shipping);
-
-        invoice.setMessage(invoiceMessage);
-
-        invoice.setTaxes(taxRate1, taxRate2);
-
-        invoice.setPaid(false); //paid
-        invoice.setVoid(_void); //void?
-        invoice.setCustKey(cust_key);
-
-        invoiceKey = invoice.postInvoice();
-
+        this.currentInvoice.setPaid(false);
+       
+        this.currentInvoice.setCustomerId(this.customer.getId());
+      
+        invoiceService.save(currentInvoice); // TODO: save items ....create postInvoice service method to handle all
+        
         if (invoiceKey < 1) {
-            if (debug) {
-                System.out.println("<><> Invoice post failed!! <><>");
-            }
+           
             return false;
         }
 
         lastRecInvNum = invoice.getInvoiceNumber();
-        if (debug) {
-            System.out.println("Last recorded invoice number: " + lastRecInvNum);
-        }
+       
 
         //invoice = null;
         if (payment) {
@@ -2335,7 +2216,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private void calcButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calcButtonActionPerformed
-        if (invTable.getRowCount() < 1) {
+        if (invoiceItemsTable.getRowCount() < 1) {
             return;
         }
 
@@ -2345,7 +2226,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     }//GEN-LAST:event_calcButtonActionPerformed
 
-    private void invTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_invTableMouseClicked
+    private void invoiceItemsTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_invoiceItemsTableMouseClicked
 
         int mouseButton = evt.getButton();
         if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) {
@@ -2362,7 +2243,7 @@ public class InvoiceApp extends javax.swing.JDialog {
             //remove current row
             //insert new row at previous position
 
-            int selectedRow = invTable.getSelectedRow();
+            int selectedRow = invoiceItemsTable.getSelectedRow();
 
             Object[] modRow = DV.getRow(tm, selectedRow);
             if (((String) modRow[3]).equals("MISC")) {
@@ -2382,13 +2263,13 @@ public class InvoiceApp extends javax.swing.JDialog {
             computePrices();
         }
 
-    }//GEN-LAST:event_invTableMouseClicked
+    }//GEN-LAST:event_invoiceItemsTableMouseClicked
 
     private void removeRows() {
-        if (invTable.getRowCount() < 1) {
+        if (invoiceItemsTable.getRowCount() < 1) {
             return;
         }
-        int[] rows = invTable.getSelectedRows();
+        int[] rows = invoiceItemsTable.getSelectedRows();
         int c = 0;
         int zkey = 0;
 
@@ -2657,22 +2538,22 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
         //erect discdialog
         //resume from dialog and apply new item
 
-        if (invTable.getSelectedRows() == null || invTable.getSelectedRow() < 0) {
+        if (invoiceItemsTable.getSelectedRows() == null || invoiceItemsTable.getSelectedRow() < 0) {
 
             //display a warning dialog, JIDE???
             return;
         }
 
-        int[] selectedRows = invTable.getSelectedRows();
+        int[] selectedRows = invoiceItemsTable.getSelectedRows();
         float tot = 0.00f;
         boolean tx1 = false;
         boolean tx2 = false;
         for (int r = 0; r < selectedRows.length; r++) {
-            tot += ((Float) invTable.getModel().getValueAt(selectedRows[r], 8)); //add the totals of the selected items
-            if ((Boolean) invTable.getModel().getValueAt(selectedRows[r], 7)) {
+            tot += ((Float) invoiceItemsTable.getModel().getValueAt(selectedRows[r], 8)); //add the totals of the selected items
+            if ((Boolean) invoiceItemsTable.getModel().getValueAt(selectedRows[r], 7)) {
                 tx2 = true;
             }
-            if ((Boolean) invTable.getModel().getValueAt(selectedRows[r], 6)) {
+            if ((Boolean) invoiceItemsTable.getModel().getValueAt(selectedRows[r], 6)) {
                 tx1 = true;
             }
         }
@@ -2692,7 +2573,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
 
         int insert = -1;
 
-        if (selectedRows[selectedRows.length - 1] >= invTable.getRowCount() - 1) {
+        if (selectedRows[selectedRows.length - 1] >= invoiceItemsTable.getRowCount() - 1) {
             insert = -1;
         } else {
             insert = selectedRows[(selectedRows.length - 1)] + 1;
@@ -2787,7 +2668,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
         /* must completely repopulate invoice object */
 
  /* Make sure we have reference to the InvoiceDialog invTable model */
-        invoice.setInvoiceDialogModel((DefaultTableModel) invTable.getModel());
+        invoice.setInvoiceDialogModel((DefaultTableModel) invoiceItemsTable.getModel());
 
         /* Make sure we have a copy of the raw invItems for the quote */
         //invoice.setInvItems(theQuote.getInvItems());
@@ -2857,7 +2738,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     private javax.swing.JTextField documentNumberField;
     private javax.swing.JTextField grandTotalField;
     private javax.swing.JButton historyButton;
-    private javax.swing.JTable invTable;
+    private javax.swing.JTable invoiceItemsTable;
     private javax.swing.JCheckBox invoiceNumberEditCheckBox;
     private javax.swing.JTextField itemTotalField;
     private javax.swing.JLabel jLabel1;
