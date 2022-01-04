@@ -38,8 +38,7 @@ import java.util.logging.Logger;
 public class ContactShippingDialog extends javax.swing.JDialog {
 
     private final Image winIcon;
-    private final GlobalApplicationDaemon application;
-
+   
     private UUID contactId;
     private Contact currentContact;
     private ContactAddress currentAddress;
@@ -56,7 +55,7 @@ public class ContactShippingDialog extends javax.swing.JDialog {
     /**
      * Creates new form ConnectionsShippingDialog
      */
-    public ContactShippingDialog(java.awt.Frame parent, boolean modal, UUID contactId, boolean selectMode, GlobalApplicationDaemon g) {
+    public ContactShippingDialog(java.awt.Frame parent, boolean modal, UUID contactId, boolean selectMode) {
         super(parent, modal);
         
         winIcon = Toolkit.getDefaultToolkit().getImage(ContactShippingDialog.class.getResource("/businessmanager/res/Orange.png"));
@@ -64,7 +63,7 @@ public class ContactShippingDialog extends javax.swing.JDialog {
         var injector = DiService.getInjector();
         this.contactService = injector.getInstance(ContactService.class);
         this.contactId = contactId;
-        application = g;
+        
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
 

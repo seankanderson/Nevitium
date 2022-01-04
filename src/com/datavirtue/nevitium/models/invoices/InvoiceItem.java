@@ -5,6 +5,7 @@ import com.datavirtue.nevitium.models.BaseModel;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import java.util.Date;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +18,10 @@ import lombok.Setter;
 public class InvoiceItem extends BaseModel {
 
     @DatabaseField(foreign=true,foreignAutoRefresh=true)
-    public Invoice invoice;    
+    private Invoice invoice;    
+    
+    @DatabaseField
+    private UUID sourceInventoryId;
     
     @DatabaseField
     private Date date = new Date();    

@@ -5,10 +5,12 @@
  */
 
 package com.datavirtue.nevitium.ui.invoices;
-import RuntimeManagement.GlobalApplicationDaemon;
+import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.models.invoices.InvoiceItemsTableModel;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.models.invoices.old.OldInvoice;
+import com.datavirtue.nevitium.services.InvoiceReturnsService;
 import datavirtue.*;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -22,38 +24,33 @@ import javax.swing.table.*;
  */
 
 public class ReturnDialog extends javax.swing.JDialog {
-    private boolean debug = false;
+
 
     /** Creates new form ReturnDialog */
     
-    private GlobalApplicationDaemon application;
+    
     private Image winIcon;
-    public ReturnDialog(java.awt.Frame parent, boolean modal, OldInvoice i, GlobalApplicationDaemon application) {
+    private InvoiceReturnsService returnService;
+    private Invoice currentInvoice;
+    
+    public ReturnDialog(java.awt.Frame parent, boolean modal, Invoice invoice) {
         super(parent, modal);
 
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
-        this.application = application;
+        
         qtyField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
         priceField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
-
-        //Version 1.5
-        props = application.getProps();
-        
-        //datePicker1.setDateFormat(new SimpleDateFormat(props.getProp("DATEFORMAT")));
-        
-        //datePicker1.setDateFormat(new SimpleDateFormat("MM/dd/yy"));
-        
+ 
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
         
-        invoice= i;
-        //System.out.println("KEY: "+invoice_key);
+        this.currentInvoice = invoice;        
          
-        jTable1.setModel(invoice.getInvItems());
-        
-        if (debug) System.out.println("Return Dialog: invoice payment count "+jTable1.getModel().getRowCount());
+        var tableModel = new InvoiceItemsTableModel(invoice.getItems());
+        invoiceReturnsTable.setModel(tableModel);
+                
         setView();
        
         this.setVisible(true);        
@@ -61,7 +58,7 @@ public class ReturnDialog extends javax.swing.JDialog {
     
     private void setView () {
        
-        TableColumnModel cm = jTable1.getColumnModel();
+        TableColumnModel cm = invoiceReturnsTable.getColumnModel();
         TableColumn tc;
         
         int [] cols = new int [] {0,0,0,4,4,4};
@@ -70,13 +67,13 @@ public class ReturnDialog extends javax.swing.JDialog {
         
             tc = cm.getColumn(cols[i]);
         
-            jTable1.removeColumn(tc);//remove key column                        
+            invoiceReturnsTable.removeColumn(tc);//remove key column                        
         
         }        
-        jTable1.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-            tc = jTable1.getColumnModel().getColumn(0);
+        invoiceReturnsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+            tc = invoiceReturnsTable.getColumnModel().getColumn(0);
             tc.setPreferredWidth(40);
-            tc = jTable1.getColumnModel().getColumn(2);
+            tc = invoiceReturnsTable.getColumnModel().getColumn(2);
             tc.setPreferredWidth(350);
         
     }
@@ -85,11 +82,11 @@ public class ReturnDialog extends javax.swing.JDialog {
         
         //Object [] item = new Object [10];
         
-        int the_row = jTable1.getSelectedRow();
+        int the_row = invoiceReturnsTable.getSelectedRow();
         
         for (int c = 0; c < item.length; c++){
                       
-            item[c] = jTable1.getModel().getValueAt(the_row, c);
+            item[c] = invoiceReturnsTable.getModel().getValueAt(the_row, c);
                         
         }
         
@@ -111,7 +108,7 @@ public class ReturnDialog extends javax.swing.JDialog {
 
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        invoiceReturnsTable = new javax.swing.JTable();
         jPanel3 = new javax.swing.JPanel();
         codeField = new javax.swing.JTextField();
         descField = new javax.swing.JTextField();
@@ -130,8 +127,8 @@ public class ReturnDialog extends javax.swing.JDialog {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
 
-        jTable1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        invoiceReturnsTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        invoiceReturnsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -150,14 +147,14 @@ public class ReturnDialog extends javax.swing.JDialog {
                 return canEdit [columnIndex];
             }
         });
-        jTable1.setGridColor(new java.awt.Color(0, 0, 0));
-        jTable1.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
-        jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
+        invoiceReturnsTable.setGridColor(new java.awt.Color(0, 0, 0));
+        invoiceReturnsTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
+        invoiceReturnsTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jTable1MouseClicked(evt);
+                invoiceReturnsTableMouseClicked(evt);
             }
         });
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(invoiceReturnsTable);
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -291,8 +288,8 @@ public class ReturnDialog extends javax.swing.JDialog {
      Refund money to customer
      */
 
-    private void processReturnTEST(){
-        if (jTable1.getSelectedRow() > -1){
+    private void processReturn(){
+        if (invoiceReturnsTable.getSelectedRow() > -1){
 
         }else {
             return;
@@ -313,8 +310,8 @@ public class ReturnDialog extends javax.swing.JDialog {
             return;
         }
 
-        if (debug) System.out.println("Selected Row: "+jTable1.getSelectedRow());
-        int selectedRow = jTable1.getSelectedRow();
+        
+        int selectedRow = invoiceReturnsTable.getSelectedRow();
         
         float refundAmount = Float.parseFloat(priceField.getText());
         float userSuppliedReturnQty = Float.parseFloat(qtyField.getText());
@@ -323,7 +320,7 @@ public class ReturnDialog extends javax.swing.JDialog {
         int retStat = invoice.returnItem(selectedRow,
                 userSuppliedReturnQty, refundAmount, date);
                 //invoice.saveInvoice();
-        if (debug) System.out.println("Return status: "+retStat);
+        
         if (retStat > 0) this.dispose();
         if (retStat == -4){
 
@@ -336,16 +333,16 @@ public class ReturnDialog extends javax.swing.JDialog {
     private void returnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_returnButtonActionPerformed
         
         //if (!DV.isValidShortDate(dateField.getText(), true)) return; /* DATE CHECK */
-        processReturnTEST();
+        processReturn();
         
     }//GEN-LAST:event_returnButtonActionPerformed
 
-    private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
+    private void invoiceReturnsTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_invoiceReturnsTableMouseClicked
     int mouseButton = evt.getButton();
     if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) return;    
-        if (jTable1.getSelectedRow() > -1){
+        if (invoiceReturnsTable.getSelectedRow() > -1){
             
-            String code = (String)jTable1.getModel().getValueAt(jTable1.getSelectedRow(),4);
+            String code = (String)invoiceReturnsTable.getModel().getValueAt(invoiceReturnsTable.getSelectedRow(),4);
             if (code.equalsIgnoreCase("RETURN")){
                 
                 qtyField.setText("0.0");
@@ -362,7 +359,7 @@ public class ReturnDialog extends javax.swing.JDialog {
         }
         
         
-    }//GEN-LAST:event_jTable1MouseClicked
+    }//GEN-LAST:event_invoiceReturnsTableMouseClicked
     
       
     private Settings props;   
@@ -373,6 +370,7 @@ public class ReturnDialog extends javax.swing.JDialog {
     private javax.swing.JTextField codeField;
     private com.michaelbaranov.microba.calendar.DatePicker datePicker1;
     private javax.swing.JTextField descField;
+    private javax.swing.JTable invoiceReturnsTable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -380,7 +378,6 @@ public class ReturnDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JTextField priceField;
     private javax.swing.JTextField qtyField;

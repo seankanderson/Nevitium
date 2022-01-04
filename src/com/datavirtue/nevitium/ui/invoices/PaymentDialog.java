@@ -6,9 +6,8 @@
  */
 
 package com.datavirtue.nevitium.ui.invoices;
-import com.datavirtue.nevitium.ui.checks.CheckDialog;
-import RuntimeManagement.KeyCard;
 import RuntimeManagement.GlobalApplicationDaemon;
+import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.ui.util.Tools;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
@@ -27,19 +26,14 @@ import java.text.*;
  * @rights Copyright Data Virtue 2006, 2007 All Rights Reserved.
  */
 public class PaymentDialog extends javax.swing.JDialog {
-    private KeyCard accessKey;
-    private GlobalApplicationDaemon application;
-    /** Creates new form PaymentDialog */
-    public PaymentDialog(java.awt.Frame parent, boolean modal, int i_key,
-            GlobalApplicationDaemon application) {
+    
+    public PaymentDialog(java.awt.Frame parent, boolean modal, Invoice invoice) {
         
         super(parent, modal);
                 
         initComponents();
         amtField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
-             
-        workingPath = application.getWorkingPath();
-        accessKey = application.getKey_card();
+              
          /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();
         InputMap im = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -70,8 +64,8 @@ public class PaymentDialog extends javax.swing.JDialog {
 
         }
         
-        db = application.getDb();
-        theInvoice = new OldInvoice(application, i_key);
+        
+        //theInvoice = new OldInvoice(application, i_key);
         
         try {
                    
@@ -84,7 +78,7 @@ public class PaymentDialog extends javax.swing.JDialog {
         }
         
         
-        invoice_key = i_key;
+        
         populate();
         
         setDetails();
@@ -104,7 +98,7 @@ public class PaymentDialog extends javax.swing.JDialog {
         dateField.setText(df.format(issueDate));
         invoice_total = theInvoice.getInvoiceTotal();
 
-        if (debug) System.out.println("Payment Dialog: invoice total "+invoice_total);
+        if (debug) System.out.println("Payment Dialog: invoice total " + invoice_total);
         refField.requestFocus();
        
         setInterest();
@@ -392,11 +386,11 @@ public class PaymentDialog extends javax.swing.JDialog {
            if (printCheck){
 
                
-               if (accessKey.checkCheck(500)){
-//                    new CheckDialog(null,true, application,
-//                       theInvoice.getCustKey(), overPayment,
-//                       "Invoice Overpayment: "+theInvoice.getInvoiceNumber());
-               }
+//               if (accessKey.checkCheck(500)){
+////                    new CheckDialog(null,true, application,
+////                       theInvoice.getCustKey(), overPayment,
+////                       "Invoice Overpayment: "+theInvoice.getInvoiceNumber());
+//               }
 
            }
 

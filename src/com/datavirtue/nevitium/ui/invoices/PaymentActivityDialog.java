@@ -4,15 +4,12 @@
  * Created on Mar 25, 2011, 10:33:51 PM
  */
 
-package com.datavirtue.nevitium.models.invoices.old;
+package com.datavirtue.nevitium.ui.invoices;
 
-
-import com.datavirtue.nevitium.ui.invoices.ReturnDialog;
 import com.datavirtue.nevitium.ui.invoices.PaymentDialog;
-import RuntimeManagement.GlobalApplicationDaemon;
-import RuntimeManagement.KeyCard;
 import com.datavirtue.nevitium.database.reports.ReportFactory;
 import com.datavirtue.nevitium.models.contacts.Contact;
+import com.datavirtue.nevitium.models.invoices.Invoice;
 import datavirtue.DV;
 import datavirtue.DbEngine;
 import datavirtue.FractionCellRenderer;
@@ -30,27 +27,22 @@ import javax.swing.table.TableColumnModel;
  * @author dataVirtue
  */
 public class PaymentActivityDialog extends javax.swing.JDialog {
-    private final KeyCard accessKey;
-    private final boolean debug = false;
-    private final GlobalApplicationDaemon application;
     private final Image winIcon;
-    private final OldInvoice invoice;
+    private Invoice currentInvoice;
     private final String nl = System.getProperty("line.separator");
 
     /** Creates new form PaymentActivityDialog */
-    public PaymentActivityDialog(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, OldInvoice i) {
+    public PaymentActivityDialog(java.awt.Frame parent, boolean modal, Invoice invoice) {
         super(parent, modal);
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
+        this.currentInvoice = invoice;
         initComponents();
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
-        accessKey = application.getKey_card();
-        this.application = application;
-        this.invoice = i;
+        
         this.setTitle("Payment Activity for Invoice Number: "+invoice.getInvoiceNumber());
-        this.setPayments();
-        //this.setView();
+        this.setPayments();        
         this.setVisible(true);
 
     }
@@ -195,11 +187,11 @@ public class PaymentActivityDialog extends javax.swing.JDialog {
 
     private void returnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_returnButtonActionPerformed
 
-        if (!accessKey.checkManager(500)){
-            accessKey.showMessage("Returns");
-            return;
-        }
-            new ReturnDialog(null, true, invoice, application);
+//        if (!accessKey.checkManager(500)){
+//            accessKey.showMessage("Returns");
+//            return;
+//        }
+            //new ReturnDialog(null, true, invoice, application);
             this.setPayments();
 
     }//GEN-LAST:event_returnButtonActionPerformed
@@ -325,7 +317,7 @@ private void setView(){
             else{
 
 
-                PaymentDialog pd = new PaymentDialog (null, true, invoice.getInvoiceKey(), application);
+                PaymentDialog pd = new PaymentDialog (null, true, this.invoice);
                 pd.setVisible(true);
                 
             }

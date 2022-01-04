@@ -50,7 +50,7 @@ import java.util.Locale;
 public class ContactsApp extends javax.swing.JDialog {
 
     private KeyCard accessKey;
-    private final GlobalApplicationDaemon application;
+
     private Contact currentContact = new Contact();
     private final ContactService contactService;
     private final ContactJournalService journalService;
@@ -65,12 +65,11 @@ public class ContactsApp extends javax.swing.JDialog {
     private DbEngine zip;
     private String nl = System.getProperty("line.separator");
     private Image winIcon;
-   
 
     /**
      * Creates new form ConnectionsDialog
      */
-    public ContactsApp(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon g, boolean select, boolean customers, boolean suppliers) {
+    public ContactsApp(java.awt.Frame parent, boolean modal, boolean select, boolean customers, boolean suppliers) {
 
         super(parent, modal);
 
@@ -79,8 +78,6 @@ public class ContactsApp extends javax.swing.JDialog {
         journalService = injector.getInstance(ContactJournalService.class);
         appSettingsService = injector.getInstance(AppSettingsService.class);
         appSettingsService.setObjectType(AppSettings.class);
-
-        this.application = g;
 
         winIcon = Toolkit.getDefaultToolkit().getImage(ContactsApp.class.getResource("/businessmanager/res/Orange.png"));
 
@@ -159,13 +156,13 @@ public class ContactsApp extends javax.swing.JDialog {
     public void display() throws SQLException {
 
         var user = UserService.getCurrentUser();
-        
-        if (!user.isAdmin() && user.getContacts() < 300){
+
+        if (!user.isAdmin() && user.getContacts() < 300) {
             JOptionPane.showMessageDialog(this, "Please see the admin about permissions.", "Access denied", JOptionPane.OK_OPTION);
             this.dispose();
             return;
         }
-        
+
         var settings = appSettingsService.getObject();
         var company = settings.getCompany();
         this.setTitle(company.getCompanyName() + " Business Contacts");
@@ -310,16 +307,16 @@ public class ContactsApp extends javax.swing.JDialog {
         currentContact = new Contact();
 
         CompanySettings settings = null;
-        
+
         try {
             settings = appSettingsService.getObject().getCompany();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error fetching settings");
-            
+
         }
-        
+
         var countryCode = settings != null ? settings.getAddressFormat() : Locale.getDefault().getCountry();
-        
+
         keyLabel.setText(currentContact.getId() != null ? currentContact.getId().toString() : "NEW - UNSAVED");  //show the user the key for the record
 
         //populateInvoices(false);
@@ -1910,31 +1907,27 @@ public class ContactsApp extends javax.swing.JDialog {
 
     private void takePayment() {
 
-        int r = invoiceTable.getSelectedRow();
-        TableModel tm = invoiceTable.getModel();
+        int selectedRow = invoiceTable.getSelectedRow();
+        var tableModel = (CustomerInvoiceListTableModel) invoiceTable.getModel();
 
-        if (r > -1) {
-
-            if ((Boolean) tm.getValueAt(r, 2) == true) {
-
-                javax.swing.JOptionPane.showMessageDialog(this, "Invoice is marked as paid.");
-                invoiceTable.changeSelection(r, 0, false, false);
-                invoiceTable.requestFocus();
-                return;
-
-            } else {
-
-                int key = (Integer) tm.getValueAt(r, 0);
-
-                PaymentDialog pd = new PaymentDialog(parentWin, true, key, application);
-                pd.setVisible(true);
-                populateInvoices(false);
-            }
-
-            invoiceTable.changeSelection(r, 0, false, false);
-            invoiceTable.requestFocus();
-
+        if (selectedRow < 0) {
+            return; //TODO: show dialog?
         }
+        var invoice = tableModel.getValueAt(selectedRow);
+
+        if (invoice.isPaid()) {
+            JOptionPane.showMessageDialog(this, "Invoice is marked as paid.");
+            invoiceTable.changeSelection(selectedRow, 0, false, false);
+            invoiceTable.requestFocus();
+            return;
+        } else {
+            PaymentDialog pd = new PaymentDialog(parentWin, true, invoice);
+            pd.setVisible(true);
+            populateInvoices(false);
+        }
+
+        invoiceTable.changeSelection(selectedRow, 0, false, false);
+        invoiceTable.requestFocus();
 
     }
 
@@ -1958,23 +1951,12 @@ public class ContactsApp extends javax.swing.JDialog {
 
                 if (invoice != null) {
                     /* Opening quotes */
-                    InvoiceApp id = new InvoiceApp(parentWin, true, application, invoice); //no select
-
-                    id.setVisible(true);
+                    InvoiceApp id = new InvoiceApp(parentWin, true); 
+                    id.setInvoice(invoice);
+                    id.display();
                     id.dispose();
-
                 }
-            } else {
-                if (invoice != null) {
-
-                    InvoiceApp id = new InvoiceApp(parentWin, true, invoice, application); //no select
-
-                    id.setVisible(true);
-                    id.dispose();
-
-                }
-
-            }
+            } 
 
         }
         this.populateInvoices(false);
@@ -2379,7 +2361,7 @@ public class ContactsApp extends javax.swing.JDialog {
         int k = (Integer) contactTable.getModel().getValueAt(r, 0);
 
         if (k > 0) {
-            ReportFactory.generateCustomerStatement(application, this.currentContact);
+            // ReportFactory.generateCustomerStatement(application, this.currentContact);
         }
 
     }
@@ -2416,7 +2398,7 @@ public class ContactsApp extends javax.swing.JDialog {
     }
 
     private void shipToAction() {
-        var dialog = new ContactShippingDialog(parentWin, true, this.currentContact.getId(), false, application);
+        var dialog = new ContactShippingDialog(parentWin, true, this.currentContact.getId(), false);
         dialog.display();
 
     }

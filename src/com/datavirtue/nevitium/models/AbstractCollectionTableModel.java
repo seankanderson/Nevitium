@@ -47,7 +47,7 @@ public abstract class AbstractCollectionTableModel<T> extends AbstractTableModel
         items.add(value);
     }
     
-    public Object getValueAt(int rowIndex) {
+    public T getValueAt(int rowIndex) {
         if (items == null) {
             return null;
         }

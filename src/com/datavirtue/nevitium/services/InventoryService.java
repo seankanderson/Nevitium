@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import com.datavirtue.nevitium.models.inventory.Inventory;
 import com.google.inject.Inject;
 import com.j256.ormlite.dao.DaoManager;
+import java.util.UUID;
 
 /**
  *
@@ -57,9 +58,14 @@ public class InventoryService extends BaseService<InventoryDao, Inventory> {
         return (this.getDao().queryBuilder().where().eq("description", description).countOf() > 0);
     }
 
-    public double numberAvailableNow(Inventory inventory) throws SQLException {
-        var result = this.getDao().queryForId(inventory.getId());
+    public double quantityAvailableNow(UUID inventoryId) throws SQLException {
+        var result = this.getDao().queryForId(inventoryId);
         return result.getQuantity();
+    }
+    
+    public Inventory getInventoryById(UUID inventoryId) throws SQLException {
+        var result = this.getDao().queryForId(inventoryId);
+        return result;
     }
     
     public void deleteInventory(Inventory inventory) throws SQLException {
