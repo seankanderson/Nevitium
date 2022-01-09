@@ -6,14 +6,16 @@
 
 package com.datavirtue.nevitium.ui.invoices;
 import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.models.invoices.InvoiceItem;
 import com.datavirtue.nevitium.models.invoices.InvoiceItemsTableModel;
+import com.datavirtue.nevitium.models.invoices.InvoiceReturnsTableModel;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import com.datavirtue.nevitium.models.invoices.old.OldInvoice;
 import com.datavirtue.nevitium.services.InvoiceReturnsService;
 import datavirtue.*;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.util.ArrayList;
 import javax.swing.table.*;
 
 
@@ -32,6 +34,7 @@ public class ReturnDialog extends javax.swing.JDialog {
     private Image winIcon;
     private InvoiceReturnsService returnService;
     private Invoice currentInvoice;
+    private InvoiceItem currentItem;
     
     public ReturnDialog(java.awt.Frame parent, boolean modal, Invoice invoice) {
         super(parent, modal);
@@ -48,7 +51,7 @@ public class ReturnDialog extends javax.swing.JDialog {
         
         this.currentInvoice = invoice;        
          
-        var tableModel = new InvoiceItemsTableModel(invoice.getItems());
+        var tableModel = new InvoiceItemsTableModel(new ArrayList(invoice.getItems()));
         invoiceReturnsTable.setModel(tableModel);
                 
         setView();
@@ -79,21 +82,17 @@ public class ReturnDialog extends javax.swing.JDialog {
     }
     
     private void populateForm () {
+       
+        int selectedRow = invoiceReturnsTable.getSelectedRow();
         
-        //Object [] item = new Object [10];
+        var tableModel = (InvoiceReturnsTableModel)this.invoiceReturnsTable.getModel();
         
-        int the_row = invoiceReturnsTable.getSelectedRow();
+        var itemReturn = tableModel.getValueAt(selectedRow);
         
-        for (int c = 0; c < item.length; c++){
-                      
-            item[c] = invoiceReturnsTable.getModel().getValueAt(the_row, c);
-                        
-        }
-        
-        qtyField.setText(DV.money((Float) item[3]));
-        codeField.setText((String) item[4] );
-        descField.setText((String) item[5]);
-        priceField.setText(DV.money((Float)item[6]));
+        qtyField.setText(Double.toString(itemReturn.getQuantity()));
+        codeField.setText(itemReturn.getCode());
+        descField.setText(itemReturn.getDescription());
+        priceField.setText(DV.money(itemReturn.getUnitPrice()));
        
     }
     
@@ -309,7 +308,6 @@ public class ReturnDialog extends javax.swing.JDialog {
             qtyField.requestFocus();
             return;
         }
-
         
         int selectedRow = invoiceReturnsTable.getSelectedRow();
         
@@ -360,11 +358,7 @@ public class ReturnDialog extends javax.swing.JDialog {
         
         
     }//GEN-LAST:event_invoiceReturnsTableMouseClicked
-    
-      
-    private Settings props;   
-    private Object [] item = new Object [10];
-    private OldInvoice invoice;
+        
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField codeField;

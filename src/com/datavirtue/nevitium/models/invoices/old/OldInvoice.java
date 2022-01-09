@@ -836,6 +836,7 @@ public class OldInvoice {
         /*Now I have to check to see if the customer has 'overpaid'.
          i.e. Has a negative balance on the invoice now that a return has been
          credited.*/
+        
         if (dueNow < 0){
             float debit;
             payment [0] = new Integer(0);

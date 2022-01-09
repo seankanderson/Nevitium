@@ -1802,8 +1802,8 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="1" attributes="0">
@@ -1828,10 +1828,11 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="1" max="-2" attributes="0">
                                       <Component id="catLineCheckBox" alignment="0" max="32767" attributes="1"/>
-                                      <Component id="quantityCheckBox" alignment="0" pref="338" max="32767" attributes="1"/>
+                                      <Component id="quantityWarningCheckBox" alignment="0" pref="338" max="32767" attributes="1"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
+                              <Component id="partialQuantityCheckBox" alignment="0" max="32767" attributes="1"/>
                           </Group>
                       </Group>
                   </Group>
@@ -1852,10 +1853,12 @@
                               <Component id="jLabel41" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Component id="quantityCheckBox" min="-2" max="-2" attributes="0"/>
+                          <Component id="quantityWarningCheckBox" min="-2" max="-2" attributes="0"/>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="catLineCheckBox" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="329" max="32767" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="partialQuantityCheckBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="313" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1911,12 +1914,12 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="quantityCheckBox">
+                <Component class="javax.swing.JCheckBox" name="quantityWarningCheckBox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Ignore Quantity Warnings"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="quantityCheckBoxActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="quantityWarningCheckBoxActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JCheckBox" name="catLineCheckBox">
@@ -1924,6 +1927,15 @@
                     <Property name="text" type="java.lang.String" value="Add category line to invoice items"/>
                     <Property name="toolTipText" type="java.lang.String" value="When using Nevitium as an inventory deployment tracker."/>
                   </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="partialQuantityCheckBox">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Allow partial quantity sales by default"/>
+                    <Property name="toolTipText" type="java.lang.String" value="When using Nevitium as an inventory deployment tracker."/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="partialQuantityCheckBoxActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>

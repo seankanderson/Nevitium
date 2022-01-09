@@ -24,9 +24,14 @@ public class InvoiceItem extends BaseModel {
     private UUID sourceInventoryId;
     
     @DatabaseField
+    private UUID relatedInvoiceItem;
+    
+    @DatabaseField
     private Date date = new Date();    
     @DatabaseField
     private double quantity;
+    @DatabaseField
+    private boolean partialSaleAllowed;
     @DatabaseField
     private String code;
     @DatabaseField
@@ -45,5 +50,8 @@ public class InvoiceItem extends BaseModel {
     private double taxable2Rate;
     @DatabaseField
     private double cost;
+    @DatabaseField
+    private boolean isReturnedItem;
+    
     
 }

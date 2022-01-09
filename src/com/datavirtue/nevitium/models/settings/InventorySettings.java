@@ -12,7 +12,8 @@ public class InventorySettings {
     private double defaultProductMarkupFactor = 2.7;
     private String weightUnit = "lbs"; // kgs
     private boolean ignoreQuantityWarnings = false;
+    private boolean allowPartialQuantitySales = false;
     private boolean addCategoryLineToInvoiceItems = false;
-    private String defaultInventorySearchField = "upc";
+    private String defaultInventorySearchField = "upc";    
     
 }

@@ -428,7 +428,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         markupField.setText(Double.toString(inventory.getDefaultProductMarkupFactor()));
 
-        quantityCheckBox.setSelected(inventory.isIgnoreQuantityWarnings());
+        quantityWarningCheckBox.setSelected(inventory.isIgnoreQuantityWarnings());
 
         jLabel28.setText(System.getProperty("os.name") + " " + System.getProperty("os.version") + " : " + System.getProperty("sun.os.patch.level"));
         jLabel30.setText(System.getProperty("java.runtime.name") + " " + System.getProperty("java.vm.version"));
@@ -477,7 +477,7 @@ public class SettingsDialog extends javax.swing.JDialog {
             email.setReturnAddress(this.emailAddressField.getText());
 
             settings.getInternet().setShowRemoteMessage(this.showRemoteMessageCheckbox.isSelected());
-
+            
             var backups = settings.getBackups();
             backups.setPrimaryBackupPath(this.backupFolderField.getText());
             backups.setSecondaryBackupPath(this.secondaryBackupFolderField.getText());
@@ -521,6 +521,13 @@ public class SettingsDialog extends javax.swing.JDialog {
 
             invoice.setInkSaver(this.inkSaverCheckbox.isSelected());
 
+            var inventory = settings.getInventory();
+            inventory.setAddCategoryLineToInvoiceItems(this.catLineCheckBox.isSelected());
+            inventory.setAllowPartialQuantitySales(this.partialQuantityCheckBox.isSelected());
+            inventory.setWeightUnit(this.kgsRadio.isSelected() ? "metric" : "imperial");
+            inventory.setDefaultInventorySearchField("upc");
+            inventory.setIgnoreQuantityWarnings(this.quantityWarningCheckBox.isSelected());            
+            
             var output = settings.getOutput();
             output.setPdfReaderUri(this.pdfReaderBinField.getText());
             output.setUseSystemDefaultPdfReader(this.useSystemDefaultPdfReaderCheckbox.isSelected());
@@ -706,8 +713,9 @@ public class SettingsDialog extends javax.swing.JDialog {
         jLabel41 = new javax.swing.JLabel();
         lbsRadio = new javax.swing.JRadioButton();
         kgsRadio = new javax.swing.JRadioButton();
-        quantityCheckBox = new javax.swing.JCheckBox();
+        quantityWarningCheckBox = new javax.swing.JCheckBox();
         catLineCheckBox = new javax.swing.JCheckBox();
+        partialQuantityCheckBox = new javax.swing.JCheckBox();
         outputPanel = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         invoiceButton = new javax.swing.JButton();
@@ -1793,15 +1801,23 @@ public class SettingsDialog extends javax.swing.JDialog {
         kgsRadio.setText("kgs");
         kgsRadio.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-        quantityCheckBox.setText("Ignore Quantity Warnings");
-        quantityCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        quantityWarningCheckBox.setText("Ignore Quantity Warnings");
+        quantityWarningCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                quantityCheckBoxActionPerformed(evt);
+                quantityWarningCheckBoxActionPerformed(evt);
             }
         });
 
         catLineCheckBox.setText("Add category line to invoice items");
         catLineCheckBox.setToolTipText("When using Nevitium as an inventory deployment tracker.");
+
+        partialQuantityCheckBox.setText("Allow partial quantity sales by default");
+        partialQuantityCheckBox.setToolTipText("When using Nevitium as an inventory deployment tracker.");
+        partialQuantityCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                partialQuantityCheckBoxActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout jPanel15Layout = new org.jdesktop.layout.GroupLayout(jPanel15);
         jPanel15.setLayout(jPanel15Layout);
@@ -1829,8 +1845,9 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(jPanel15Layout.createSequentialGroup()
                         .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                             .add(org.jdesktop.layout.GroupLayout.LEADING, catLineCheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, quantityCheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE))
-                        .addContainerGap())))
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, quantityWarningCheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE))
+                        .addContainerGap())
+                    .add(partialQuantityCheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         jPanel15Layout.setVerticalGroup(
             jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1846,10 +1863,12 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .add(kgsRadio)
                     .add(jLabel41))
                 .add(18, 18, 18)
-                .add(quantityCheckBox)
+                .add(quantityWarningCheckBox)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(catLineCheckBox)
-                .addContainerGap(329, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(partialQuantityCheckBox)
+                .addContainerGap(313, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout inventoryPanelLayout = new org.jdesktop.layout.GroupLayout(inventoryPanel);
@@ -2776,9 +2795,9 @@ public class SettingsDialog extends javax.swing.JDialog {
         // TODO add your handling code here:
     }//GEN-LAST:event_emailSslCheckboxActionPerformed
 
-    private void quantityCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_quantityCheckBoxActionPerformed
+    private void quantityWarningCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_quantityWarningCheckBoxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_quantityCheckBoxActionPerformed
+    }//GEN-LAST:event_quantityWarningCheckBoxActionPerformed
 
     private void printZerosCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printZerosCheckBoxActionPerformed
         // TODO add your handling code here:
@@ -2799,6 +2818,10 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private void invoiceColorFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceColorFieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_invoiceColorFieldActionPerformed
+
+    private void partialQuantityCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_partialQuantityCheckBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_partialQuantityCheckBoxActionPerformed
 
     private void changeHandCursor() {
         saveCursor();
@@ -2971,6 +2994,7 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JTextField markupField;
     private javax.swing.JTextField operatingSystemUserTextField;
     private javax.swing.JPanel outputPanel;
+    private javax.swing.JCheckBox partialQuantityCheckBox;
     private javax.swing.JButton paymentSystemBinPathBrowseButton;
     private javax.swing.JCheckBox paymentSystemIsWebCheckbox;
     private javax.swing.JTextField paymentSystemUriField;
@@ -2983,7 +3007,7 @@ private void invoiceOutputFolderFieldActionPerformed(java.awt.event.ActionEvent 
     private javax.swing.JSpinner posPrinterPaperWidthSpinner;
     private javax.swing.JCheckBox printZerosCheckBox;
     private javax.swing.JCheckBox processPaymentWhenPostingCheckbox;
-    private javax.swing.JCheckBox quantityCheckBox;
+    private javax.swing.JCheckBox quantityWarningCheckBox;
     private javax.swing.JButton quoteButton;
     private javax.swing.JTextField quoteNameField;
     private javax.swing.JTextField quoteOutputFolderField;

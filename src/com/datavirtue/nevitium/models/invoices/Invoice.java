@@ -48,5 +48,8 @@ public class Invoice extends BaseModel {
 
     @ForeignCollectionField(eager = true)
     private Collection<InvoiceItem> returns;
+    
+    @ForeignCollectionField(eager = true)
+    private Collection<InvoicePayment> paymentActivity;
 
 }

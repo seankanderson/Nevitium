@@ -22,5 +22,15 @@ public class InvoiceItemService extends BaseService<InvoiceItemDao, InvoiceItem>
     public List<InvoiceItem> getItemsForInvoice(Invoice invoice) throws SQLException {
         return this.getDao().queryForEq("invoiceId", invoice.getId()); 
     }
+    
+    public List<InvoiceItem> getReturnsForInvoice(Invoice invoice) throws SQLException {
+        var query =  this.getDao().queryBuilder().where().eq("invoiceId", invoice.getId()).and().eq("code", "RETURN"); 
+        return query.query();
+    }
+    
+    public List<InvoiceItem> getSaleItemsForInvoice(Invoice invoice) throws SQLException {
+        var query = this.getDao().queryBuilder().where().eq("invoiceId", invoice.getId()).and().ne("code", "RETURN"); 
+        return query.query();
+    }
 
 }
