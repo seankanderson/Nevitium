@@ -9,30 +9,33 @@ import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.models.invoices.InvoiceItem;
 import com.datavirtue.nevitium.models.invoices.InvoiceItemsTableModel;
 import com.datavirtue.nevitium.models.invoices.InvoiceReturnsTableModel;
+import com.datavirtue.nevitium.services.DiService;
+import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.InvoiceService;
+import com.datavirtue.nevitium.services.exceptions.InvoiceItemAlreadyReturnedException;
+import com.datavirtue.nevitium.services.exceptions.InvoiceVoidedException;
+import com.datavirtue.nevitium.services.exceptions.PartialQuantityException;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import com.datavirtue.nevitium.services.InvoiceReturnsService;
+import com.google.inject.Injector;
 import datavirtue.*;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.util.ArrayList;
 import javax.swing.table.*;
+import java.sql.SQLException;
 
 
 /**
  *
  * @author  Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007 All Rights Reserved.
+ * @rights Copyright Data Virtue 2006, 2007, 2022 All Rights Reserved.
  */
 
 public class ReturnDialog extends javax.swing.JDialog {
 
-
-    /** Creates new form ReturnDialog */
-    
-    
     private Image winIcon;
-    private InvoiceReturnsService returnService;
+    private InvoiceService invoiceService;
     private Invoice currentInvoice;
     private InvoiceItem currentItem;
     
@@ -42,6 +45,10 @@ public class ReturnDialog extends javax.swing.JDialog {
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
+        
+        Injector injector = DiService.getInjector();
+        invoiceService = injector.getInstance(InvoiceService.class);
+        //appSettingsService.setObjectType(AppSettings.class);
         
         qtyField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
         priceField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
@@ -287,7 +294,12 @@ public class ReturnDialog extends javax.swing.JDialog {
      Refund money to customer
      */
 
-    private void processReturn(){
+    private void processReturn() 
+            throws SQLException, 
+            PartialQuantityException, 
+            InvoiceItemAlreadyReturnedException, 
+            InvoiceVoidedException
+    {
         if (invoiceReturnsTable.getSelectedRow() > -1){
 
         }else {
@@ -308,30 +320,33 @@ public class ReturnDialog extends javax.swing.JDialog {
             qtyField.requestFocus();
             return;
         }
-        
-        int selectedRow = invoiceReturnsTable.getSelectedRow();
-        
+                              
         float refundAmount = Float.parseFloat(priceField.getText());
         float userSuppliedReturnQty = Float.parseFloat(qtyField.getText());
-        long date = datePicker1.getDate().getTime();
+        var returnDate = datePicker1.getDate();
         
-        int retStat = invoice.returnItem(selectedRow,
-                userSuppliedReturnQty, refundAmount, date);
+        var suggestedRefundPayment = this.invoiceService.returnInvoiceItem(currentItem, userSuppliedReturnQty, refundAmount, returnDate);
                 //invoice.saveInvoice();
         
-        if (retStat > 0) this.dispose();
-        if (retStat == -4){
-
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "You cannot use partial quantities on this item.");
-            return;
+        if (suggestedRefundPayment != null) {
+            // fire off payment dialog with this payment populated
         }
     }
     
     private void returnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_returnButtonActionPerformed
         
-        //if (!DV.isValidShortDate(dateField.getText(), true)) return; /* DATE CHECK */
-        processReturn();
+        try {
+            //if (!DV.isValidShortDate(dateField.getText(), true)) return; /* DATE CHECK */
+            processReturn();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing invoice database while processing return");
+        } catch (PartialQuantityException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Tried to return partial quantity");
+        } catch (InvoiceItemAlreadyReturnedException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Item was already returned");
+        } catch (InvoiceVoidedException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Invalid operation on voided invoice");
+        }
         
     }//GEN-LAST:event_returnButtonActionPerformed
 

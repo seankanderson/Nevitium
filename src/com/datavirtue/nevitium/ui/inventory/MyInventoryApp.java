@@ -37,8 +37,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.prefs.BackingStoreException;
-import com.datavirtue.nevitium.models.settings.ScreenSettings;
-import com.datavirtue.nevitium.models.settings.WindowSizeAndPosition;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;

@@ -7,15 +7,12 @@
 package com.datavirtue.nevitium.ui.contacts;
 
 import RuntimeManagement.KeyCard;
-import RuntimeManagement.GlobalApplicationDaemon;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.ui.invoices.PaymentDialog;
 import com.datavirtue.nevitium.ui.invoices.InvoiceApp;
-
 import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.models.contacts.old.ContactJournalListModel;
 import com.datavirtue.nevitium.models.contacts.old.ContactsTableModel;
-import com.datavirtue.nevitium.database.reports.ReportFactory;
 import com.google.inject.Injector;
 import datavirtue.*;
 import com.datavirtue.nevitium.services.DiService;
@@ -24,7 +21,6 @@ import java.io.*;
 import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.event.*;
-
 import java.awt.*;
 import java.net.URI;
 import java.sql.SQLException;
@@ -44,7 +40,7 @@ import java.util.Locale;
 /**
  *
  * @author Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010 All Rights
+ * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010, 2022 All Rights
  * Reserved.
  */
 public class ContactsApp extends javax.swing.JDialog {
@@ -59,16 +55,13 @@ public class ContactsApp extends javax.swing.JDialog {
     Settings props;
     private Contact returnValue = null;
     private boolean selectMode = false;
-    //private Object [] dataOut = new Object [20];
     private int edit_key = 0;
     private java.awt.Frame parentWin;
     private DbEngine zip;
     private String nl = System.getProperty("line.separator");
     private Image winIcon;
 
-    /**
-     * Creates new form ConnectionsDialog
-     */
+    
     public ContactsApp(java.awt.Frame parent, boolean modal, boolean select, boolean customers, boolean suppliers) {
 
         super(parent, modal);

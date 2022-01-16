@@ -38,7 +38,11 @@ public class InvoicePayment extends BaseModel {
     private double credit;
     
     @DatabaseField
-    private boolean taxable1;
+    private String paymentSystem;
+    
+    @DatabaseField
+    private String paymentSystemReference;
+    
     
     
 }

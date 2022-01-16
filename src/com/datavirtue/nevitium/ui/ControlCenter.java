@@ -37,6 +37,8 @@ import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
 import com.google.inject.Inject;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 
 /**
@@ -336,18 +338,19 @@ public class ControlCenter extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void custInvoiceHistory() {
+    private void custInvoiceHistory() throws SQLException {
 
-        ContactsApp cd = new ContactsApp(this, true, application, true, true, false);
-        cd.setVisible(true);
+        var contactsApp = new ContactsApp(this, true, true, true, false);
+        
+        contactsApp.display();
 
-        var contact = cd.getReturnValue();  //real value
+        var contact = contactsApp.getReturnValue();  
 
         if (contact == null) {
             return;
         }
 
-        cd.dispose();
+        contactsApp.dispose();
         ReportFactory.generateCustomerStatement(application, contact);
 
     }
@@ -818,10 +821,10 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void connectionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectionsButtonActionPerformed
         //Tools.playSound(getClass().getResource("/businessmanager/res/slip.wav"));
-        ContactsApp cd = new ContactsApp(this, true, application, false, true, true);
+        var contactsApp = new ContactsApp(this, true, false, true, true);
 
         try {
-            cd.display();
+            contactsApp.display();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error getting contacts");
         }
@@ -1663,8 +1666,12 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void connectionsItemActionPerformed(java.awt.event.ActionEvent evt) {//event_connectionsItemActionPerformed
         Tools.playSound(getClass().getResource("/businessmanager/res/slip.wav"));
-        ContactsApp cd = new ContactsApp(this, true, application, false, true, true);
-        //cd.setVisible(true);
+        var contactsApp = new ContactsApp(this, true, false, true, true);
+        try {
+            contactsApp.display();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error access contacts database");
+        }
 
     }//event_connectionsItemActionPerformed
 

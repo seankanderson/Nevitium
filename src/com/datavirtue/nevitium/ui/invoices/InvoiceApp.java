@@ -10,16 +10,13 @@ import com.datavirtue.nevitium.services.PosPrinterService;
 import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.database.reports.ReportModel;
-import com.datavirtue.nevitium.database.reports.ReportFactory;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.contacts.ContactsApp;
 import com.datavirtue.nevitium.ui.contacts.ContactShippingDialog;
 import com.datavirtue.nevitium.ui.util.NewEmail;
-import com.datavirtue.nevitium.models.invoices.old.OldInvoice;
 import com.datavirtue.nevitium.ui.VATCalculator;
 import com.datavirtue.nevitium.ui.inventory.MyInventoryApp;
-import com.datavirtue.nevitium.models.invoices.old.Quote;
 
 import datavirtue.*;
 import java.beans.PropertyVetoException;
@@ -56,9 +53,6 @@ import com.datavirtue.nevitium.services.UserService;
 import com.formdev.flatlaf.util.StringUtils;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 
 /**

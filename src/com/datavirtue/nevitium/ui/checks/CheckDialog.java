@@ -25,6 +25,8 @@ import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.settings.CheckSettings;
 import com.datavirtue.nevitium.services.CheckSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -452,11 +454,16 @@ public class CheckDialog extends javax.swing.JDialog {
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
 
-        ContactsApp cd = new ContactsApp(null, true, application, true, false, true);
+        var contactsApp = new ContactsApp(null, true, true, false, true);
+        try {
+            contactsApp.display();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error getting contacts from database");
+            return;
+        }
+        var contact = contactsApp.getReturnValue();
 
-        var contact = cd.getReturnValue();
-
-        cd.dispose(); 
+        contactsApp.dispose(); 
        
 
         if (contact == null) {

@@ -1,6 +1,7 @@
 package com.datavirtue.nevitium.database.orm;
 
-import com.datavirtue.nevitium.models.invoices.old.InvoicePayment;
+
+import com.datavirtue.nevitium.models.invoices.InvoicePayment;
 import com.j256.ormlite.dao.BaseDaoImpl;
 import com.j256.ormlite.support.ConnectionSource;
 import java.sql.SQLException;

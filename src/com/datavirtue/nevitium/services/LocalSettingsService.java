@@ -111,13 +111,26 @@ public class LocalSettingsService {
     }
 
     public static void applyScreenSizeAndPosition(WindowSizeAndPosition sizeAndPosition, Component window) throws BackingStoreException {
+        Point location = null; 
+        Dimension size = null;
         
-        if (sizeAndPosition == null) {
+        if (sizeAndPosition == null || sizeAndPosition.getLocation() == null) {
             var dimension = DV.computeCenter((java.awt.Window) window);
-            window.setLocation(dimension.width, dimension.height);
+            location = new Point(dimension.width, dimension.height);            
+        }else {
+            location = sizeAndPosition.getLocation();
         }
-        window.setLocation(sizeAndPosition.getLocation());
-        window.setSize(sizeAndPosition.getSize());
+        
+        if (sizeAndPosition == null || sizeAndPosition.getSize() == null) {
+            size = null; // default size            
+        }else {
+            size = sizeAndPosition.getSize();
+        }
+                
+        window.setLocation(location);
+        if (size != null) {
+            window.setSize(sizeAndPosition.getSize());
+        }
     }
 
 }

@@ -14,10 +14,8 @@ import com.google.inject.Inject;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.misc.TransactionManager;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -114,23 +112,22 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     }
 
     /**
-     * 
+     *
      * @param invoiceItem InvoiceItem should be populated with Invoice reference
      * @param proposedRetQty
      * @param credit
      * @param date
-     * @return the invoice item return
-     * @throws SQLException 
+     * @return if a refund payemnt has been issued it is returned so that the calling method can prompt the user to complete the payment
+     * @throws SQLException
      * @throws PartialQuantityException
      * @throws InvoiceItemAlreadyReturnedException
-     * @throws InvoiceVoidedException 
+     * @throws InvoiceVoidedException
      */
-    public InvoiceItem returnInvoiceItem(InvoiceItem invoiceItem, double proposedRetQty, double credit, Date returnDate) 
-            throws SQLException, 
+    public InvoicePayment returnInvoiceItem(InvoiceItem invoiceItem, double proposedRetQty, double credit, Date returnDate)
+            throws SQLException,
             PartialQuantityException,
             InvoiceItemAlreadyReturnedException,
-            InvoiceVoidedException
-    {
+            InvoiceVoidedException {
         var invoice = invoiceItem.getInvoice();
 
         if (invoice.isVoided()) {
@@ -142,16 +139,14 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
             sourceInventory = inventoryService.getInventoryById(invoiceItem.getSourceInventoryId());
         }
 
-        var settings = appSettingsService.getObject();
-
         if (Tools.isDecimal(credit) && !invoiceItem.isPartialSaleAllowed()) {
-            throw new PartialQuantityException("Partial quantity return was attempted on an item that does not support partial quantities: " + invoiceItem.getDescription());
-        }        
-        
+            throw new PartialQuantityException("Partial quantity return was attempted on an item that does not support partial quantity sales: " + invoiceItem.getDescription());
+        }
+
         /* Search the invoice for the same item and 
-           calculate how many were sold*/        
+           calculate how many were sold*/
         var numberSold = this.calculateNumberSold(invoiceItem);
-        
+
         /* Search returns for same item, if found
            calculate how many have been returned*/
         var numberReturned = this.calculateNumberReturned(invoiceItem);
@@ -159,13 +154,13 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         /* Subtract returned from sold and check against proposed return qty
            if the amount is less than or equal to the remaining qty process return*/
         var difference = numberSold - numberReturned;
-                
+
         if (difference < proposedRetQty) {
             throw new InvoiceItemAlreadyReturnedException("The invoice item has already been returned or the number you wanted to return was more than the number available to return: " + invoiceItem.getDescription());
         }
-        
+
         var itemReturn = new InvoiceItem();
-        
+
         itemReturn.setDescription(invoiceItem.getDescription());
         itemReturn.setQuantity(proposedRetQty);
         itemReturn.setInvoice(invoiceItem.getInvoice());
@@ -173,56 +168,61 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         itemReturn.setCode("RETURN");
         itemReturn.setSourceInventoryId(invoiceItem.getSourceInventoryId());
         itemReturn.setDate(returnDate);
-        
-        invoice.getReturns().add(itemReturn); 
-        
+
+        invoice.getReturns().add(itemReturn);
         this.invoiceItemService.save(itemReturn);
-        
+
         var refundForItemReturn = new InvoicePayment();
-        
+
         refundForItemReturn.setCredit(credit);
         refundForItemReturn.setPaymentActivityDate(new Date());
         refundForItemReturn.setPaymentEffectiveDate(returnDate);
         refundForItemReturn.setMemo("RETURN REFUND");
         refundForItemReturn.setInvoice(invoice);
         refundForItemReturn.setType("");
-        
+
         invoice.getPaymentActivity().add(refundForItemReturn);
-        
         this.invoicePaymentService.save(refundForItemReturn);
-        
+
         var invoiceDue = this.calculateInvoiceAmountDue(invoice);
-        
+
         if (invoiceDue <= 0) {
             invoice.setPaid(true);
-            
-            if (invoiceDue < 0) {
+
+            if (invoiceDue < 0) { // TODO: make a setting "minimum dollar amount for refund payment" to skip this if the amount is too low to trigger a refund payment
                 // create refund payment
+                var invoiceRefund = new InvoicePayment();
+                invoiceRefund.setCredit((invoiceDue * -1)); // convert negative amount to absolute value
+                invoiceRefund.setInvoice(invoice);
+                invoiceRefund.setMemo("Return caused overpayment");
+                invoiceRefund.setPaymentActivityDate(new Date());
+                invoiceRefund.setPaymentEffectiveDate(new Date()); // we are paying the customer today
+                invoiceRefund.setType("REFUND");
+                
+                //k m67 867y nmhuj, nmb8invoice.getPaymentActivity().add(invoiceRefund);                
+                //this.invoicePaymentService.save(invoiceRefund);
+                return invoiceRefund;
             }
-            
+
         }
-        
-        return itemReturn;        
+
+        return null;
     }
-    
+
     public double calculateNumberSold(InvoiceItem item) {
         return 0.00;
     }
-    
+
     public double calculateNumberReturned(InvoiceItem item) {
         return 0.00;
     }
-    
+
     public double calculateInvoiceAmountDue(Invoice invoice) {
         return 0.00;
     }
+    
+    public void deletePayment(InvoicePayment payment) throws SQLException {        
+        invoicePaymentService.delete(payment);
+    }
 
-    public List<InvoiceItem> getReturnsForInvoice(Invoice invoice) {
-        return new ArrayList();
-    }
-    
-    public List<InvoiceItem> getSaleItemsForInvoice(Invoice invoice) {
-        return new ArrayList();
-    }
-    
 }
