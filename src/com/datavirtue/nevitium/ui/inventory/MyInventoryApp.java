@@ -2187,7 +2187,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         returnValue = new ArrayList();
 
         for (int i = 0; i < selectedRowIndexes.length; i++) {
-            returnValue.add((Inventory) tableModel.getValueAt(i));
+            returnValue.add((Inventory) tableModel.getValueAt(selectedRowIndexes[i]));
         }
     }
 

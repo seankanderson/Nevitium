@@ -44,12 +44,14 @@ import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.models.settings.LocalAppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ContactService;
+import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.InventoryService;
 import com.datavirtue.nevitium.services.InvoiceItemService;
 import com.datavirtue.nevitium.services.InvoiceService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.ui.EnhancedTableCellRenderer;
 import com.formdev.flatlaf.util.StringUtils;
 import java.sql.SQLException;
 import java.util.List;
@@ -63,7 +65,7 @@ import java.util.prefs.BackingStoreException;
 public class InvoiceApp extends javax.swing.JDialog {
 
     private boolean addCategoryInfo = false;
-    private Invoice currentInvoice = null;
+    private Invoice currentInvoice = new Invoice();
     private Contact customer;
     private AppSettingsService settingsService;
     private AppSettings appSettings;
@@ -110,6 +112,12 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     public void display() {
 
+        var injector = DiService.getInjector();
+        invoiceService = injector.getInstance(InvoiceService.class);
+        inventoryService = injector.getInstance(InventoryService.class);
+        settingsService = injector.getInstance(AppSettingsService.class);
+        settingsService.setObjectType(AppSettings.class);
+
         var user = UserService.getCurrentUser();
 
         if (!user.isAdmin() && user.getInvoices() < 300) {
@@ -119,18 +127,18 @@ public class InvoiceApp extends javax.swing.JDialog {
         }
 
         try {
-            this.commonInit();
+            this.initCommon();
         } catch (BackingStoreException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error fetching local settings");
         }
 
         if (currentInvoice.getId() == null) {
-            this.newInvoiceInit();
+            this.initForNewInvoice();
         } else {
             if (currentInvoice.isQuote()) {
-                this.viewQuoteInit();
+                this.initForViewQuote();
             } else {
-                this.viewInvoiceInit();
+                this.initForViewInvoice();
             }
             this.populateInvoiceForm();
         }
@@ -140,6 +148,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         } catch (BackingStoreException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error fetching local screen settings");
         }
+        this.qtyTextField.setText("1.00");
         this.setVisible(true);
 
     }
@@ -160,7 +169,13 @@ public class InvoiceApp extends javax.swing.JDialog {
     /**
      * All required setup for creating / viewing invoices and quotes.
      */
-    private void commonInit() throws BackingStoreException {
+    private void initCommon() throws BackingStoreException {
+
+        if (this.currentInvoice.getItems() == null) {
+            this.currentInvoice.setItems(new ArrayList<InvoiceItem>());
+        }
+        var tableModel = new InvoiceItemsTableModel(new ArrayList(this.currentInvoice.getItems()));
+        this.invoiceItemsTable.setModel(tableModel);
 
         this.localSettings = LocalSettingsService.getLocalAppSettings();
 
@@ -186,13 +201,6 @@ public class InvoiceApp extends javax.swing.JDialog {
         custButton.setText(appSettings.getInvoice().getBillToLabel());
 
         paymentCheckBox.setSelected(appSettings.getInvoice().isProcessPaymentOnPosting());
-
-        var tax1Name = appSettings.getInvoice().getTax1Name();
-        var tax2Name = appSettings.getInvoice().getTax2Name();
-        invoiceItemsTable.getColumn(invoiceItemsTable.getColumnName(6)).setHeaderValue(tax1Name);
-        invoiceItemsTable.getColumn(invoiceItemsTable.getColumnName(7)).setHeaderValue(tax2Name);
-        t1Label.setText(tax1Name);
-        t2Label.setText(tax2Name);
 
         /* Set currency field alignment justification */
         itemTotalField.setHorizontalAlignment(JTextField.RIGHT);
@@ -221,6 +229,8 @@ public class InvoiceApp extends javax.swing.JDialog {
         DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
         datePicker1.setDateFormat(df);
 
+        this.invoiceItemsTable.setDefaultRenderer(Object.class, new EnhancedTableCellRenderer());
+
         setDefaultMessage();
         computePrices();
 
@@ -229,7 +239,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     /**
      * Required setup for only viewing a saved quote
      */
-    private void viewQuoteInit() {
+    private void initForViewQuote() {
         toolBar.setVisible(false);
         printReceiptButton.setVisible(false);
         currentInvoice.setCustomer("S A L E");
@@ -244,7 +254,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     /**
      * Required setup for new invoice that may become a quote
      */
-    private void newInvoiceInit() {
+    private void initForNewInvoice() {
         /* Close dialog on escape */
         javax.swing.ActionMap am = getRootPane().getActionMap();
         javax.swing.InputMap imap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -289,7 +299,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     /**
      * Required setup for viewing posted/saved invoices
      */
-    private void viewInvoiceInit() {
+    private void initForViewInvoice() {
 
         toolBar.add(paymentButton);
         toolBar.add(statementButton);
@@ -367,7 +377,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         documentNumberField.setText(currentInvoice.getInvoiceNumber());
 
-        var tableModel = new InvoiceItemsTableModel(new ArrayList(currentInvoice.getItems()));
+        InvoiceItemsTableModel tableModel = new InvoiceItemsTableModel(new ArrayList(currentInvoice.getItems()));
         invoiceItemsTable.setModel(tableModel);
 
         try {
@@ -538,6 +548,13 @@ public class InvoiceApp extends javax.swing.JDialog {
         col = invoiceItemsTable.getColumnModel().getColumn(5);
         col.setPreferredWidth(30);
 
+        var tax1Name = appSettings.getInvoice().getTax1Name();
+        var tax2Name = appSettings.getInvoice().getTax2Name();
+        invoiceItemsTable.getColumn(invoiceItemsTable.getColumnName(6)).setHeaderValue(tax1Name);
+        invoiceItemsTable.getColumn(invoiceItemsTable.getColumnName(7)).setHeaderValue(tax2Name);
+        t1Label.setText(tax1Name);
+        t2Label.setText(tax2Name);
+
     }
 
     private void clearFields() {
@@ -547,7 +564,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private void computePrices() {
-
+        hydrateCurrentInvoice();
         double totalTax1 = 0.00f;
         double totalTax2 = 0.00f;
         double grandTotal = 0.00f;
@@ -642,17 +659,31 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private int addItemToInvoiceItemsTable(InvoiceItem newItem) {
-        List<InvoiceItem> items = (List<InvoiceItem>) this.currentInvoice.getItems();
+        var items = (List<InvoiceItem>) this.currentInvoice.getItems();
 
-        // update existing item instead of appending
-        for (int index = 0; index < items.size(); index++) {
-            var item = items.get(index);
-            if (item.getDescription().equals(newItem.getDescription())) {
-                item.setQuantity(item.getQuantity() + newItem.getQuantity());
-                return index;
+        // update existing item instead of appending if there are existing items
+        if (items != null && items.size() > 0) {
+            for (int index = 0; index < items.size(); index++) {
+                var item = items.get(index);
+                if (item.getDescription().equals(newItem.getDescription())) {
+                    item.setQuantity(item.getQuantity() + newItem.getQuantity());
+                    return index;
+                }
             }
         }
+
+        if (items == null) {
+            items = new ArrayList<InvoiceItem>();
+        }
         items.add(newItem);
+
+        var tableModel = new InvoiceItemsTableModel(items);
+        this.invoiceItemsTable.setModel(tableModel);
+
+        //var tableModel = (AbstractTableModel) this.invoiceItemsTable.getModel();
+        //tableModel.fireTableDataChanged();
+        this.invoiceItemsTable.repaint();
+
         return (items.size() - 1);
     }
 
@@ -978,31 +1009,8 @@ public class InvoiceApp extends javax.swing.JDialog {
         jScrollPane2.setOpaque(false);
 
         invoiceItemsTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        invoiceItemsTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "KEY", "Date", "QTY", "CODE", "DESCRIPTION", "UNIT", "Tax 1", "Tax 2", "TOTAL", "Cost"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.Integer.class, java.lang.Float.class, java.lang.String.class, java.lang.String.class, java.lang.Float.class, java.lang.Boolean.class, java.lang.Boolean.class, java.lang.Float.class, java.lang.Float.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, false, true, false, false, true, true, true, false, false
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
         invoiceItemsTable.setInheritsPopupMenu(true);
-        invoiceItemsTable.setSelectionBackground(new java.awt.Color(204, 255, 255));
+        invoiceItemsTable.setRowSelectionAllowed(false);
         invoiceItemsTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
         invoiceItemsTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1027,6 +1035,11 @@ public class InvoiceApp extends javax.swing.JDialog {
         upcField.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 upcFieldMouseClicked(evt);
+            }
+        });
+        upcField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                upcFieldActionPerformed(evt);
             }
         });
         upcField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -1346,6 +1359,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         );
 
         qtyTextField.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        qtyTextField.setText("1.00");
         qtyTextField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 qtyTextFieldFocusGained(evt);
@@ -1472,7 +1486,7 @@ public class InvoiceApp extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
+                    .add(jPanel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 203, Short.MAX_VALUE)
                     .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1934,9 +1948,9 @@ public class InvoiceApp extends javax.swing.JDialog {
         var invoiceSettings = appSettings.getInvoice();
         var companySettings = appSettings.getCompany();
         var emailSettings = appSettings.getInternet().getEmailSettings();
-        
+
         var type = this.currentInvoice.isQuote() ? invoiceSettings.getQuoteName() : invoiceSettings.getInvoiceName();
-       
+
         NewEmail email = new NewEmail();
         email.setAttachment(file);
         email.setRecipent(toAddress);
@@ -2064,9 +2078,9 @@ public class InvoiceApp extends javax.swing.JDialog {
         return true;
     }
 
-    private boolean postInvoice(boolean takePayment) throws SQLException {
+    public void hydrateCurrentInvoice() {
 
-        computePrices();
+        this.currentInvoice.setInvoiceNumber(this.documentNumberField.getText());
 
         this.currentInvoice.setInvoiceDate(datePicker1.getDate());
 
@@ -2080,7 +2094,19 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         this.currentInvoice.setPaid(false);
 
-        this.currentInvoice.setCustomerId(this.customer.getId());
+        if (this.customer != null) {
+            this.currentInvoice.setCustomerId(this.customer.getId());
+        }
+
+        var tableModel = (InvoiceItemsTableModel) this.invoiceItemsTable.getModel();
+
+        this.currentInvoice.setItems(tableModel.getCollection());
+
+    }
+
+    private boolean postInvoice(boolean takePayment) throws SQLException {
+
+        computePrices();
 
         invoiceService.postInvoice(currentInvoice); // TODO: save items ....create postInvoice service method to handle all
 
@@ -2229,7 +2255,7 @@ public class InvoiceApp extends javax.swing.JDialog {
                     }
 
                     //if (shipToKey > 0) shipToTextArea.setEditable(false);
-                    this.currentInvoice.setShiptToAddress(shipToTextArea.getText());                    
+                    this.currentInvoice.setShiptToAddress(shipToTextArea.getText());
                 }
                 return;
             }
@@ -2237,13 +2263,13 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         // open MyConnectionsApp and get ANY address
         var contactsApp = new ContactsApp(this.parentWin, true, true, true, false);
-        
+
         try {
             contactsApp.display();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error accessing settings database");
         }
-        
+
         var shippingContact = contactsApp.getReturnValue();
 
         if (shippingContact == null) {
@@ -2267,8 +2293,8 @@ public class InvoiceApp extends javax.swing.JDialog {
         }
 
         this.currentInvoice.setShiptToAddress(shipToTextArea.getText());
-        
-        contactsApp.dispose(); 
+
+        contactsApp.dispose();
         contactsApp = null;
 
     }
@@ -2276,14 +2302,14 @@ public class InvoiceApp extends javax.swing.JDialog {
     private void custAction() {
 
         var contactsApp
-                = new ContactsApp(this.parentWin, true, true, true, false);       
-        
+                = new ContactsApp(this.parentWin, true, true, true, false);
+
         try {
             contactsApp.display();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error accessing settings database");
-        }        
-        
+        }
+
         var contact = contactsApp.getReturnValue();  //real value
 
         if (contact == null) {
@@ -2312,7 +2338,7 @@ public class InvoiceApp extends javax.swing.JDialog {
             this.customer = new Contact();
             this.currentInvoice.setCustomerId(null);
             custTextArea.setText("S A L E");
-            custTextArea.setEditable(true);            
+            custTextArea.setEditable(true);
         }
 
         upcField.requestFocus();
@@ -2339,9 +2365,9 @@ public class InvoiceApp extends javax.swing.JDialog {
     }//GEN-LAST:event_convertButtonActionPerformed
 
     private void copyBillToButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyBillToButtonActionPerformed
-        if (!StringUtils.isEmpty(this.currentInvoice.getCustomer())) {
-            shipToTextArea.setText(this.currentInvoice.getCustomer());
-            this.currentInvoice.setShiptToAddress(shipToTextArea.getText());
+
+        if (!StringUtils.isEmpty(this.custTextArea.getText())) {
+            shipToTextArea.setText(this.custTextArea.getText());
         }
     }//GEN-LAST:event_copyBillToButtonActionPerformed
 
@@ -2479,6 +2505,10 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
 
     }//GEN-LAST:event_discountButtonActionPerformed
 
+    private void upcFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_upcFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_upcFieldActionPerformed
+
     private void doPayment() {
         //new PaymentActivityDialog(null, true, application, invoice);
 
@@ -2543,7 +2573,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
             this.currentInvoice.setQuote(false);
             this.setInvoiceNumber();
             return;
-            
+
         }
         //Copy
         if (selectedOption == 1) {
@@ -2560,7 +2590,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
         newInvoice.setMessage(this.currentInvoice.getMessage());
         newInvoice.setShippingFee(this.currentInvoice.getShippingFee());
         newInvoice.setVoided(false);
-       
+
         this.setInvoice(newInvoice);
         this.setInvoiceNumber();
 

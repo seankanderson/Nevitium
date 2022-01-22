@@ -40,12 +40,15 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
 
     public String getNewInvoiceNumber(String prefix) {
         var now = Calendar.getInstance().getTime();
-        var dateFormat = new SimpleDateFormat("yyyyMMddHHmmssff");
+        var dateFormat = new SimpleDateFormat("yyyyMMddHHmmssS");
         var dateString = dateFormat.format(now);
         return prefix + dateString.substring(2, dateString.length() - 2);
     }
 
     public double getTax1Total(Invoice invoice) {
+        if (invoice.getItems() == null) {
+            return 0.00;
+        }
         double taxTotal = 0;
         for (var item : invoice.getItems()) {
             taxTotal += getItemTax1Total(item);
@@ -54,14 +57,20 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     }
 
     public double getTax2Total(Invoice invoice) {
+        if (invoice.getItems() == null) {
+            return 0.00;
+        }
         double taxTotal = 0;
         for (var item : invoice.getItems()) {
-            taxTotal += getItemTax1Total(item);
+            taxTotal += getItemTax2Total(item);
         }
         return taxTotal;
     }
 
     public double getSubtotal(Invoice invoice) {
+        if (invoice.getItems() == null) {
+            return 0.00;
+        }
         double itemTotal = 0;
         for (var item : invoice.getItems()) {
             itemTotal += getItemSubTotal(item);
@@ -78,7 +87,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     }
 
     public double getItemTax2Total(InvoiceItem item) {
-        return item.isTaxable1() && item.getTaxable2Rate() > 0 ? (item.getQuantity() * item.getUnitPrice()) * item.getTaxable2Rate() : 0;
+        return item.isTaxable2() && item.getTaxable2Rate() > 0 ? (item.getQuantity() * item.getUnitPrice()) * item.getTaxable2Rate() : 0;
     }
 
     public void postInvoice(Invoice invoice) throws SQLException {

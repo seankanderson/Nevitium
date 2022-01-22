@@ -1,13 +1,13 @@
 package com.datavirtue.nevitium.models;
 
 import java.util.List;
-import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
  * @author SeanAnderson
  */
-public abstract class AbstractCollectionTableModel<T> extends AbstractTableModel{
+public abstract class AbstractCollectionTableModel<T> extends DefaultTableModel{
 
     protected String[] columns;
     public void setColumns(String[] columns) {
@@ -53,4 +53,26 @@ public abstract class AbstractCollectionTableModel<T> extends AbstractTableModel
         }
         return items.get(rowIndex);
     }  
+    
+    @Override 
+    public Class<?> getColumnClass(int column) {
+        
+        var value = this.getValueAt(0,column);
+        
+        if (value instanceof Boolean) {
+            return Boolean.class;
+        }
+        
+        if (value instanceof Double) {
+            return Double.class;
+        }
+        
+        if (value instanceof String) {
+            return String.class;
+        }
+        
+        return Object.class;
+        
+        
+    }
 }
