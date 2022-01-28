@@ -33,7 +33,6 @@ public class DecimalCellRenderer extends DefaultTableCellRenderer {
         }
         this.setHorizontalAlignment(align);
 
-
     }
 
     protected int integer;

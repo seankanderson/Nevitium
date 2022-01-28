@@ -6,15 +6,21 @@
  */
 package com.datavirtue.nevitium.ui.invoices;
 
-import RuntimeManagement.KeyCard;
-import RuntimeManagement.GlobalApplicationDaemon;
 import com.datavirtue.nevitium.models.invoices.old.OldInvoice;
 import com.datavirtue.nevitium.models.invoices.old.Quote;
-import com.datavirtue.nevitium.database.reports.ReportFactory;
-import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.invoices.InvoiceManagerTableModel;
+import com.datavirtue.nevitium.models.settings.AppSettings;
+import com.datavirtue.nevitium.models.settings.LocalAppSettings;
+import com.datavirtue.nevitium.services.AppSettingsService;
+import com.datavirtue.nevitium.services.DiService;
+import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.InvoiceService;
+import com.datavirtue.nevitium.services.LocalSettingsService;
+import com.datavirtue.nevitium.ui.util.DateCellRenderer;
+import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 
 import datavirtue.*;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -22,36 +28,48 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.util.ArrayList;
 import java.awt.event.*;
+import java.util.prefs.BackingStoreException;
+import java.sql.SQLException;
 
 /**
  *
  * @author Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007 All Rights Reserved.
+ * @rights Copyright Data Virtue 2006, 2007, 2022 All Rights Reserved.
  */
 public class InvoiceManager extends javax.swing.JDialog {
 
-    private final KeyCard accessKey;
-    private final boolean debug = false;
-    private final GlobalApplicationDaemon application;
     private boolean searchResults = false;
     private String searchString = "";
+    private AppSettingsService appSettingsService;
+    private InvoiceService invoiceService;
+    private AppSettings appSettings;
+    private LocalAppSettings localSettings;
 
     /**
      * Creates new form InvoiceManager
      */
-    public InvoiceManager(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application) {
+    public InvoiceManager(java.awt.Frame parent, boolean modal) {
 
         super(parent, modal);
-
+        this.parentWin = parent;
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         initComponents();
 
-        statusToolbar.setLayout(new FlowLayout());
-        actionToolbar.setLayout(new FlowLayout());
-        accessKey = application.getKey_card();
+        var injector = DiService.getInjector();
+        appSettingsService = injector.getInstance(AppSettingsService.class);
+        appSettingsService.setObjectType(AppSettings.class);
+        invoiceService = injector.getInstance(InvoiceService.class);
 
-        this.application = application;
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                try {
+                    recordWindowSizeAndPosition();
+                } catch (BackingStoreException ex) {
+                    ExceptionService.showErrorDialog(e.getComponent(), ex, "Error saving local screen preferences");
+                }
+            }
+        });
 
         /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();
@@ -60,37 +78,62 @@ public class InvoiceManager extends javax.swing.JDialog {
         KeyStroke windowCloseStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
         Action windowCloseAction = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
+
                 setVisible(false);
                 dispose();
             }
         };
         im.put(windowCloseStroke, windowCloseKey);
         am.put(windowCloseKey, windowCloseAction);
-        /**/
 
-        java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-        this.setLocation(dim.width, dim.height);
+    }
 
-        props = application.getProps();//new Settings (workingPath + "settings.ini");
+    public void display() throws BackingStoreException, SQLException {
 
-        String qname = props.getProp("QUOTE NAME");
+        this.localSettings = LocalSettingsService.getLocalAppSettings();
+        this.appSettings = appSettingsService.getObject();
+
+        restoreSavedWindowSizeAndPosition();
+
+        String qname = appSettings.getInvoice().getQuoteName();
 
         if (qname != null) {
             quoteRadio.setText(qname);
         }
 
-        db = application.getDb();
-        parentWin = parent;
-
         refreshTables();
 
         this.selectFirstRow(invoiceTable);
-        iPrefix = props.getProp("INVOICE PREFIX");
-        qPrefix = props.getProp("QUOTE PREFIX");
+        iPrefix = appSettings.getInvoice().getInvoicePrefix();
+        qPrefix = appSettings.getInvoice().getQuotePrefix();
         searchField.setText(iPrefix);
         searchField.requestFocus();
+        statusToolbar.setLayout(new FlowLayout());
+        actionToolbar.setLayout(new FlowLayout());
+        
+        invoiceTable.getColumnModel().getColumn(0).setCellRenderer(new DateCellRenderer());
+        invoiceTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18,2,SwingConstants.RIGHT));
+//        invoiceTable.setShowGrid(true);
+//        invoiceTable.setGridColor(Color.WHITE);
+//        invoiceTable.setShowHorizontalLines(true);
+//        invoiceTable.setShowVerticalLines(true);
+        
         this.setVisible(true);
     }
+
+    private void recordWindowSizeAndPosition() throws BackingStoreException {
+        var screenSettings = localSettings.getScreenSettings();
+        var sizeAndPosition = LocalSettingsService.getWindowSizeAndPosition(this);
+        screenSettings.setInvoiceManager(sizeAndPosition);
+        LocalSettingsService.saveLocalAppSettings(localSettings);
+    }
+
+    private void restoreSavedWindowSizeAndPosition() throws BackingStoreException {
+
+        var screenSettings = localSettings.getScreenSettings().getInvoiceManager();
+        LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
+    }
+
     private int rememberedRow = 0;
     private String iPrefix = "";
     private String qPrefix = "";
@@ -119,33 +162,33 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     }
 
-    private void setView() {
-
+    private void customizeView() {
+        if (invoiceTable.getRowCount() < 0) {
+            return;
+        }
         TableColumnModel cm;
         TableColumn tc;
 
-        if (invoiceTable.getRowCount() > 0) {
+//            cm = invoiceTable.getColumnModel();
+//
+//            for (int i = 0; i < cols.length; i++) {
+//
+//                tc = cm.getColumn(cols[i]);
+//                invoiceTable.removeColumn(tc);
+//
+//            }
+        //properly size each col for the invoices
+        invoiceTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        int[] widths = new int[]{45, 50, 270, 55};
 
-            cm = invoiceTable.getColumnModel();
+        for (int i = 0; i < widths.length; i++) {
 
-            for (int i = 0; i < cols.length; i++) {
+            tc = invoiceTable.getColumnModel().getColumn(i);
+            tc.setPreferredWidth(widths[i]);
 
-                tc = cm.getColumn(cols[i]);
-                invoiceTable.removeColumn(tc);
-
-            }
-
-            //properly size each col for the invoices
-            invoiceTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-            int[] widths = new int[]{45, 50, 270, 55};
-
-            for (int i = 0; i < widths.length; i++) {
-
-                tc = invoiceTable.getColumnModel().getColumn(i);
-                tc.setPreferredWidth(widths[i]);
-
-            }
         }
+        
+        
     }
 
     private void resetSearch() {
@@ -164,130 +207,139 @@ public class InvoiceManager extends javax.swing.JDialog {
     //refereshTables will attempt to restore he search
     private void refreshTables() {
 
-        //added 11-25-2011 for V1.6
         restoreSearch();
         if (searchResults) {
             return;
         }
 
-        boolean quotes = quoteRadio.isSelected();
-
-        ArrayList al = new ArrayList();
-
-        boolean sel = paidRadio.isSelected();
-
-        if (!voidRadio.isSelected() && !quotes) {  //dont do this if void was selected
-            // System.out.println("DEGUG: 3");
-            al = db.search("invoice", 8, Boolean.toString(sel), false);  //list of all marked paid or unpaid
-            //  System.out.println("DEGUG: 4");
-        }
-
-        if (quotes) {
-            al = null;
-            searchField.setText(qPrefix);
-            tm = db.createTableModel("quote", invoiceTable);
-            if (tm.getRowCount() < 1) {
-                tm = new DefaultTableModel();
-            }
-        } else {
-            searchField.setText(iPrefix);
-        }
-
-        if (voidRadio.isSelected()) {
-            al = db.search("invoice", 9, "true", false);  //list of voided invoices
-        }
-
-        if (al == null && !quotes) {  //if no records set a blank table model
-
-            tm = new DefaultTableModel();
-            invoiceTable.setModel(tm);
-
-            paymentTable.setModel(new DefaultTableModel());
-
-            setView();
+        try {
+            var invoices = invoiceService.getAllInvoices();
+            var tableModel = new InvoiceManagerTableModel(invoices);
+            this.invoiceTable.setModel(tableModel);
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error getting invoices from database");
             return;
-        } else {
-
-            if (!quotes) {
-                tm = db.createTableModel("invoice", al, invoiceTable);  //get a model from the list of all
-            }
         }
 
-        /* Remove any voids */
-        if (!voidRadio.isSelected() && al != null && !quotes) {  //if void was not selected
-
-            al = new ArrayList(); //al.clear();
-            for (int r = 0; r < tm.getRowCount(); r++) {
-
-                if (!(Boolean) tm.getValueAt(r, 9)) {
-                    al.add((Integer) tm.getValueAt(r, 0));
-                }
-            }
-
-            if (al.size() < 1) {
-                tm = new DefaultTableModel();
-            } else {
-                tm = db.createTableModel("invoice", al, invoiceTable);
-            }
-
-        }  //end void removal
-
-        invoiceTable.setModel(tm);
-        paymentTable.setModel(new DefaultTableModel());
-        setView();
+//        boolean quotes = quoteRadio.isSelected();
+//
+//        ArrayList al = new ArrayList();
+//
+//        boolean sel = paidRadio.isSelected();
+//
+//        if (!voidRadio.isSelected() && !quotes) {  
+//            
+//            
+//            al = db.search("invoice", 8, Boolean.toString(sel), false);  //list of all marked paid or unpaid
+//            
+//        }
+//
+//        if (quotes) {
+//            al = null;
+//            searchField.setText(qPrefix);
+//            tm = db.createTableModel("quote", invoiceTable);
+//            if (tm.getRowCount() < 1) {
+//                tm = new DefaultTableModel();
+//            }
+//        } else {
+//            searchField.setText(iPrefix);
+//        }
+//
+//        if (voidRadio.isSelected()) {
+//            al = db.search("invoice", 9, "true", false);  //list of voided invoices
+//        }
+//
+//        if (al == null && !quotes) {  //if no records set a blank table model
+//
+//            tm = new DefaultTableModel();
+//            invoiceTable.setModel(tm);
+//
+//            paymentTable.setModel(new DefaultTableModel());
+//
+//            setView();
+//            return;
+//        } else {
+//
+//            if (!quotes) {
+//                tm = db.createTableModel("invoice", al, invoiceTable);  //get a model from the list of all
+//            }
+//        }
+//
+//        /* Remove any voids */
+//        if (!voidRadio.isSelected() && al != null && !quotes) {  //if void was not selected
+//
+//            al = new ArrayList(); //al.clear();
+//            for (int r = 0; r < tm.getRowCount(); r++) {
+//
+//                if (!(Boolean) tm.getValueAt(r, 9)) {
+//                    al.add((Integer) tm.getValueAt(r, 0));
+//                }
+//            }
+//
+//            if (al.size() < 1) {
+//                tm = new DefaultTableModel();
+//            } else {
+//                tm = db.createTableModel("invoice", al, invoiceTable);
+//            }
+//
+//        }  //end void removal
+//
+//        invoiceTable.setModel(tm);
+//        paymentTable.setModel(new DefaultTableModel());
+        customizeView();
 
     }
 
     private void setPayments() {
 
-        if (invoiceTable.getRowCount() > 0) {
-            //
-        }
-
-        if (invoiceTable.getSelectedRow() < 0) {
-            return;
-        }
-
-        if (quoteRadio.isSelected() || voidRadio.isSelected()) {
-            paymentTable.setModel(new DefaultTableModel());
-            return;
-
-        }
-
-        int invKey = (Integer) tm.getValueAt(invoiceTable.getSelectedRow(), 0);
-
-        OldInvoice inv = new OldInvoice(application, invKey);
-
-        //System.out.println("DEGUG: 11"); //DEBUG
-        paymentTable.setModel(inv.getPayments());
-        //System.out.println("DEGUG: 12"); //DEBUG
-
-        /* Nasty bug unless we skip col mods on no payments */
-        if (paymentTable.getRowCount() <= 0) {
-            return;
-        }
-
-        //remove cols 0 1          
-        TableColumnModel cm = paymentTable.getColumnModel();
-        TableColumn tc;
-
-        //setup hold table view
-        tc = cm.getColumn(0);
-        paymentTable.removeColumn(tc);//remove key column 
-        tc = cm.getColumn(0);
-        paymentTable.removeColumn(tc);//remove inv # column 
-
-        if (paymentTable.getRowCount() > 0) {
-
-            paymentTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-            int[] widths = new int[]{85, 60, 110, 60, 60, 60};
-
-            for (int i = 0; i < widths.length; i++) {
-
-                tc = paymentTable.getColumnModel().getColumn(i);
-                tc.setPreferredWidth(widths[i]);
-            }
-        }
+//        if (invoiceTable.getRowCount() > 0) {
+//            //
+//        }
+//
+//        if (invoiceTable.getSelectedRow() < 0) {
+//            return;
+//        }
+//
+//        if (quoteRadio.isSelected() || voidRadio.isSelected()) {
+//            paymentTable.setModel(new DefaultTableModel());
+//            return;
+//
+//        }
+//
+//        int invKey = (Integer) tm.getValueAt(invoiceTable.getSelectedRow(), 0);
+//
+//        OldInvoice inv = new OldInvoice(application, invKey);
+//
+//        //System.out.println("DEGUG: 11"); //DEBUG
+//        paymentTable.setModel(inv.getPayments());
+//        //System.out.println("DEGUG: 12"); //DEBUG
+//
+//        /* Nasty bug unless we skip col mods on no payments */
+//        if (paymentTable.getRowCount() <= 0) {
+//            return;
+//        }
+//
+//        //remove cols 0 1          
+//        TableColumnModel cm = paymentTable.getColumnModel();
+//        TableColumn tc;
+//
+//        //setup hold table view
+//        tc = cm.getColumn(0);
+//        paymentTable.removeColumn(tc);//remove key column 
+//        tc = cm.getColumn(0);
+//        paymentTable.removeColumn(tc);//remove inv # column 
+//
+//        if (paymentTable.getRowCount() > 0) {
+//
+//            paymentTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+//            int[] widths = new int[]{85, 60, 110, 60, 60, 60};
+//
+//            for (int i = 0; i < widths.length; i++) {
+//
+//                tc = paymentTable.getColumnModel().getColumn(i);
+//                tc.setPreferredWidth(widths[i]);
+//            }
+//        }
     }
 
     private void findInvoice() {
@@ -321,7 +373,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 
                 paymentTable.setModel(new DefaultTableModel());
 
-                this.setView();
+                this.customizeView();
 
                 //this.setPayments();
                 buttonGroup1.clearSelection();
@@ -373,7 +425,7 @@ public class InvoiceManager extends javax.swing.JDialog {
                 tm = db.createTableModel("invoice", clean, invoiceTable);
                 invoiceTable.setModel(tm);
 
-                this.setView();
+                this.customizeView();
 
                 //this.setPayments();
                 buttonGroup1.clearSelection();
@@ -801,13 +853,13 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     private void statementButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_statementButtonActionPerformed
 
-        if (!accessKey.checkInvoice(500)) {
-            accessKey.showMessage("Statements");
-            return;
-        }
+//        if (!accessKey.checkInvoice(500)) {
+//            accessKey.showMessage("Statements");
+//            return;
+//        }
         if (invoiceTable.getSelectedRow() > -1 && paymentTable.getRowCount() > 0) {
             int k = (Integer) tm.getValueAt(invoiceTable.getSelectedRow(), 0);
-            ReportFactory.generateStatements(application, k);
+            //ReportFactory.generateStatements(application, k);
         }
 
 
@@ -815,11 +867,10 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     private void returnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_returnButtonActionPerformed
 
-        if (!accessKey.checkManager(500)) {
-            accessKey.showMessage("Returns");
-            return;
-        }
-
+//        if (!accessKey.checkManager(500)) {
+//            accessKey.showMessage("Returns");
+//            return;
+//        }
         if (invoiceTable.getSelectedRow() > -1) {
 
             int selectedRow = invoiceTable.getSelectedRow();
@@ -838,11 +889,10 @@ public class InvoiceManager extends javax.swing.JDialog {
             return;
         }
 
-        if (!accessKey.checkManager(500)) {
-            accessKey.showMessage("Close");
-            return;
-        }
-
+//        if (!accessKey.checkManager(500)) {
+//            accessKey.showMessage("Close");
+//            return;
+//        }
         int row = -1;
 
         if (invoiceTable.getSelectedRow() > -1) {
@@ -880,11 +930,10 @@ public class InvoiceManager extends javax.swing.JDialog {
             int invoice_key = (Integer) invoiceTable.getModel().getValueAt(row, 0);
 
             //System.out.println(invoice_key);
-            invoice = new OldInvoice(application, invoice_key);
-
-            invoice.setPaid(true);
-            invoice.saveInvoice();
-
+//            invoice = new OldInvoice(application, invoice_key);
+//
+//            invoice.setPaid(true);
+//            invoice.saveInvoice();
         }
 
         this.refreshTables();
@@ -904,9 +953,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         // delete quote items
         DefaultTableModel items = theQuote.getItems();
-        if (debug) {
-            System.out.println("Trying to remove qitems: " + items.getRowCount());
-        }
+
         for (int r = 0; r < items.getRowCount(); r++) {
 
             tmpKey = (Integer) items.getValueAt(r, 0);
@@ -983,7 +1030,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         /* Get an Invoice instance for this invoice and check balance */
  /* if the balance is over 0.00 mark unpaid, save and refresh tables */
-        OldInvoice inv = new OldInvoice(application, invKey);
+        OldInvoice inv = new OldInvoice(null, invKey);
 
         float balance = inv.getInvoiceDueNow();
 
@@ -1029,11 +1076,10 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         if (row > -1 && !voidRadio.isSelected()) {
 
-            if (!accessKey.checkManager(500)) {
-                accessKey.showMessage("Void");
-                return;
-            }
-
+//            if (!accessKey.checkManager(500)) {
+//                accessKey.showMessage("Void");
+//                return;
+//            }
             if (quoteRadio.isSelected()) {
 
                 deleteQuote((Integer) invoiceTable.getModel().getValueAt(row, 0));
@@ -1221,27 +1267,31 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         rememberRow();
 
-        int r = invoiceTable.getSelectedRow();
+        int selectedRow = invoiceTable.getSelectedRow();
 
-        if (r > -1) {
+        if (selectedRow > -1) {
 
-            int k = (Integer) invoiceTable.getModel().getValueAt(r, 0);
+            var tableModel = (InvoiceManagerTableModel) this.invoiceTable.getModel();
 
-            InvoiceApp id;
+            var invoice = tableModel.getValueAt(selectedRow);
 
-            if (quoteRadio.isSelected()) {
-                /* Opening quotes, the key is used before the application to load quotes */
-                //id = new InvoiceDialog (parentWin, true, k, application); //no select
-
-            } else {
-
-                if (!accessKey.checkInvoice(300)) {
-                    accessKey.showMessage("Close");
-                    return;
-                }
-                //id = new InvoiceDialog (parentWin, true, application, k); //no select
-
-            }
+            var invoiceApp = new InvoiceApp(this.parentWin, true);
+            invoiceApp.setInvoice(invoice);
+            invoiceApp.display();
+            invoiceApp.dispose();
+//            if (quoteRadio.isSelected()) {
+//                /* Opening quotes, the key is used before the application to load quotes */
+//                //id = new InvoiceDialog (parentWin, true, k, application); //no select
+//
+//            } else {
+//
+////                if (!accessKey.checkInvoice(300)) {
+////                    accessKey.showMessage("Close");
+////                    return;
+////                }
+//                //id = new InvoiceDialog (parentWin, true, application, k); //no select
+//
+//            }
 
             //id.setVisible(true);
             //stat = id.getStat();
@@ -1314,8 +1364,8 @@ public class InvoiceManager extends javax.swing.JDialog {
         }
 
         var tableModel = (InvoiceManagerTableModel) this.invoiceTable.getModel();
-        var invoice = tableModel.getValueAt(selectedRow); 
-        
+        var invoice = tableModel.getValueAt(selectedRow);
+
         if (invoice.isPaid()) {
 
             JOptionPane.showMessageDialog(this, "Invoice number " + (String) tm.getValueAt(selectedRow, 1) + " is marked as paid.");
@@ -1336,10 +1386,10 @@ public class InvoiceManager extends javax.swing.JDialog {
     }//GEN-LAST:event_payButtonActionPerformed
 
     private void newButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newButtonActionPerformed
-        if (!accessKey.checkInvoice(300)) {
-            accessKey.showMessage("Invoice/Quote");
-            return;
-        }
+//        if (!accessKey.checkInvoice(300)) {
+//            accessKey.showMessage("Invoice/Quote");
+//            return;
+//        }
 
         var invoiceApp = new InvoiceApp(parentWin, true);
 
@@ -1392,15 +1442,14 @@ public class InvoiceManager extends javax.swing.JDialog {
             return;
         }
 
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Customer/Supplier Reports");
-            return;
-        }
-
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Customer/Supplier Reports");
+//            return;
+//        }
         int k = (Integer) invoiceTable.getModel().getValueAt(r, 11);
 
         if (k > 0) {
-            ReportFactory.generateCustomerStatement(application, new Contact());
+            // ReportFactory.generateCustomerStatement(application, new Contact());
         } else {
             String type = " invoice ";
             if (quoteRadio.isSelected()) {

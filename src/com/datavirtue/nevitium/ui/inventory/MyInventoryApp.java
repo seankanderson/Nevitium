@@ -41,6 +41,7 @@ import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 import org.apache.commons.lang3.StringUtils;
 
 public class MyInventoryApp extends javax.swing.JDialog {
@@ -163,12 +164,16 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
             sd.addStatus("Inventory table Complete.");
             sd.addStatus("Configuring inventory table...");
+            
             return sd;
         }
 
         public void done() {
-            iTable.setModel(tm);
-
+            inventoryTable.setModel(tm);
+            
+            inventoryTable.getColumnModel().getColumn(2).setCellRenderer(new DecimalCellRenderer(18,2,SwingConstants.RIGHT));
+            inventoryTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18,2,SwingConstants.RIGHT));
+        
             StatusDialog d = null;
             try {
                 d = (StatusDialog) get();
@@ -226,6 +231,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         taxCheckBox.setToolTipText(appSettings.getInvoice().getTax1Name());
         tax2CheckBox.setToolTipText(appSettings.getInvoice().getTax2Name());
 
+        
         findTextField.requestFocus();
 
         worker.execute();
@@ -393,7 +399,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 findTextField.requestFocus();
                 findTextField.selectAll();
             } else {
-                iTable.setModel(new InventoryTableModel(searchResults));
+                inventoryTable.setModel(new InventoryTableModel(searchResults));
                 match = true;
                 findTextField.selectAll();
                 return;
@@ -416,7 +422,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 findTextField.requestFocus();
                 findTextField.selectAll();
             } else {
-                iTable.setModel(new InventoryTableModel(searchResults));
+                inventoryTable.setModel(new InventoryTableModel(searchResults));
                 match = true;
                 findTextField.selectAll();
                 return;
@@ -439,7 +445,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 findTextField.requestFocus();
                 findTextField.selectAll();
             } else {
-                iTable.setModel(new InventoryTableModel(searchResults));
+                inventoryTable.setModel(new InventoryTableModel(searchResults));
                 match = true;
                 findTextField.selectAll();
                 return;
@@ -461,7 +467,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
                 findTextField.requestFocus();
                 findTextField.selectAll();
             } else {
-                iTable.setModel(new InventoryTableModel(searchResults));
+                inventoryTable.setModel(new InventoryTableModel(searchResults));
                 match = true;
                 findTextField.selectAll();
                 return;
@@ -470,15 +476,15 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (col == 1) { //UPC
 
-            java.util.List row = DV.searchTableMulti(iTable.getModel(), 1, text);
+            java.util.List row = DV.searchTableMulti(inventoryTable.getModel(), 1, text);
 
             if (row != null) {
 
-                iTable.clearSelection();
+                inventoryTable.clearSelection();
 
                 for (int r = 0; r < row.size(); r++) {
                     //iTable.changeSelection((Integer) row.get(r), 0, true, true);
-                    iTable.addRowSelectionInterval((Integer) row.get(r), (Integer) row.get(r));
+                    inventoryTable.addRowSelectionInterval((Integer) row.get(r), (Integer) row.get(r));
                 }
                 populateFields();
                 match = true;
@@ -504,12 +510,12 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (col == 2) {  //Code
 
-            java.util.List row = DV.searchTableMulti(iTable.getModel(), 0, text);
+            java.util.List row = DV.searchTableMulti(inventoryTable.getModel(), 0, text);
 
             if (row != null) {
-                iTable.clearSelection();
+                inventoryTable.clearSelection();
                 for (int r = 0; r < row.size(); r++) {
-                    iTable.addRowSelectionInterval((Integer) row.get(r), (Integer) row.get(r));
+                    inventoryTable.addRowSelectionInterval((Integer) row.get(r), (Integer) row.get(r));
                 }
                 populateFields();
                 match = true;
@@ -551,7 +557,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
     private void refreshTable() {
         try {
             var allInventory = inventoryService.getAll();
-            iTable.setModel(new InventoryTableModel(allInventory));
+            inventoryTable.setModel(new InventoryTableModel(allInventory));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -567,11 +573,11 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }
 
     private void populateForm() {
-        int selectedRow = iTable.getSelectedRow();
+        int selectedRow = inventoryTable.getSelectedRow();
         if (selectedRow < 0) {
             return;
         }
-        var tableModel = (InventoryTableModel) iTable.getModel();
+        var tableModel = (InventoryTableModel) inventoryTable.getModel();
 
         this.currentItem = (Inventory) tableModel.getValueAt(selectedRow);
 
@@ -731,7 +737,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         saveButton = new javax.swing.JButton();
         tablePanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        iTable = new javax.swing.JTable();
+        inventoryTable = new javax.swing.JTable();
         jToolBar1 = new javax.swing.JToolBar();
         toggleButton = new javax.swing.JButton();
         viewButton = new javax.swing.JButton();
@@ -861,23 +867,23 @@ public class MyInventoryApp extends javax.swing.JDialog {
         jScrollPane1.setMinimumSize(new java.awt.Dimension(14, 14));
         jScrollPane1.setRequestFocusEnabled(false);
 
-        iTable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        iTable.setToolTipText("Click a row and press F9 to receive.");
-        iTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
-        iTable.addMouseListener(new java.awt.event.MouseAdapter() {
+        inventoryTable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        inventoryTable.setToolTipText("Click a row and press F9 to receive.");
+        inventoryTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
+        inventoryTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                iTableMouseClicked(evt);
+                inventoryTableMouseClicked(evt);
             }
         });
-        iTable.addKeyListener(new java.awt.event.KeyAdapter() {
+        inventoryTable.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                iTableKeyPressed(evt);
+                inventoryTableKeyPressed(evt);
             }
             public void keyReleased(java.awt.event.KeyEvent evt) {
-                iTableKeyReleased(evt);
+                inventoryTableKeyReleased(evt);
             }
         });
-        jScrollPane1.setViewportView(iTable);
+        jScrollPane1.setViewportView(inventoryTable);
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
@@ -988,7 +994,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         findTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         findTextField.setToolTipText("Press F9 to Toggle Receive Mode");
         findTextField.setCaretColor(new java.awt.Color(51, 255, 255));
-        findTextField.setNextFocusableComponent(iTable);
+        findTextField.setNextFocusableComponent(inventoryTable);
         findTextField.setSelectionColor(new java.awt.Color(0, 255, 51));
         findTextField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
@@ -1617,13 +1623,13 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     private void groupButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupButtonActionPerformed
 
-        int[] a = iTable.getSelectedRows();
+        int[] a = inventoryTable.getSelectedRows();
 
         int[] v = new int[a.length];
 
         for (int i = 0; i < v.length; i++) {
 
-            v[i] = (Integer) iTable.getModel().getValueAt(a[i], 0);
+            v[i] = (Integer) inventoryTable.getModel().getValueAt(a[i], 0);
 
         }
         //new InventoryGroupDialog(null, true, v, workingPath).setVisible(true);
@@ -1644,7 +1650,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     private void savePanelKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_savePanelKeyPressed
 
-        if (iTable.getSelectedRow() > -1) {
+        if (inventoryTable.getSelectedRow() > -1) {
 
             viewPic();
 
@@ -1688,7 +1694,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     private void viewButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewButtonActionPerformed
 
-        if (iTable.getSelectedRow() > -1 && !picField.getText().equals("")) {
+        if (inventoryTable.getSelectedRow() > -1 && !picField.getText().equals("")) {
 
             viewPic();
 
@@ -1700,13 +1706,13 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         new PictureDialog(null, true, picField.getText(), true);
 
-        iTable.requestFocus();
+        inventoryTable.requestFocus();
 
     }
 
     private void labelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_labelButtonActionPerformed
 
-        if (iTable.getSelectedRow() > -1) {
+        if (inventoryTable.getSelectedRow() > -1) {
 
             //new InventoryLabelsDialog(null, true, iTable.getModel(), iTable.getSelectedRows(), workingPath, props);
         } else {
@@ -1718,7 +1724,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     }//GEN-LAST:event_labelButtonActionPerformed
 
-    private void iTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_iTableKeyReleased
+    private void inventoryTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_inventoryTableKeyReleased
 
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_F12) {
 
@@ -1730,7 +1736,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             return;
         }
 
-        if (iTable.getSelectedRow() > -1) {
+        if (inventoryTable.getSelectedRow() > -1) {
 
             populateFields();
 
@@ -1739,7 +1745,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         }
 
 
-    }//GEN-LAST:event_iTableKeyReleased
+    }//GEN-LAST:event_inventoryTableKeyReleased
 
     private void formKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
 
@@ -1793,12 +1799,12 @@ public class MyInventoryApp extends javax.swing.JDialog {
         findTextField.requestFocus();
     }
 
-    private void iTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_iTableKeyPressed
+    private void inventoryTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_inventoryTableKeyPressed
 
         if (selectMode) {
 
             if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
-                if (iTable.getSelectedRow() > -1 && selectMode) {
+                if (inventoryTable.getSelectedRow() > -1 && selectMode) {
 
                     setReturnValue();
 
@@ -1817,7 +1823,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             //new InventoryNoteDialog(null, true, db, (Integer) dataOut[0], descTextField.getText());
         }
 
-    }//GEN-LAST:event_iTableKeyPressed
+    }//GEN-LAST:event_inventoryTableKeyPressed
 
     private void upcTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_upcTextFieldMouseClicked
 
@@ -1869,7 +1875,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_findTextFieldKeyPressed
 
-    private void iTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iTableMouseClicked
+    private void inventoryTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_inventoryTableMouseClicked
         int mouseButton = evt.getButton();
         if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) {
             return;
@@ -1879,11 +1885,11 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
             if (evt.getClickCount() == 2) {
 
-                int row = iTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
+                int row = inventoryTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
 
-                if (iTable.getSelectedRow() > -1) {
+                if (inventoryTable.getSelectedRow() > -1) {
                     returnValue = new ArrayList();
-                    var tableModel = (InventoryTableModel) this.iTable.getModel();
+                    var tableModel = (InventoryTableModel) this.inventoryTable.getModel();
                     returnValue.add((Inventory) tableModel.getValueAt(row));
                     this.setVisible(false);
                 }
@@ -1897,7 +1903,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         saveButton.setEnabled(true);
 
 
-    }//GEN-LAST:event_iTableMouseClicked
+    }//GEN-LAST:event_inventoryTableMouseClicked
 
     private void voidButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_voidButtonActionPerformed
 
@@ -1913,7 +1919,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 //            accessKey.showMessage("Delete");
 //            return;
 //        }
-        if (iTable.getSelectedRow() > -1) {
+        if (inventoryTable.getSelectedRow() > -1) {
 
             int a = JOptionPane.showConfirmDialog(this, "Delete Selected Record?", "DELETE", JOptionPane.YES_NO_OPTION);
 
@@ -2026,14 +2032,14 @@ public class MyInventoryApp extends javax.swing.JDialog {
     }
 
     private void changeSelectionTo(Inventory inventory) {
-        var tableModel = (InventoryTableModel) iTable.getModel();
+        var tableModel = (InventoryTableModel) inventoryTable.getModel();
         int row = tableModel.getCollection().indexOf(inventory);
-        iTable.changeSelection(row, 0, false, false);
+        inventoryTable.changeSelection(row, 0, false, false);
     }
 
     private void updateTableModel(Inventory inventory, boolean isNewItem) {
-        int changeRow = iTable.getSelectedRow();
-        var tableModel = (InventoryTableModel) iTable.getModel();
+        int changeRow = inventoryTable.getSelectedRow();
+        var tableModel = (InventoryTableModel) inventoryTable.getModel();
         if (isNewItem) {
             tableModel.setValueAt(inventory);
         } else {
@@ -2110,7 +2116,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
 
-        if (iTable.getSelectedRow() > -1) {
+        if (inventoryTable.getSelectedRow() > -1) {
             setReturnValue();
             this.setVisible(false);
         }
@@ -2120,10 +2126,10 @@ public class MyInventoryApp extends javax.swing.JDialog {
     private void notesPaneMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_notesPaneMouseClicked
 
         if (evt.getClickCount() == 2) {
-            int tableRow = iTable.getSelectedRow();
+            int tableRow = inventoryTable.getSelectedRow();
             if (tableRow > 0) {
                 this.populateFields();
-                int k = (Integer) iTable.getModel().getValueAt(tableRow, 0);
+                int k = (Integer) inventoryTable.getModel().getValueAt(tableRow, 0);
                 //new InventoryNoteDialog(null, true, db, (Integer) dataOut[0], descTextField.getText());
                 this.getNote(k);
             }
@@ -2182,8 +2188,8 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
     private void setReturnValue() {
 
-        var selectedRowIndexes = iTable.getSelectedRows();
-        var tableModel = (InventoryTableModel) iTable.getModel();
+        var selectedRowIndexes = inventoryTable.getSelectedRows();
+        var tableModel = (InventoryTableModel) inventoryTable.getModel();
         returnValue = new ArrayList();
 
         for (int i = 0; i < selectedRowIndexes.length; i++) {
@@ -2209,7 +2215,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
     private javax.swing.JTextField findTextField;
     private javax.swing.JButton groupButton;
     private javax.swing.JTextField helpBox;
-    private javax.swing.JTable iTable;
+    private javax.swing.JTable inventoryTable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;

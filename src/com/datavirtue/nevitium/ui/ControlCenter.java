@@ -839,18 +839,22 @@ public class ControlCenter extends javax.swing.JFrame {
     }//GEN-LAST:event_invoiceButtonActionPerformed
 
     private void activityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_activityButtonActionPerformed
-        if (!accessKey.checkManager(300)) {
-            accessKey.showMessage("Invoice Manager");
-            return;
-        }
+//        if (!accessKey.checkManager(300)) {
+//            accessKey.showMessage("Invoice Manager");
+//            return;
+//        }
         //InvoiceModel temp = (InvoiceModel) DV.DeSerial("data/hold/I.10010.inv");
         //  InvoiceModel temp = null;             
         //invDialog id = new invDialog (this, true, dbsys, cso, temp); //no select
-        InvoiceManager i = new InvoiceManager(this, true, application);
-
-        sys_stat = i.getStat();
-
-        i.dispose();
+        var invoiceManager = new InvoiceManager(this, true);
+        
+        try {
+            invoiceManager.display();
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing local settings");
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing database");
+        }
 
 
     }//GEN-LAST:event_activityButtonActionPerformed
@@ -1650,11 +1654,14 @@ public class ControlCenter extends javax.swing.JFrame {
         //InvoiceModel temp = (InvoiceModel) DV.DeSerial("data/hold/I.10010.inv");
         //  InvoiceModel temp = null;             
         //invDialog id = new invDialog (this, true, dbsys, cso, temp); //no select
-        InvoiceManager i = new InvoiceManager(this, true, application);
-
-        sys_stat = i.getStat();
-
-        i.dispose();
+        var invoiceManager = new InvoiceManager(this, true);
+         try {
+            invoiceManager.display();
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing local settings");
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing database");
+        }
 
     }//event_invoiceItemActionPerformed
 

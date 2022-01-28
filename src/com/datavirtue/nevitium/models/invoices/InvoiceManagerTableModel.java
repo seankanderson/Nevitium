@@ -2,6 +2,8 @@
 package com.datavirtue.nevitium.models.invoices;
 
 import com.datavirtue.nevitium.models.AbstractCollectionTableModel;
+import com.datavirtue.nevitium.services.InvoiceService;
+import datavirtue.DV;
 import java.util.Date;
 import java.util.List;
 
@@ -13,7 +15,8 @@ public class InvoiceManagerTableModel extends AbstractCollectionTableModel<Invoi
 
     public InvoiceManagerTableModel(List<Invoice> invoices) {
         this.items = invoices;
-        this.columns = new String[]{"Invoice Date", "Paid"};
+        this.columns = new String[]{"Date", "Number", "Customer", "Total"};
+        
     }
 
     @Override
@@ -26,12 +29,16 @@ public class InvoiceManagerTableModel extends AbstractCollectionTableModel<Invoi
         switch (col) {
             case 0:
                 item.setInvoiceDate((Date) value);
-                ;
                 break;
             case 1:
-                item.setPaid((Boolean) value);
+                item.setInvoiceNumber((String)value);
                 break;
-
+            case 2: 
+                item.setCustomer((String)value);
+                break;
+            case 3: 
+                break;
+                
         }
     }
 
@@ -46,7 +53,11 @@ public class InvoiceManagerTableModel extends AbstractCollectionTableModel<Invoi
             case 0:
                 return item.getInvoiceDate();
             case 1:
-                return item.isPaid();
+                return item.getInvoiceNumber();
+            case 2:
+                return item.getCustomer();
+            case 3:
+                return Double.parseDouble(DV.money(InvoiceService.calculateGrandTotal(item)));
 
         }
         return null;

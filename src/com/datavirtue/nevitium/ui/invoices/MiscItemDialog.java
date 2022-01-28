@@ -5,7 +5,6 @@
  */
 package com.datavirtue.nevitium.ui.invoices;
 
-import RuntimeManagement.GlobalApplicationDaemon;
 import com.datavirtue.nevitium.models.invoices.InvoiceItem;
 import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.models.settings.LocalAppSettings;

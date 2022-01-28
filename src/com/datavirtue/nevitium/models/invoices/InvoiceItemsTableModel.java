@@ -71,7 +71,7 @@ public class InvoiceItemsTableModel extends AbstractCollectionTableModel<Invoice
                 return item.isTaxable2();
 
             case 6:
-                return (item.getQuantity() * item.getUnitPrice()); // TODO: add taxable logic
+                return item.getQuantity() * item.getUnitPrice(); // TODO: add taxable logic
 
         }
         return null;

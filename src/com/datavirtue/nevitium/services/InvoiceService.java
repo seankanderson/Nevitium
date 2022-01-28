@@ -16,6 +16,7 @@ import com.j256.ormlite.misc.TransactionManager;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -38,6 +39,10 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         return DaoManager.createDao(connection, Invoice.class);
     }
 
+    public List<Invoice> getAllInvoices() throws SQLException {
+        return this.getDao().queryForAll();
+    }
+    
     public String getNewInvoiceNumber(String prefix) {
         var now = Calendar.getInstance().getTime();
         var dateFormat = new SimpleDateFormat("yyyyMMddHHmmssS");
@@ -45,7 +50,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         return prefix + dateString.substring(2, dateString.length() - 2);
     }
 
-    public double getTax1Total(Invoice invoice) {
+    public static double getTax1Total(Invoice invoice) {
         if (invoice.getItems() == null) {
             return 0.00;
         }
@@ -56,7 +61,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         return taxTotal;
     }
 
-    public double getTax2Total(Invoice invoice) {
+    public static double getTax2Total(Invoice invoice) {
         if (invoice.getItems() == null) {
             return 0.00;
         }
@@ -67,7 +72,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         return taxTotal;
     }
 
-    public double getSubtotal(Invoice invoice) {
+    public static double getSubtotal(Invoice invoice) {
         if (invoice.getItems() == null) {
             return 0.00;
         }
@@ -78,15 +83,22 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         return itemTotal;
     }
 
-    public double getItemSubTotal(InvoiceItem item) {
+    public static double calculateGrandTotal(Invoice invoice) {
+        var subtotal = getSubtotal(invoice);
+        var tax1 = getTax1Total(invoice);
+        var tax2 = getTax2Total(invoice);
+        return subtotal + tax1 + tax2;
+    }
+    
+    public static double getItemSubTotal(InvoiceItem item) {
         return item.getQuantity() > 0 && item.getUnitPrice() > 0 ? (item.getQuantity() * item.getUnitPrice()) : 0;
     }
 
-    public double getItemTax1Total(InvoiceItem item) {
+    public static double getItemTax1Total(InvoiceItem item) {
         return item.isTaxable1() && item.getTaxable1Rate() > 0 ? (item.getQuantity() * item.getUnitPrice()) * item.getTaxable1Rate() : 0;
     }
 
-    public double getItemTax2Total(InvoiceItem item) {
+    public static double getItemTax2Total(InvoiceItem item) {
         return item.isTaxable2() && item.getTaxable2Rate() > 0 ? (item.getQuantity() * item.getUnitPrice()) * item.getTaxable2Rate() : 0;
     }
 
@@ -104,16 +116,18 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
                     item.setInvoice(invoice);
                     invoiceItemService.save(item);
                 }
-
-                // reduce inventory quantities
-                for (var item : invoice.getItems()) {
-                    if (item.getSourceInventoryId() == null) {
-                        continue;
+                
+                if (!invoice.isQuote() && !invoice.isVoided()) {
+                    for (var item : invoice.getItems()) { // reduce inventory quantities
+                        if (item.getSourceInventoryId() == null) {
+                            continue;
+                        }
+                        var inventory = inventoryService.getInventoryById(item.getSourceInventoryId());
+                        inventory.setQuantity(inventory.getQuantity() - item.getQuantity());
+                        inventoryService.save(inventory);
                     }
-                    var inventory = inventoryService.getInventoryById(item.getSourceInventoryId());
-                    inventory.setQuantity(inventory.getQuantity() - item.getQuantity());
-                    inventoryService.save(inventory);
                 }
+
                 return null;
             }
         });
@@ -126,7 +140,8 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
      * @param proposedRetQty
      * @param credit
      * @param date
-     * @return if a refund payemnt has been issued it is returned so that the calling method can prompt the user to complete the payment
+     * @return if a refund payemnt has been issued it is returned so that the
+     * calling method can prompt the user to complete the payment
      * @throws SQLException
      * @throws PartialQuantityException
      * @throws InvoiceItemAlreadyReturnedException
@@ -207,7 +222,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
                 invoiceRefund.setPaymentActivityDate(new Date());
                 invoiceRefund.setPaymentEffectiveDate(new Date()); // we are paying the customer today
                 invoiceRefund.setType("REFUND");
-                
+
                 //k m67 867y nmhuj, nmb8invoice.getPaymentActivity().add(invoiceRefund);                
                 //this.invoicePaymentService.save(invoiceRefund);
                 return invoiceRefund;
@@ -229,8 +244,8 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     public double calculateInvoiceAmountDue(Invoice invoice) {
         return 0.00;
     }
-    
-    public void deletePayment(InvoicePayment payment) throws SQLException {        
+
+    public void deletePayment(InvoicePayment payment) throws SQLException {
         invoicePaymentService.delete(payment);
     }
 

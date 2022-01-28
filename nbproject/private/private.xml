@@ -30,28 +30,17 @@
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/invoices/InvoiceReturnsTableModel.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/invoices/Invoice.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/invoices/PaymentDialog.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/DatabaseService.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/invoices/CustomerInvoiceListTableModel.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/contacts/ContactsApp.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/TestDataService.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/inventory/MyInventoryApp.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/invoices/InvoiceManager.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/invoices/InvoiceManagerTableModel.java</file>
             <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/invoices/InvoiceItemsTableModel.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/invoices/PaymentActivityDialog.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/InventoryService.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/invoices/ReturnDialog.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/checks/CheckDialog.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/InvoiceItemService.java</file>
+            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/AbstractCollectionTableModel.java</file>
+            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/DatabaseService.java</file>
             <file>file:/C:/dev/Nevitium/src/businessmanager/Main.java</file>
+            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/inventory/MyInventoryApp.java</file>
             <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/ControlCenter.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/LocalSettingsService.java</file>
+            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/invoices/InvoiceManager.java</file>
             <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/invoices/InvoicePayment.java</file>
             <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/invoices/InvoiceApp.java</file>
             <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/InvoiceService.java</file>
+            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/invoices/InvoiceManagerTableModel.java</file>
         </group>
     </open-files>
 </project-private>
