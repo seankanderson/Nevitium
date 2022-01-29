@@ -9,9 +9,7 @@ import com.datavirtue.nevitium.models.security.User;
 import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.UserService;
-import com.datavirtue.nevitium.services.exceptions.DuplicateUserNameException;
-import com.datavirtue.nevitium.services.exceptions.FailedPasswordException;
-import datavirtue.*;
+import com.datavirtue.nevitium.services.util.DV;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import lombok.Getter;
@@ -248,16 +246,16 @@ public class AccessDialog extends javax.swing.JDialog {
 
         try {
             this.user = userService.authenticateUser(this.userField.getText().trim(), this.passField.getPassword());
-        } catch (FailedPasswordException ex) {
+        } catch (Exception ex) {
             ExceptionService.showErrorDialog(this, ex, "Password failed");
-            return;
-        } catch (DuplicateUserNameException ex) {
-            ExceptionService.showErrorDialog(this, ex, "Data error ");
-            this.setVisible(false);
-        } catch (SQLException ex) {
-            ExceptionService.showErrorDialog(this, ex, "Error fetching user from database");
-            this.setVisible(false);
-        }
+            return;}
+//        } catch (DuplicateUserNameException ex) {
+//            ExceptionService.showErrorDialog(this, ex, "Data error ");
+//            this.setVisible(false);
+//        } catch (SQLException ex) {
+//            ExceptionService.showErrorDialog(this, ex, "Error fetching user from database");
+//            this.setVisible(false);
+//        }
 
         if (this.user == null) {
             JOptionPane.showMessageDialog(this, "The username does not exist in the database.", "User not found", JOptionPane.OK_OPTION);

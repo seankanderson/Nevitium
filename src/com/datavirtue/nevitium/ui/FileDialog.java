@@ -10,7 +10,7 @@
  */
 package com.datavirtue.nevitium.ui;
 
-import datavirtue.DV;
+import com.datavirtue.nevitium.services.util.DV;
 import java.awt.Image;
 import java.awt.Toolkit;
 import javax.swing.JFileChooser;

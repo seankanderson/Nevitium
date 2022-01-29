@@ -6,15 +6,12 @@
  */
 package com.datavirtue.nevitium.ui.contacts;
 
-import RuntimeManagement.KeyCard;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.ui.invoices.PaymentDialog;
 import com.datavirtue.nevitium.ui.invoices.InvoiceApp;
-import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.models.contacts.old.ContactJournalListModel;
 import com.datavirtue.nevitium.models.contacts.old.ContactsTableModel;
 import com.google.inject.Injector;
-import datavirtue.*;
 import com.datavirtue.nevitium.services.DiService;
 import javax.swing.table.*;
 import java.io.*;
@@ -30,12 +27,16 @@ import com.datavirtue.nevitium.models.invoices.CustomerInvoiceListTableModel;
 import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.models.settings.CompanySettings;
+import com.datavirtue.nevitium.models.settings.LocalAppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ContactJournalService;
 import com.datavirtue.nevitium.services.ContactService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.util.DV;
 import java.util.Locale;
+import java.util.prefs.BackingStoreException;
 
 /**
  *
@@ -45,33 +46,30 @@ import java.util.Locale;
  */
 public class ContactsApp extends javax.swing.JDialog {
 
-    private KeyCard accessKey;
-
     private Contact currentContact = new Contact();
     private final ContactService contactService;
     private final ContactJournalService journalService;
     private final AppSettingsService appSettingsService;
+    private LocalAppSettings localSettings = null;
 
-    Settings props;
     private Contact returnValue = null;
     private boolean selectMode = false;
     private int edit_key = 0;
     private java.awt.Frame parentWin;
-    private DbEngine zip;
+
     private String nl = System.getProperty("line.separator");
     private Image winIcon;
 
-    
     public ContactsApp(java.awt.Frame parent, boolean modal, boolean select, boolean customers, boolean suppliers) {
 
         super(parent, modal);
-
+        
         Injector injector = DiService.getInjector();
         contactService = injector.getInstance(ContactService.class);
         journalService = injector.getInstance(ContactJournalService.class);
         appSettingsService = injector.getInstance(AppSettingsService.class);
         appSettingsService.setObjectType(AppSettings.class);
-
+        
         winIcon = Toolkit.getDefaultToolkit().getImage(ContactsApp.class.getResource("/businessmanager/res/Orange.png"));
 
         initComponents();
@@ -124,7 +122,12 @@ public class ContactsApp extends javax.swing.JDialog {
 
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-                recordScreenPosition();
+
+                try {
+                    recordWindowSizeAndPosition();
+                } catch (BackingStoreException ex) {
+                    ExceptionService.showErrorDialog(e.getComponent(), ex, "Error saving local screen preferences");
+                }
             }
         });
 
@@ -146,7 +149,7 @@ public class ContactsApp extends javax.swing.JDialog {
 
     }
 
-    public void display() throws SQLException {
+    public void display() throws SQLException, BackingStoreException {
 
         var user = UserService.getCurrentUser();
 
@@ -178,14 +181,13 @@ public class ContactsApp extends javax.swing.JDialog {
         tax2CheckBox.setText(invoiceSettings.getTax2Name());
 
         this.refreshTable();
-
-        //check for good stored values
-        //if bad do resizing routine if good just position and display
-        if (this.checkForScreenSettings()) {
-            this.restoreScreenPosition();//restore saved screen size
-        } else {
-            java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-            this.setLocation(dim.width, dim.height);
+        
+        localSettings = LocalSettingsService.getLocalAppSettings();
+        
+         try {
+            restoreSavedWindowSizeAndPosition();
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error fetching local screen settings");
         }
 
         this.setVisible(true);
@@ -220,80 +222,17 @@ public class ContactsApp extends javax.swing.JDialog {
         return returnValue;
     }
 
-    private void recordScreenPosition() {
-
-//        Point p = this.getLocationOnScreen();
-//        Dimension d = this.getSize();
-//        props.setProp("CONNPOS", p.x + "," + p.y);
-//        props.setProp("CONNSIZE", d.width + "," + d.height);
+    private void recordWindowSizeAndPosition() throws BackingStoreException {
+        var screenSettings = localSettings.getScreenSettings();
+        var sizeAndPosition = LocalSettingsService.getWindowSizeAndPosition(this);
+        screenSettings.setContacts(sizeAndPosition);
+        LocalSettingsService.saveLocalAppSettings(localSettings);
     }
 
-    private Point defaultScreenPosition;
-    private Dimension defaultWindowSize;
+    private void restoreSavedWindowSizeAndPosition() throws BackingStoreException {
 
-    private boolean checkForScreenSettings() {
-//        String pt = props.getProp("CONNPOS");
-//        String dim = props.getProp("CONNSIZE");
-//        if (pt.equals("")) {
-//            return false;
-//        }
-//        if (dim.equals("")) {
-//            return false;
-//        }
-//        if ((Tools.parsePoint(pt)) == null) {
-//            return false;
-//        }
-//        if ((Tools.parseDimension(dim)) == null) {
-//            return false;
-//        }
-//        return true;
-        return false;
-    }
-
-    private void storeDefaultScreen() {
-
-        try {
-            defaultScreenPosition = this.getLocationOnScreen();
-        } catch (Exception e) {
-            defaultScreenPosition = new Point(0, 0);
-        }
-
-        defaultWindowSize = this.getSize();
-
-    }
-
-    private void restoreDefaultScreenSize() {
-
-        this.setSize(this.defaultWindowSize);
-    }
-
-    private void restorDefaultScreen() {
-        restoreDefaultScreenSize();
-        restoreDefaultScreenLocation();
-    }
-
-    private void restoreDefaultScreenLocation() {
-        this.setLocation(this.defaultScreenPosition);
-    }
-
-    private void restoreScreenPosition() {
-
-        String pt = props.getProp("CONNPOS");
-        String dim = props.getProp("CONNSIZE");
-        Point p = Tools.parsePoint(pt);
-        if (p == null) {
-            p = this.defaultScreenPosition;
-        }
-        if (p == null) {
-            p = new Point(0, 0);
-        }
-        this.setLocation(p);
-        Dimension d = Tools.parseDimension(dim);
-        if (d == null) {
-            d = this.defaultWindowSize;
-        }
-        this.setSize(d);
-
+        var screenSettings = localSettings.getScreenSettings().getContacts();
+        LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
     }
 
     private void clearFields() {
@@ -542,7 +481,7 @@ public class ContactsApp extends javax.swing.JDialog {
                 var results = contactService.searchField(searchField, findField.getText());
                 if (results != null && results.size() > 0) {
                     contactTable.setModel(new ContactsTableModel(results));
-                    props.setProp("CONN COL", searchField);
+                    //TODO: capture default search column
                 } else {
                     JOptionPane.showMessageDialog(this, "No matching records were found.", "Find Failed", JOptionPane.OK_OPTION);
                 }
@@ -657,20 +596,20 @@ public class ContactsApp extends javax.swing.JDialog {
 
     private void zipAction() {
 
-        java.util.ArrayList al = null;
-
-        if (zipTextField.getText().length() > 4 && zipTextField.getText().length() < 6 && DV.validIntString(zipTextField.getText())) {
-
-            al = zip.searchFast("zip", 1, zipTextField.getText(), false);
-
-        }
-
-        if (al != null) {
-            Object[] zipinfo = new Object[6];
-            zipinfo = zip.getRecord("zip", (Long) al.get(0));
-            cityTextField.setText((String) zipinfo[2]);
-            stateTextField.setText((String) zipinfo[3]);
-        }
+//        java.util.ArrayList al = null;
+//
+//        if (zipTextField.getText().length() > 4 && zipTextField.getText().length() < 6 && DV.validIntString(zipTextField.getText())) {
+//
+//            al = zip.searchFast("zip", 1, zipTextField.getText(), false);
+//
+//        }
+//
+//        if (al != null) {
+//            Object[] zipinfo = new Object[6];
+//            zipinfo = zip.getRecord("zip", (Long) al.get(0));
+//            cityTextField.setText((String) zipinfo[2]);
+//            stateTextField.setText((String) zipinfo[3]);
+//        }
 
     }
 
@@ -1784,10 +1723,10 @@ public class ContactsApp extends javax.swing.JDialog {
 
         if (evt.getClickCount() == 2) {
 
-            if (!accessKey.checkManager(300)) {
-                accessKey.showMessage("Invoice Manager");
-                return;
-            }
+//            if (!accessKey.checkManager(300)) {
+//                accessKey.showMessage("Invoice Manager");
+//                return;
+//            }
 
             viewInvoice();
 
@@ -1796,10 +1735,10 @@ public class ContactsApp extends javax.swing.JDialog {
     }//GEN-LAST:event_invoiceTableMouseClicked
 
     private void labelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_labelButtonActionPerformed
-        if (!accessKey.checkConnections(300)) {
-            accessKey.showMessage("Labels");
-            return;
-        }
+//        if (!accessKey.checkConnections(300)) {
+//            accessKey.showMessage("Labels");
+//            return;
+//        }
 
         if (contactTable.getSelectedRow() > -1) {
 
@@ -1829,9 +1768,8 @@ public class ContactsApp extends javax.swing.JDialog {
         if (!wwwTextField.getText().toUpperCase().contains("HTTP://") && !wwwTextField.getText().toUpperCase().contains("FTP://")) {
             wwwTextField.setText("http://" + wwwTextField.getText());
         }
-
-        boolean desktop = DV.parseBool(props.getProp("DESKTOP SUPPORTED"), false);
-        if (Desktop.isDesktopSupported() && desktop) {
+                
+        if (Desktop.isDesktopSupported()) {
             if (Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 try {
 
@@ -1860,8 +1798,8 @@ public class ContactsApp extends javax.swing.JDialog {
             return;
 
         }
-        boolean desktop = DV.parseBool(props.getProp("DESKTOP SUPPORTED"), false);
-        if (Desktop.isDesktopSupported() && desktop) {
+        
+        if (Desktop.isDesktopSupported()) {
             if (Desktop.getDesktop().isSupported(Desktop.Action.MAIL)) {
                 try {
 
@@ -1944,12 +1882,12 @@ public class ContactsApp extends javax.swing.JDialog {
 
                 if (invoice != null) {
                     /* Opening quotes */
-                    InvoiceApp id = new InvoiceApp(parentWin, true); 
+                    InvoiceApp id = new InvoiceApp(parentWin, true);
                     id.setInvoice(invoice);
                     id.display();
                     id.dispose();
                 }
-            } 
+            }
 
         }
         this.populateInvoices(false);
@@ -1960,10 +1898,10 @@ public class ContactsApp extends javax.swing.JDialog {
 
     private void viewButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewButtonActionPerformed
 
-        if (!accessKey.checkManager(300)) {
-            accessKey.showMessage("Invoice Manager");
-            return;
-        }
+//        if (!accessKey.checkManager(300)) {
+//            accessKey.showMessage("Invoice Manager");
+//            return;
+//        }
         viewInvoice();
 
     }//GEN-LAST:event_viewButtonActionPerformed
@@ -2028,10 +1966,10 @@ public class ContactsApp extends javax.swing.JDialog {
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
 
         if (contactTable.getModel().getRowCount() > 0) {
-            if (!accessKey.checkExports(500)) {
-                accessKey.showMessage("Export");
-                return;
-            }
+//            if (!accessKey.checkExports(500)) {
+//                accessKey.showMessage("Export");
+//                return;
+//            }
             String home = System.getProperty("user.home");
             if (System.getProperty("os.name").contains("Windows")) {
                 home = home + '\\' + "My Documents";
@@ -2079,10 +2017,10 @@ public class ContactsApp extends javax.swing.JDialog {
 
         if (!companyTextField.isEnabled()) {
 
-            if (!accessKey.checkConnections(200)) {
-                accessKey.showMessage("Create");
-                return;
-            }
+//            if (!accessKey.checkConnections(200)) {
+//                accessKey.showMessage("Create");
+//                return;
+//            }
 
             clearFields();
             setFieldsEnabled(true);
@@ -2123,10 +2061,10 @@ public class ContactsApp extends javax.swing.JDialog {
 
         if (contactTable.getSelectedRow() > -1) {
 
-            if (!accessKey.checkConnections(500)) {
-                accessKey.showMessage("Delete");
-                return;
-            }
+//            if (!accessKey.checkConnections(500)) {
+//                accessKey.showMessage("Delete");
+//                return;
+//            }
 
             int a = JOptionPane.showConfirmDialog(this, "Delete Selected Record?", "ERASE", JOptionPane.YES_NO_OPTION);
 
@@ -2177,10 +2115,10 @@ public class ContactsApp extends javax.swing.JDialog {
 
     private void saveAction() {
 
-        if (!accessKey.checkConnections(200)) {
-            accessKey.showMessage("Create, Edit");
-            return;
-        }
+//        if (!accessKey.checkConnections(200)) {
+//            accessKey.showMessage("Create, Edit");
+//            return;
+//        }
 
         if (custCheckBox.isSelected() == false && supplierCheckBox.isSelected() == false) {
             int a = JOptionPane.showConfirmDialog(this, "You did NOT select 'Customer' OR 'Supplier'.  Is this ok? ", "No Category", JOptionPane.YES_NO_OPTION);
@@ -2346,10 +2284,10 @@ public class ContactsApp extends javax.swing.JDialog {
         if (r < 0) {
             return;
         }
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Customer/Supplier Reports");
-            return;
-        }
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Customer/Supplier Reports");
+//            return;
+//        }
 
         int k = (Integer) contactTable.getModel().getValueAt(r, 0);
 
@@ -2361,10 +2299,10 @@ public class ContactsApp extends javax.swing.JDialog {
 
     private void doPurchaseReport() {
 
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Customer/Supplier Reports");
-            return;
-        }
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Customer/Supplier Reports");
+//            return;
+//        }
 
         int row = contactTable.getSelectedRow();
 

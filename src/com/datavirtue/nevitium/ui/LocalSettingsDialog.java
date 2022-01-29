@@ -1,16 +1,14 @@
 package com.datavirtue.nevitium.ui;
 
-import datavirtue.DV;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.models.settings.LocalAppSettings;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.util.DV;
 
 /**
  *

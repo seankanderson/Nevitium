@@ -1,6 +1,6 @@
 package businessmanager;
 
-import datavirtue.DVNET;
+import com.datavirtue.nevitium.services.util.DVNET;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 

@@ -6,13 +6,13 @@
 package com.datavirtue.nevitium.ui.checks;
 
 import com.google.inject.Injector;
-import datavirtue.*;
 import com.datavirtue.nevitium.services.DiService;
 import java.awt.Point;
 import javax.swing.*;
 import com.datavirtue.nevitium.models.settings.CheckSettings;
 import com.datavirtue.nevitium.services.CheckSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.util.DV;
 import java.sql.SQLException;
 
 /**

@@ -11,8 +11,8 @@
 
 package com.datavirtue.nevitium.ui.layoutdesigner;
 
+import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import datavirtue.DV;
 
 /**
  *

@@ -10,14 +10,14 @@
  */
 
 package com.datavirtue.nevitium.database.reports;
+import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.FileDialog;
-import RuntimeManagement.GlobalApplicationDaemon;
+import com.datavirtue.nevitium.ui.PleaseWait;
+
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 import com.datavirtue.nevitium.ui.util.Tools;
-import datavirtue.*;
-import gui.PleaseWait;
+
 import java.beans.PropertyVetoException;
-import java.io.File;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.logging.Level;
@@ -26,6 +26,7 @@ import javax.swing.ImageIcon;
 import javax.swing.SwingConstants;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import org.h2.jdbc.JdbcConnection.Settings;
 
 /**
  *
@@ -35,12 +36,10 @@ public class ReportTableDialog extends javax.swing.JDialog {
 
   
 
-    public ReportTableDialog(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, String report) {
+    public ReportTableDialog(java.awt.Frame parent, boolean modal, String report) {
         super(parent, modal);
         initComponents();
-        this.application = application;
-        db = application.getDb();
-        props = application.getProps();
+        
 
         
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
@@ -105,11 +104,11 @@ public class ReportTableDialog extends javax.swing.JDialog {
 
     }
 private Settings props;
-private GlobalApplicationDaemon application;
+
 private boolean VAT = false;
 
     private void initSalesReport(){
-        report = new SalesReport(application, VAT);
+        report = new SalesReport();
         report.SetTitle("Sales Report");
         this.setTitle("Sales Report");
         setColWidths();
@@ -117,7 +116,7 @@ private boolean VAT = false;
     }
 
     private void initRevenueReport(){
-        report = new RevenueReport(db);
+        //report = new RevenueReport(db);
         report.SetTitle("Revenue Report");
         this.setTitle("Revenue Report");
         setColWidths();
@@ -468,7 +467,7 @@ private void setView(){
    
    private Object value = null;
    private int valueCol = 0;
-   private DbEngine db;
+   
    private ReportInterface report;
    private boolean max = false;
    private java.awt.Dimension small;

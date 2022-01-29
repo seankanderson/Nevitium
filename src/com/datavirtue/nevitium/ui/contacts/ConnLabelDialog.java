@@ -7,12 +7,13 @@
 package com.datavirtue.nevitium.ui.contacts;
 import com.datavirtue.nevitium.services.PdfLabelService;
 import com.datavirtue.nevitium.database.reports.ReportFactory;
+import com.datavirtue.nevitium.services.util.DV;
 
 import java.io.*;
-import datavirtue.*;
 import javax.swing.*;
 import java.awt.event.*;
 import com.lowagie.text.Font;
+import org.h2.jdbc.JdbcConnection.Settings;
 
 /**
  *
@@ -443,23 +444,23 @@ public class ConnLabelDialog extends javax.swing.JDialog {
         
         if (viewPrintRadio.isSelected()) {
         
-            Settings props = new Settings(workingPath + "settings.ini");
+            //Settings props = new Settings(workingPath + "settings.ini");
                 
-            ReportFactory.veiwPDF(props.getProp("ACRO"),filename, props);
+            //ReportFactory.veiwPDF(props.getProp("ACRO"),filename, props);
         
             props = null;
         }
         
-        if (fastPrintRadio.isSelected()) ReportFactory.windowsFastPrint(filename, props);
+//        if (fastPrintRadio.isSelected()) ReportFactory.windowsFastPrint(filename, props);
+//        
+//        }else {  //end action block
+//            
+//            
+//            javax.swing.JOptionPane.showMessageDialog(null, "Make sure the values entered into the Dimension fields are floating point (decimal) numbers.");
+//            
+//        }
         
-        }else {  //end action block
-            
-            
-            javax.swing.JOptionPane.showMessageDialog(null, "Make sure the values entered into the Dimension fields are floating point (decimal) numbers.");
-            
         }
-        
-        
     }
     
     private int [] selected_rows;

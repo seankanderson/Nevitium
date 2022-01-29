@@ -9,7 +9,6 @@
 
 package com.datavirtue.nevitium.services;
 import com.datavirtue.nevitium.models.checks.CheckStub;
-import datavirtue.*;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -23,7 +22,8 @@ import java.awt.*;
 import java.awt.font.*;
 import java.awt.print.Paper;
 import java.awt.Toolkit;
-import com.datavirtue.nevitium.services.FormatService;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.services.util.EnglishDecimalFormat;
 
 /**
  *

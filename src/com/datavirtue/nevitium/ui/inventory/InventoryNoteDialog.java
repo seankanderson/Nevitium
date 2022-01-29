@@ -5,13 +5,11 @@
  */
 
 package com.datavirtue.nevitium.ui.inventory;
+import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
-import businessmanager.*;
-import javax.swing.JOptionPane;
 import javax.swing.*;
 import java.awt.event.*;
-import datavirtue.*;
-import java.util.*;
+
 
 /**
  *
@@ -20,13 +18,12 @@ import java.util.*;
 public class InventoryNoteDialog extends javax.swing.JDialog {
     
     /** Creates new form InventoryNoteDialog */
-    public InventoryNoteDialog(java.awt.Frame parent, boolean modal, DbEngine db, int key, String noteTitle) {
+    public InventoryNoteDialog(java.awt.Frame parent, boolean modal, int key, String noteTitle) {
         super(parent, modal);
         initComponents();
         
         inventoryKey = key;
-        this.db = db;
-        
+       
         noteTextArea.setDocument(new LimitedDocument(1024));
         
         
@@ -183,25 +180,25 @@ public class InventoryNoteDialog extends javax.swing.JDialog {
 
     private void getNote(int invKey) {
         
-        
-        Object [] note=null;
-        ArrayList al;
-        
-        al = db.search("invnotes", 1, Integer.toString(invKey), false);
-        
-        if (al != null){
-        
-            note = db.getRecord("invnotes", (Integer)al.get(0));
-            noteKey = (Integer) note[0];
-            noteTextArea.setText((String)note[2]);
-            noteTextArea.setCaretPosition(0);
-            
-        }else {
-            
-            noteKey = 0;
-            
-        }
-        
+//        
+//        Object [] note=null;
+//        ArrayList al;
+//        
+//        al = db.search("invnotes", 1, Integer.toString(invKey), false);
+//        
+//        if (al != null){
+//        
+//            note = db.getRecord("invnotes", (Integer)al.get(0));
+//            noteKey = (Integer) note[0];
+//            noteTextArea.setText((String)note[2]);
+//            noteTextArea.setCaretPosition(0);
+//            
+//        }else {
+//            
+//            noteKey = 0;
+//            
+//        }
+//        
       
         
     }
@@ -213,7 +210,7 @@ public class InventoryNoteDialog extends javax.swing.JDialog {
         note[1] = new Integer(inventoryKey);
         note[2] = new String (noteTextArea.getText());
 
-        noteKey = db.saveRecord("invnotes", note, false);
+        //noteKey = db.saveRecord("invnotes", note, false);
         
         this.dispose();
         
@@ -226,7 +223,7 @@ public class InventoryNoteDialog extends javax.swing.JDialog {
         
     }//GEN-LAST:event_closeButtonActionPerformed
     
-  private DbEngine db;
+    
   private int inventoryKey;
   
   

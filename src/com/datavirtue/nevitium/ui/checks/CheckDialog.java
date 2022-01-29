@@ -5,11 +5,9 @@
  */
 package com.datavirtue.nevitium.ui.checks;
 
-import RuntimeManagement.KeyCard;
-import RuntimeManagement.GlobalApplicationDaemon;
+
 import com.datavirtue.nevitium.ui.contacts.ContactsApp;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import datavirtue.*;
 import java.awt.*;
 import java.sql.SQLException;
 
@@ -25,8 +23,10 @@ import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.settings.CheckSettings;
 import com.datavirtue.nevitium.services.CheckSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.ui.util.AutoCompleteDocument;
+import java.util.prefs.BackingStoreException;
+import org.h2.jdbc.JdbcConnection.Settings;
 
 /**
  *
@@ -34,14 +34,13 @@ import java.util.logging.Logger;
  */
 public class CheckDialog extends javax.swing.JDialog {
 
-    private final KeyCard accessKey;
-    private final GlobalApplicationDaemon application;
+    
     private final CheckSettingsService checkSettings;
 
     /**
      * Creates new form CheckDialog
      */
-    public CheckDialog(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, Contact contact, float amount, String memo) {
+    public CheckDialog(java.awt.Frame parent, boolean modal, Contact contact, float amount, String memo) {
         super(parent, modal);
         initComponents();
 
@@ -50,14 +49,11 @@ public class CheckDialog extends javax.swing.JDialog {
         checkSettings.setObjectType(CheckSettings.class);
 
         amtField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
-        this.application = application;
-        db = application.getDb();
-        workingPath = application.getWorkingPath();
-        accessKey = application.getKey_card();
+        
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
         this.populateItemList();
-        props = new Settings(workingPath);
+        //props = new Settings(workingPath);
 
         /* init */
         if (amount > 0) {
@@ -90,9 +86,8 @@ public class CheckDialog extends javax.swing.JDialog {
         this.setVisible(true);
     }
 
-    private DbEngine db;
-    private String workingPath = "";
-
+    
+    
     private java.util.ArrayList itemList;
 
     private void populateItemList() {
@@ -100,7 +95,7 @@ public class CheckDialog extends javax.swing.JDialog {
         itemList = new java.util.ArrayList();
         itemList.trimToSize();
 
-        TableModel cat_tm = db.createTableModel("chkpayee");
+        TableModel cat_tm = new DefaultTableModel(); //db.createTableModel("chkpayee");
 
         if (cat_tm != null && cat_tm.getRowCount() > 0) {
 
@@ -119,13 +114,13 @@ public class CheckDialog extends javax.swing.JDialog {
 
         String txm;
 
-        java.util.ArrayList al;
+        java.util.ArrayList al = null;
 
-        al = db.search("chkpayee", 1, s, false);
+        //al = db.search("chkpayee", 1, s, false);
 
         if (al == null) {
 
-            db.saveRecord("chkpayee", new Object[]{0, s}, false);
+            //db.saveRecord("chkpayee", new Object[]{0, s}, false);
             //db.close();
 
         }
@@ -438,8 +433,7 @@ public class CheckDialog extends javax.swing.JDialog {
     private String name = "";
     private String street = "";
     private String city = "";
-    private Settings props;
-
+   
     private void clearAction() {
 
         indRadio.setEnabled(false);
@@ -459,6 +453,9 @@ public class CheckDialog extends javax.swing.JDialog {
             contactsApp.display();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error getting contacts from database");
+            return;
+        }catch (BackingStoreException e) {
+            ExceptionService.showErrorDialog(this, e, "Error getting local settings");
             return;
         }
         var contact = contactsApp.getReturnValue();

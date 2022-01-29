@@ -3,13 +3,11 @@
  *
  * Created on January 27, 2007, 12:26 PM
  */
-
 package com.datavirtue.nevitium.ui.inventory;
+
 import com.datavirtue.nevitium.services.PdfLabelService;
-import com.datavirtue.nevitium.database.reports.ReportFactory;
-import businessmanager.*;
+import com.datavirtue.nevitium.services.util.DV;
 import javax.swing.*;
-import datavirtue.*;
 import java.io.*;
 //import org.pdfbox.PrintPDF;
 //import org.pdfbox.pdmodel.PDDocument;
@@ -17,19 +15,19 @@ import java.awt.event.*;
 
 /**
  *
- * @author  Data Virtue
+ * @author Data Virtue
  */
 public class InventoryLabelsDialog extends javax.swing.JDialog {
-    
-    /** Creates new form InventoryLabelsDialog */
+
+    /**
+     * Creates new form InventoryLabelsDialog
+     */
     public InventoryLabelsDialog(java.awt.Frame parent, boolean modal,
-            javax.swing.table.TableModel tm, int [] selected_rows, String path, Settings props) {
+            javax.swing.table.TableModel tm, int[] selected_rows, String path) {
         super(parent, modal);
         initComponents();
         
-        workingPath = path;
-        this.props = props;
-         /* Close dialog on escape */
+        /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();
         InputMap im = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         Object windowCloseKey = new Object();
@@ -43,216 +41,231 @@ public class InventoryLabelsDialog extends javax.swing.JDialog {
         im.put(windowCloseStroke, windowCloseKey);
         am.put(windowCloseKey, windowCloseAction);
         /**/
-        
-        
+
         this.tm = tm;
         this.selected_rows = selected_rows;
-        
+
         countLabel.setText(selected_rows.length + " Row(s) selected.");
-        
-        SpinnerNumberModel model = new SpinnerNumberModel(1, 1, null, 1); 
+
+        SpinnerNumberModel model = new SpinnerNumberModel(1, 1, null, 1);
         eachSpinner.setModel(model);
-        
-        model = new SpinnerNumberModel(0, 0, null, 1); ;
+
+        model = new SpinnerNumberModel(0, 0, null, 1);;
         skipSpinner.setModel(model);
-        
+
         labelPanel1.setFile("defs.txt");
-        
+
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
 
-        
         this.setVisible(true);
-        
-        
+
     }
-    private String workingPath="";
-    private Settings props;
+
     private void generateLabels() {
-        
-       
-                float [] def = labelPanel1.getLabelDef();
-        
-        if (def != null){  //begin action block
-            
+
+        float[] def = labelPanel1.getLabelDef();
+
+        if (def != null) {  //begin action block
+
             String filename = "labels";
-            
+
             boolean good = false;
-            
+
             int no = 0;
-            
+
             do {
-                
-                if (new File(filename + ".pdf").exists()){
-                    
-                    if ( new File(filename + ".pdf").canWrite()){
-                        
+
+                if (new File(filename + ".pdf").exists()) {
+
+                    if (new File(filename + ".pdf").canWrite()) {
+
                         good = true;
-                        
-                    }
-                    else {
-                        
+
+                    } else {
+
                         no++;
                         filename = filename + no;
-                        
+
                     }
-                    
-               }else good = true;
-                
-                
-            }while (!good);
-             
-             
-            if (no > 20){  //clean up old files
-                
-                for (int i = 1; i < no - 10; i++){  
-                    
-                    if (new File ("labels" + i + ".pdf").exists() && new File ("labels" + i + ".pdf").canWrite()){
-                        
+
+                } else {
+                    good = true;
+                }
+
+            } while (!good);
+
+            if (no > 20) {  //clean up old files
+
+                for (int i = 1; i < no - 10; i++) {
+
+                    if (new File("labels" + i + ".pdf").exists() && new File("labels" + i + ".pdf").canWrite()) {
+
                         File fx = new File("labels" + i + ".pdf"); // delete file
                         fx.delete();
-                        
-                        
+
                     }
-                                        
+
                 }
-                
+
             }
-                        
+
             filename = filename + ".pdf";
-            PdfLabelService pdf = new PdfLabelService (def, filename);          
-               
-            if (centerRadio.isSelected()) pdf.setAlignment(9, 1);  //center
-            if (leftRadio.isSelected()) pdf.setAlignment(9, 0); //left   
-            if (midRadio.isSelected()) pdf.setAlignment(5, 9); //middle
-            if (topRadio.isSelected()) pdf.setAlignment(4, 9); //top
-            
-            
+            PdfLabelService pdf = new PdfLabelService(def, filename);
+
+            if (centerRadio.isSelected()) {
+                pdf.setAlignment(9, 1);  //center
+            }
+            if (leftRadio.isSelected()) {
+                pdf.setAlignment(9, 0); //left   
+            }
+            if (midRadio.isSelected()) {
+                pdf.setAlignment(5, 9); //middle
+            }
+            if (topRadio.isSelected()) {
+                pdf.setAlignment(4, 9); //top
+            }
+
             //pdf.setDebug(true);
-            
             /* Setup PDFLabels object */
-            
-            /* Access tableModel and send data to the PDFLabels object */
-        
+ /* Access tableModel and send data to the PDFLabels object */
             int row;
             int howmany = (Integer) eachSpinner.getValue();
             int skip = (Integer) skipSpinner.getValue();
             boolean warn = false;
             pdf.setStartLabel(skip + 1);
-            
+
             StringBuilder sb = new StringBuilder();
             String tmp;
-            
-            for (int r = 0; r < selected_rows.length; r++){
-                
+
+            for (int r = 0; r < selected_rows.length; r++) {
+
                 row = selected_rows[r];  //the current row we are working on in each loop cycle
-                
-                for (int j = 0; j < howmany; j++ ){  //how many of each label?
-                    
-                   
-                    if (barcodeRadio.isSelected()){  //barcode labels
-                        
+
+                for (int j = 0; j < howmany; j++) {  //how many of each label?
+
+                    if (barcodeRadio.isSelected()) {  //barcode labels
+
                         /* Barcode section doesn't use the StringBuilder temp since it only acceses one field */
-                        
-                        
-                        tmp = (String) tm.getValueAt(row,2);
+                        tmp = (String) tm.getValueAt(row, 2);
                         tmp = tmp.trim();
-                        
-                        if (ucBox.isSelected()) tmp = tmp.toUpperCase();
-                        
-                                                    
+
+                        if (ucBox.isSelected()) {
+                            tmp = tmp.toUpperCase();
+                        }
+
                         /*Begin barcode type-check*/
-                        if (C39Radio.isSelected()){
-                            
-                            if (!tmp.contains("=")){
-                            
+                        if (C39Radio.isSelected()) {
+
+                            if (!tmp.contains("=")) {
+
                                 pdf.addCode39(tmp);  //code field
-                                
-                            }else {
-                                
-                                if (!warn)javax.swing.JOptionPane.showMessageDialog(null, "Code 39 cannot contain =; use Code 128.");
+
+                            } else {
+
+                                if (!warn) {
+                                    javax.swing.JOptionPane.showMessageDialog(null, "Code 39 cannot contain =; use Code 128.");
+                                }
                                 warn = true;
                             }
-                            
+
                         }
-                        
+
                         if (C128Radio.isSelected()) {
-                            
-                            pdf.addCode128( tmp ); //code field
-                            
+
+                            pdf.addCode128(tmp); //code field
+
                         }
                         /*End barcode type-check*/
-                        
-                        
-                    }else { //info label
-                         
-                        if (upcBox.isSelected()) sb.append( (String) tm.getValueAt(row, 1)+ " ");
-                        if (codeBox.isSelected()) sb.append( "CODE: " + tm.getValueAt(row, 2).toString());
-                        if (upcBox.isSelected() || codeBox.isSelected()) sb.append(nl);
-                        
-                        if (descBox.isSelected()) sb.append( (String) tm.getValueAt(row, 3) + nl);
-                        
-                        if (sizeBox.isSelected()) sb.append( "SIZE: " + (String) tm.getValueAt(row, 4) + "   ");
-                        if (weightBox.isSelected()) sb.append( "WEIGHT: " + (String) tm.getValueAt(row, 5));
-                        if (sizeBox.isSelected() || weightBox.isSelected()) sb.append(nl);
-                        
-                        if (costBox.isSelected()) sb.append( "$"+DV.money((Float) tm.getValueAt(row, 7) )+"   " );
-                        if (priceBox.isSelected()) sb.append( "$"+DV.money((Float) tm.getValueAt(row, 8)) );
-                        if (costBox.isSelected() || priceBox.isSelected()) sb.append(nl);
-                        
-                        if (catBox.isSelected()) sb.append( (String) tm.getValueAt(row, 9) );
-                        
+
+                    } else { //info label
+
+                        if (upcBox.isSelected()) {
+                            sb.append((String) tm.getValueAt(row, 1) + " ");
+                        }
+                        if (codeBox.isSelected()) {
+                            sb.append("CODE: " + tm.getValueAt(row, 2).toString());
+                        }
+                        if (upcBox.isSelected() || codeBox.isSelected()) {
+                            sb.append(nl);
+                        }
+
+                        if (descBox.isSelected()) {
+                            sb.append((String) tm.getValueAt(row, 3) + nl);
+                        }
+
+                        if (sizeBox.isSelected()) {
+                            sb.append("SIZE: " + (String) tm.getValueAt(row, 4) + "   ");
+                        }
+                        if (weightBox.isSelected()) {
+                            sb.append("WEIGHT: " + (String) tm.getValueAt(row, 5));
+                        }
+                        if (sizeBox.isSelected() || weightBox.isSelected()) {
+                            sb.append(nl);
+                        }
+
+                        if (costBox.isSelected()) {
+                            sb.append("$" + DV.money((Float) tm.getValueAt(row, 7)) + "   ");
+                        }
+                        if (priceBox.isSelected()) {
+                            sb.append("$" + DV.money((Float) tm.getValueAt(row, 8)));
+                        }
+                        if (costBox.isSelected() || priceBox.isSelected()) {
+                            sb.append(nl);
+                        }
+
+                        if (catBox.isSelected()) {
+                            sb.append((String) tm.getValueAt(row, 9));
+                        }
+
                         /*Formatting steps*/
-                        if (ucBox.isSelected()) tmp = sb.toString().toUpperCase();
-                        else tmp = sb.toString();
-                        
+                        if (ucBox.isSelected()) {
+                            tmp = sb.toString().toUpperCase();
+                        } else {
+                            tmp = sb.toString();
+                        }
+
                         pdf.add(tmp);  //add the data to the Label Sheet Object
-                        
+
                     }
-                    
+
                     //System.out.println(sb.toString());
                     tmp = "";
                     sb = new StringBuilder();
                 }
-                
-                
+
             }
-        
-        pdf.finnish();
-        
-        
-        if (prnRadio.isSelected()){
-            
-          ReportFactory.windowsFastPrint(filename, props);
-            
-        } //end Fast print section
-        
-        if (!prnRadio.isSelected()){  //print/view
-                    
-            Settings props = new Settings(workingPath + "settings.ini");  //this needs a static method to get one property
-        
-            ReportFactory.veiwPDF(props.getProp("ACRO"),filename, props);
-        
-            props = null;
-            
-        }
-        
-        }else {  //end action block
-            
-            
+
+            pdf.finnish();
+
+            if (prnRadio.isSelected()) {
+
+                //ReportFactory.windowsFastPrint(filename, props);
+
+            } //end Fast print section
+
+            if (!prnRadio.isSelected()) {  //print/view
+
+                //Settings props = new Settings(workingPath + "settings.ini");  //this needs a static method to get one property
+
+                //ReportFactory.veiwPDF(props.getProp("ACRO"), filename, props);
+
+                //props = null;
+
+            }
+
+        } else {  //end action block
+
             javax.swing.JOptionPane.showMessageDialog(null, "Make sure the values entered into the Dimension fields are floating point (decimal) numbers.");
-            
+
         }
-        
- 
-        
+
     }
-    
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -654,93 +667,91 @@ public class InventoryLabelsDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void C39RadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_C39RadioActionPerformed
-        
+
         ucBox.setSelected(true);
         ucBox.setEnabled(false);
-        
+
     }//GEN-LAST:event_C39RadioActionPerformed
 
     private void C128RadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_C128RadioActionPerformed
-        
+
         ucBox.setSelected(false);
         ucBox.setEnabled(false);
-        
-        
+
+
     }//GEN-LAST:event_C128RadioActionPerformed
 
     private void goButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goButtonActionPerformed
-                
-        generateLabels();     
-        
+
+        generateLabels();
+
     }//GEN-LAST:event_goButtonActionPerformed
 
     private void barcodeRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_barcodeRadioActionPerformed
-        
+
         upcBox.setEnabled(false);
         upcBox.setSelected(false);
-        
+
         codeBox.setSelected(true);
         codeBox.setEnabled(false);
-        
+
         sizeBox.setEnabled(false);
         sizeBox.setSelected(false);
-        
+
         weightBox.setEnabled(false);
         weightBox.setSelected(false);
-        
+
         costBox.setEnabled(false);
         costBox.setSelected(false);
-        
+
         priceBox.setEnabled(false);
         priceBox.setSelected(false);
-        
+
         catBox.setEnabled(false);
         catBox.setSelected(false);
-        
+
         C128Radio.setEnabled(true);
-        C39Radio.setEnabled(true);  
-        
+        C39Radio.setEnabled(true);
+
         descBox.setSelected(false); //cleanup
         descBox.setEnabled(false);
-        
+
         centerRadio.setSelected(true);
-        
+
         ucBox.setSelected(true);
         ucBox.setEnabled(false);
-        
+
     }//GEN-LAST:event_barcodeRadioActionPerformed
 
     private void infoRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoRadioActionPerformed
 
         codeBox.setEnabled(true);
-        
+
         upcBox.setEnabled(true);
-        
+
         sizeBox.setEnabled(true);
         weightBox.setEnabled(true);
         costBox.setEnabled(true);
         priceBox.setEnabled(true);
         catBox.setEnabled(true);
-        
+
         C128Radio.setEnabled(false);
         C39Radio.setEnabled(false);
-        
+
         descBox.setSelected(true);
         descBox.setEnabled(true);
-        
+
         leftRadio.setSelected(true);
-        
+
         //ucBox.setSelected(true);
         ucBox.setEnabled(true);
-        
+
     }//GEN-LAST:event_infoRadioActionPerformed
-    
- 
-    
+
     private javax.swing.table.TableModel tm;
-    private int [] selected_rows;
+    private int[] selected_rows;
     private String nl = System.getProperty("line.separator");
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton C128Radio;
     private javax.swing.JRadioButton C39Radio;
@@ -781,5 +792,5 @@ public class InventoryLabelsDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox upcBox;
     private javax.swing.JCheckBox weightBox;
     // End of variables declaration//GEN-END:variables
-    
+
 }

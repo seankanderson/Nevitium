@@ -17,7 +17,6 @@ import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.models.inventory.InventoryTableModel;
 import com.datavirtue.nevitium.ui.StatusDialog;
-import datavirtue.*;
 import com.datavirtue.nevitium.services.DiService;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -41,6 +40,8 @@ import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.ui.util.AutoCompleteDocument;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 import org.apache.commons.lang3.StringUtils;
 
@@ -869,7 +870,6 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         inventoryTable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         inventoryTable.setToolTipText("Click a row and press F9 to receive.");
-        inventoryTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
         inventoryTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 inventoryTableMouseClicked(evt);

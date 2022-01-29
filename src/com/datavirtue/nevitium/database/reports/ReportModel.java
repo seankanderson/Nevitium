@@ -6,9 +6,9 @@
  * * Copyright (c) Data Virtue 2006, 2007, 2008, 2009
  */
 package com.datavirtue.nevitium.database.reports;
+import com.datavirtue.nevitium.services.util.DV;
 import javax.swing.table.*;
-     import datavirtue.*;   
-     import java.text.*;
+          import java.text.*;
      import java.util.*;
      
 /**

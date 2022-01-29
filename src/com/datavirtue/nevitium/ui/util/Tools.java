@@ -8,8 +8,6 @@
  */
 package com.datavirtue.nevitium.ui.util;
 
-import datavirtue.DV;
-import gui.PlayWave;
 import javax.swing.table.*;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -22,6 +20,8 @@ import java.text.DateFormat;
 import java.util.Date;
 import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.contacts.ContactAddress;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.services.util.PlayWave;
 import org.apache.commons.codec.binary.Hex;
 
 /**

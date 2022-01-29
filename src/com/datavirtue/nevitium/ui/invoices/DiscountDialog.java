@@ -10,12 +10,11 @@
  */
 package com.datavirtue.nevitium.ui.invoices;
 
-import RuntimeManagement.GlobalApplicationDaemon;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.ui.util.AutoCompleteDocument;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
-import datavirtue.AutoCompleteDocument;
-import datavirtue.DV;
-import datavirtue.DbEngine;
+
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
@@ -28,15 +27,14 @@ import javax.swing.table.TableModel;
 public class DiscountDialog extends javax.swing.JDialog {
     Image winIcon;
     /** Creates new form DiscountDialog */
-    public DiscountDialog(java.awt.Frame parent, boolean modal, GlobalApplicationDaemon application, String desc, float total, boolean tx1, boolean tx2) {
+    public DiscountDialog(java.awt.Frame parent, boolean modal, String desc, float total, boolean tx1, boolean tx2) {
         super(parent, modal);
         
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Aha-16/enabled/Percent.png"));
 
         initComponents();
-        discItem = new Object [16];
-        db = application.getDb();
+                
         priceTotal = total;
         tax1 = tx1;
         tax2 = tx2;
@@ -242,7 +240,7 @@ public class DiscountDialog extends javax.swing.JDialog {
 
     private Object [] discItem;
     private java.util.ArrayList itemList;
-    private DbEngine db;
+  
     private float priceTotal;
     private boolean tax1, tax2;
     
@@ -270,45 +268,45 @@ public class DiscountDialog extends javax.swing.JDialog {
     
     private void populateItemList () {
         
-         itemList = new java.util.ArrayList();
-        itemList.trimToSize();
-        
-        TableModel cat_tm = db.createTableModel("miscitems");
-        
-        if (cat_tm != null && cat_tm.getRowCount() > 0){
-            
-            for (int r = 0; r < cat_tm.getRowCount(); r++){
-            
-                itemList.add((String) cat_tm.getValueAt(r, 1));
-                
-            }
-        
-         
-        }else {
-            
-            itemList.add("N/A");
-        }
-        
-        discDescField.setDocument(new AutoCompleteDocument( discDescField, itemList ));
+//         itemList = new java.util.ArrayList();
+//        itemList.trimToSize();
+//        
+//        TableModel cat_tm = db.createTableModel("miscitems");
+//        
+//        if (cat_tm != null && cat_tm.getRowCount() > 0){
+//            
+//            for (int r = 0; r < cat_tm.getRowCount(); r++){
+//            
+//                itemList.add((String) cat_tm.getValueAt(r, 1));
+//                
+//            }
+//        
+//         
+//        }else {
+//            
+//            itemList.add("N/A");
+//        }
+//        
+//        discDescField.setDocument(new AutoCompleteDocument( discDescField, itemList ));
         
         
     }
     
     private void normalizeItemList(String s) {
         
-        
-        String txm;
-        
-        java.util.ArrayList al;
-        
-        al = db.search("miscitems", 1, s, false);
-        
-        if (al == null){
-            
-            db.saveRecord("miscitems",new Object [] {new Integer(0), s} ,false);
-           
-        }
-        
+//        
+//        String txm;
+//        
+//        java.util.ArrayList al;
+//        
+//        al = db.search("miscitems", 1, s, false);
+//        
+//        if (al == null){
+//            
+//            db.saveRecord("miscitems",new Object [] {new Integer(0), s} ,false);
+//           
+//        }
+//        
         
     }
     

@@ -15,10 +15,9 @@ import com.datavirtue.nevitium.services.InvoiceService;
 import com.datavirtue.nevitium.services.exceptions.InvoiceItemAlreadyReturnedException;
 import com.datavirtue.nevitium.services.exceptions.InvoiceVoidedException;
 import com.datavirtue.nevitium.services.exceptions.PartialQuantityException;
-
+import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.google.inject.Injector;
-import datavirtue.*;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.util.ArrayList;
@@ -154,7 +153,6 @@ public class ReturnDialog extends javax.swing.JDialog {
             }
         });
         invoiceReturnsTable.setGridColor(new java.awt.Color(0, 0, 0));
-        invoiceReturnsTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
         invoiceReturnsTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 invoiceReturnsTableMouseClicked(evt);

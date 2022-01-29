@@ -6,8 +6,6 @@
  */
 package com.datavirtue.nevitium.ui.invoices;
 
-import com.datavirtue.nevitium.models.invoices.old.OldInvoice;
-import com.datavirtue.nevitium.models.invoices.old.Quote;
 import com.datavirtue.nevitium.models.invoices.InvoiceManagerTableModel;
 import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.models.settings.LocalAppSettings;
@@ -19,7 +17,7 @@ import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.ui.util.DateCellRenderer;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 
-import datavirtue.*;
+
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Image;
@@ -365,27 +363,27 @@ public class InvoiceManager extends javax.swing.JDialog {
             //setview - setpayments
             //clear table filters buttons (reset)
 
-            ArrayList al = db.search("invoice", 3, searchField.getText(), true);
-
-            if (al != null) {
-                tm = db.createTableModel("invoice", al, true);
-                invoiceTable.setModel(tm);
-
-                paymentTable.setModel(new DefaultTableModel());
-
-                this.customizeView();
-
-                //this.setPayments();
-                buttonGroup1.clearSelection();
-                unpaidRadio.setSelected(false);
-                paidRadio.setSelected(false);
-                quoteRadio.setSelected(false);
-                voidRadio.setSelected(false);
-
-                found = true;
-                searchResults = true;
-                searchString = searchField.getText();
-            }
+//            ArrayList al = db.search("invoice", 3, searchField.getText(), true);
+//
+//            if (al != null) {
+//                tm = db.createTableModel("invoice", al, true);
+//                invoiceTable.setModel(tm);
+//
+//                paymentTable.setModel(new DefaultTableModel());
+//
+//                this.customizeView();
+//
+//                //this.setPayments();
+//                buttonGroup1.clearSelection();
+//                unpaidRadio.setSelected(false);
+//                paidRadio.setSelected(false);
+//                quoteRadio.setSelected(false);
+//                voidRadio.setSelected(false);
+//
+//                found = true;
+//                searchResults = true;
+//                searchString = searchField.getText();
+//            }
 
         }
 
@@ -394,35 +392,35 @@ public class InvoiceManager extends javax.swing.JDialog {
             //cycle thru and build arraylist of invoice keys without duplcates
             //get table model 
             //store search sttate
-            ArrayList al = db.search("invitems", 5, searchField.getText(), true); //search invitems description
+            ArrayList al = null; //db.search("invitems", 5, searchField.getText(), true); //search invitems description
 
             if (al != null) {
                 ArrayList clean = new ArrayList();
                 clean.trimToSize(); //going to be resizing a lot!!!! not optimal
 
-                DefaultTableModel tmptm = (DefaultTableModel) db.createTableModel("invitems", al, false);
-                int tkey, ckey;
-                boolean used = false;
+//                DefaultTableModel tmptm = (DefaultTableModel) db.createTableModel("invitems", al, false);
+//                int tkey, ckey;
+//                boolean used = false;
+//
+//                for (int t = 0; t < tmptm.getRowCount(); t++) {
+//                    used = false;
+//                    tkey = (Integer) tmptm.getValueAt(t, 1);//get invoice key from invitem
+//
+//                    //cycle thru clean al and record new invoice key if it is not encountered
+//                    for (int c = 0; c < clean.size(); c++) {
+//                        ckey = (Integer) clean.get(c);
+//                        if (ckey == tkey) {
+//                            used = true;
+//                            break;
+//                        }
+//                    }
+//
+//                    if (!used) {
+//                        clean.add(tkey); //geerally causes a resize of the clean AL
+//                    }
+//                }
 
-                for (int t = 0; t < tmptm.getRowCount(); t++) {
-                    used = false;
-                    tkey = (Integer) tmptm.getValueAt(t, 1);//get invoice key from invitem
-
-                    //cycle thru clean al and record new invoice key if it is not encountered
-                    for (int c = 0; c < clean.size(); c++) {
-                        ckey = (Integer) clean.get(c);
-                        if (ckey == tkey) {
-                            used = true;
-                            break;
-                        }
-                    }
-
-                    if (!used) {
-                        clean.add(tkey); //geerally causes a resize of the clean AL
-                    }
-                }
-
-                tm = db.createTableModel("invoice", clean, invoiceTable);
+               // tm = db.createTableModel("invoice", clean, invoiceTable);
                 invoiceTable.setModel(tm);
 
                 this.customizeView();
@@ -434,7 +432,7 @@ public class InvoiceManager extends javax.swing.JDialog {
                 quoteRadio.setSelected(false);
                 voidRadio.setSelected(false);
 
-                tmptm = null;
+                //tmptm = null;
                 al = null; //help GC a little bit??
                 found = true;
                 searchResults = true;
@@ -505,23 +503,10 @@ public class InvoiceManager extends javax.swing.JDialog {
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Posted Invoices", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
         jScrollPane1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        invoiceTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
 
         invoiceTable.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.white, null));
         invoiceTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        invoiceTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
         invoiceTable.setToolTipText("Double-Click an Invoice to View or Print");
-        invoiceTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
         invoiceTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 invoiceTableMouseClicked(evt);
@@ -765,27 +750,8 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Payment Activity", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
-
         paymentTable.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        paymentTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null, null}
-            },
-            new String [] {
-                "DATE", "TYPE", "REF", "AMOUNT", "BALANCE"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
         paymentTable.setToolTipText("Invoice Activity");
-        paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, SwingConstants.RIGHT));
         jScrollPane3.setViewportView(paymentTable);
 
         deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Delete.png"))); // NOI18N
@@ -948,32 +914,32 @@ public class InvoiceManager extends javax.swing.JDialog {
             return;
         }
 
-        Quote theQuote = new Quote(db, key);
-        int tmpKey;
-
-        // delete quote items
-        DefaultTableModel items = theQuote.getItems();
-
-        for (int r = 0; r < items.getRowCount(); r++) {
-
-            tmpKey = (Integer) items.getValueAt(r, 0);
-            db.removeRecord("qitems", tmpKey);
-
-        }
-        //this.refreshTables();
-
-        db.removeRecord("quote", key);
-
-        // delete quote shipto
-        tmpKey = theQuote.getShipToKey();
-        if (tmpKey > 0) {
-            db.removeRecord("qshipto", tmpKey);
-        }
-
-        JOptionPane.showMessageDialog(null, "Quote was deleted.");
-
-        theQuote = null;
-        this.refreshTables();
+//        Quote theQuote = new Quote(db, key);
+//        int tmpKey;
+//
+//        // delete quote items
+//        DefaultTableModel items = theQuote.getItems();
+//
+//        for (int r = 0; r < items.getRowCount(); r++) {
+//
+//            tmpKey = (Integer) items.getValueAt(r, 0);
+//            db.removeRecord("qitems", tmpKey);
+//
+//        }
+//        //this.refreshTables();
+//
+//        db.removeRecord("quote", key);
+//
+//        // delete quote shipto
+//        tmpKey = theQuote.getShipToKey();
+//        if (tmpKey > 0) {
+//            db.removeRecord("qshipto", tmpKey);
+//        }
+//
+//        JOptionPane.showMessageDialog(null, "Quote was deleted.");
+//
+//        theQuote = null;
+//        this.refreshTables();
     }
 
 
@@ -1021,7 +987,7 @@ public class InvoiceManager extends javax.swing.JDialog {
         /* Fall-through action */
         String iValue = javax.swing.JOptionPane.showInputDialog("Type DELETE to continue.");
         if (iValue != null && iValue.equalsIgnoreCase("delete")) {
-            db.removeRecord("payments", paymentKey);
+            //db.removeRecord("payments", paymentKey);
 
         }
 
@@ -1030,39 +996,39 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         /* Get an Invoice instance for this invoice and check balance */
  /* if the balance is over 0.00 mark unpaid, save and refresh tables */
-        OldInvoice inv = new OldInvoice(null, invKey);
+        //OldInvoice inv = new OldInvoice(null, invKey);
 
-        float balance = inv.getInvoiceDueNow();
-
-        if (balance > 0) {
-            boolean prevPdStatus = inv.isPaid();
-            inv.setPaid(false);
-            inv.saveInvoice();
-            this.refreshTables();
-            if (prevPdStatus) {
-                javax.swing.JOptionPane.showMessageDialog(null,
-                        "The invoice now shows a balance due of " + DV.money(balance) + nl
-                        + "The status of the invoice has been changed to unpaid.");
-            }
-            return;
-        }
-
-        if (balance < 0) {
-
-            inv.setPaid(false);
-            inv.saveInvoice();
-            this.refreshTables();
-
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "The invoice now has a negative balance," + nl
-                    + "showing that the customer has overpaid." + nl
-                    + "Its status has been changed to unpaid so that" + nl
-                    + " you can reconcile the invoice by issuing a refund.");
-
-            return;
-        }
-
-        setPayments();
+//        float balance = inv.getInvoiceDueNow();
+//
+//        if (balance > 0) {
+//            boolean prevPdStatus = inv.isPaid();
+//            inv.setPaid(false);
+//            inv.saveInvoice();
+//            this.refreshTables();
+//            if (prevPdStatus) {
+//                javax.swing.JOptionPane.showMessageDialog(null,
+//                        "The invoice now shows a balance due of " + DV.money(balance) + nl
+//                        + "The status of the invoice has been changed to unpaid.");
+//            }
+//            return;
+//        }
+//
+//        if (balance < 0) {
+//
+//            inv.setPaid(false);
+//            inv.saveInvoice();
+//            this.refreshTables();
+//
+//            javax.swing.JOptionPane.showMessageDialog(null,
+//                    "The invoice now has a negative balance," + nl
+//                    + "showing that the customer has overpaid." + nl
+//                    + "Its status has been changed to unpaid so that" + nl
+//                    + " you can reconcile the invoice by issuing a refund.");
+//
+//            return;
+//        }
+//
+//        setPayments();
 
     }
 
@@ -1072,95 +1038,95 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     private void voidAction() {
 
-        int row = invoiceTable.getSelectedRow();
-
-        if (row > -1 && !voidRadio.isSelected()) {
-
-//            if (!accessKey.checkManager(500)) {
-//                accessKey.showMessage("Void");
+//        int row = invoiceTable.getSelectedRow();
+//
+//        if (row > -1 && !voidRadio.isSelected()) {
+//
+////            if (!accessKey.checkManager(500)) {
+////                accessKey.showMessage("Void");
+////                return;
+////            }
+//            if (quoteRadio.isSelected()) {
+//
+//                deleteQuote((Integer) invoiceTable.getModel().getValueAt(row, 0));
 //                return;
 //            }
-            if (quoteRadio.isSelected()) {
+//
+//            //int a = JOptionPane.showConfirmDialog(this, "Sure you want to VOID the selected invoice?" + System.getProperty("line.separator") +"VOID is Permanent!","V O I D",  JOptionPane.YES_NO_OPTION);
+//            String iValue = JOptionPane.showInputDialog("To void this invoice type VOID and click OK.");
 
-                deleteQuote((Integer) invoiceTable.getModel().getValueAt(row, 0));
-                return;
-            }
-
-            //int a = JOptionPane.showConfirmDialog(this, "Sure you want to VOID the selected invoice?" + System.getProperty("line.separator") +"VOID is Permanent!","V O I D",  JOptionPane.YES_NO_OPTION);
-            String iValue = JOptionPane.showInputDialog("To void this invoice type VOID and click OK.");
-
-            if (iValue != null && iValue.equalsIgnoreCase("void")) {
-
-                int r = invoiceTable.getSelectedRow();
-
-                Object[] dataOut = db.getRecord("invoice", (Integer) tm.getValueAt(r, 0));
-
-                dataOut[9] = new Boolean(true);  //VOID it!
-
-                int savekey = db.saveRecord("invoice", dataOut, false);
-
-
-                /* Blast sales and payments for this invoice */
-                String inum = (String) dataOut[1];
-                String invoice_key = Integer.toString((Integer) dataOut[0]);
-
-                /* Kill invoice payments */
-                ArrayList al = db.search("payments", 1, inum, false);
-
-                if (al != null) {
-
-                    for (int i = 0; i < al.size(); i++) {
-
-                        db.removeRecord("payments", (Integer) al.get(i));
-                    }
-                }
-
-                /* Kill invoice items */
-                al = db.search("invitems", 1, invoice_key, false);
-                Object[] rec;
-                String desc;
-                String type;
-                float qty;
-
-                ArrayList temp;
-                if (al != null) {
-
-                    for (int i = 0; i < al.size(); i++) {
-                        rec = db.getRecord("invitems", (Integer) al.get(i));
-                        desc = (String) rec[5];  //desc
-                        type = (String) rec[4];  //code
-                        qty = (Float) rec[3]; //qty
-
-                        temp = db.search("inventory", 3, desc, false);
-
-                        if (temp != null) {
-                            rec = db.getRecord("inventory", (Integer) temp.get(0));
-
-                            if (type.equalsIgnoreCase("RETURN")) {
-                                rec[6] = (Float) rec[6] + (qty * -1);
-                            } else {
-                                rec[6] = (Float) rec[6] + qty;
-                            }
-                            db.removeRecord("invitems", (Integer) al.get(i));
-                            db.saveRecord("inventory", rec, false);
-
-                        }
-                    }
-                }
-                this.refreshTables();
-
-                if (savekey == -1) {
-                    JOptionPane.showMessageDialog(null, "Problem accessing database, invoice was NOT voided.", "ERROR", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(null, "Invoice was VOIDED.");
-                }
-
-            } else {
-
-                JOptionPane.showMessageDialog(null, "Invoice was NOT voided.");
-
-            }
-        }
+//            if (iValue != null && iValue.equalsIgnoreCase("void")) {
+//
+//                int r = invoiceTable.getSelectedRow();
+//
+//                Object[] dataOut = db.getRecord("invoice", (Integer) tm.getValueAt(r, 0));
+//
+//                dataOut[9] = new Boolean(true);  //VOID it!
+//
+//                int savekey = db.saveRecord("invoice", dataOut, false);
+//
+//
+//                /* Blast sales and payments for this invoice */
+//                String inum = (String) dataOut[1];
+//                String invoice_key = Integer.toString((Integer) dataOut[0]);
+//
+//                /* Kill invoice payments */
+//                ArrayList al = db.search("payments", 1, inum, false);
+//
+//                if (al != null) {
+//
+//                    for (int i = 0; i < al.size(); i++) {
+//
+//                        db.removeRecord("payments", (Integer) al.get(i));
+//                    }
+//                }
+//
+//                /* Kill invoice items */
+//                al = db.search("invitems", 1, invoice_key, false);
+//                Object[] rec;
+//                String desc;
+//                String type;
+//                float qty;
+//
+//                ArrayList temp;
+//                if (al != null) {
+//
+//                    for (int i = 0; i < al.size(); i++) {
+//                        rec = db.getRecord("invitems", (Integer) al.get(i));
+//                        desc = (String) rec[5];  //desc
+//                        type = (String) rec[4];  //code
+//                        qty = (Float) rec[3]; //qty
+//
+//                        temp = db.search("inventory", 3, desc, false);
+//
+//                        if (temp != null) {
+//                            rec = db.getRecord("inventory", (Integer) temp.get(0));
+//
+//                            if (type.equalsIgnoreCase("RETURN")) {
+//                                rec[6] = (Float) rec[6] + (qty * -1);
+//                            } else {
+//                                rec[6] = (Float) rec[6] + qty;
+//                            }
+//                            db.removeRecord("invitems", (Integer) al.get(i));
+//                            db.saveRecord("inventory", rec, false);
+//
+//                        }
+//                    }
+//                }
+//                this.refreshTables();
+//
+//                if (savekey == -1) {
+//                    JOptionPane.showMessageDialog(null, "Problem accessing database, invoice was NOT voided.", "ERROR", JOptionPane.ERROR_MESSAGE);
+//                } else {
+//                    JOptionPane.showMessageDialog(null, "Invoice was VOIDED.");
+//                }
+//
+//            } else {
+//
+//                JOptionPane.showMessageDialog(null, "Invoice was NOT voided.");
+//
+//            }
+//        }
 
     }
 
@@ -1488,12 +1454,11 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     private java.awt.Frame parentWin;
     private javax.swing.table.TableModel tm;
-    private DbEngine db;
-    private OldInvoice invoice;
+    
     private int[] cols = new int[]{0, 3, 3, 3, 3, 6, 3, 3};
     private String stat = "";
     private String nl = System.getProperty("line.separator");
-    private Settings props;
+   
     private Image winIcon;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

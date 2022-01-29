@@ -84,9 +84,6 @@
       </Layout>
       <SubComponents>
         <Container class="javax.swing.JScrollPane" name="jScrollPane3">
-          <AuxValues>
-            <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));"/>
-          </AuxValues>
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
           <SubComponents>
@@ -106,9 +103,6 @@
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" value="Invoice Activity"/>
               </Properties>
-              <AuxValues>
-                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, SwingConstants.RIGHT));"/>
-              </AuxValues>
             </Component>
           </SubComponents>
         </Container>

@@ -2,6 +2,7 @@
 
 package com.datavirtue.nevitium.ui.util;
 
+import com.datavirtue.nevitium.ui.PleaseWait;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.FileDataSource;
@@ -10,7 +11,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.Authenticator;
 import java.util.Properties;
-import gui.PleaseWait;
 
 
 /**

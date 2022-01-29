@@ -5,7 +5,7 @@
  */
 
 package com.datavirtue.nevitium.ui.inventory;
-import datavirtue.*;
+import com.datavirtue.nevitium.services.util.DV;
 import java.io.*;
 import java.awt.*;
 import java.awt.event.*;

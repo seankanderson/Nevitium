@@ -10,7 +10,6 @@ package com.datavirtue.nevitium.ui;
 import com.datavirtue.nevitium.ui.util.NewEmail;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import java.io.*;
-import datavirtue.*;
 import java.awt.*;
 import javax.swing.*;
 import com.google.inject.Injector;
@@ -31,6 +30,8 @@ import com.datavirtue.nevitium.services.DatabaseService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.services.util.DVNET;
 import java.util.Locale;
 import java.util.prefs.BackingStoreException;
 

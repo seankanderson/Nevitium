@@ -5,8 +5,6 @@
  */
 package com.datavirtue.nevitium.ui.invoices;
 
-import com.datavirtue.nevitium.database.reports.ReportFactory;
-import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.models.invoices.PaymentActivityTableModel;
 import com.datavirtue.nevitium.models.settings.AppSettings;
@@ -14,15 +12,11 @@ import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.InvoiceService;
-import datavirtue.DV;
-import datavirtue.DbEngine;
-import datavirtue.FractionCellRenderer;
+import com.datavirtue.nevitium.services.util.DV;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 
@@ -83,8 +77,6 @@ public class PaymentActivityDialog extends javax.swing.JDialog {
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Payment Activity", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
-
         paymentTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         paymentTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -103,7 +95,6 @@ public class PaymentActivityDialog extends javax.swing.JDialog {
             }
         });
         paymentTable.setToolTipText("Invoice Activity");
-        paymentTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, SwingConstants.RIGHT));
         jScrollPane3.setViewportView(paymentTable);
 
         deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Delete.png"))); // NOI18N

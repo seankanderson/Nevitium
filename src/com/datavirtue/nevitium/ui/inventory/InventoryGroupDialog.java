@@ -5,9 +5,9 @@
  */
 
 package com.datavirtue.nevitium.ui.inventory;
+import com.datavirtue.nevitium.services.util.DV;
 import java.io.*;
 import javax.swing.DefaultListModel;
-import datavirtue.*;
 import java.awt.Image;
 import java.awt.Toolkit;
 

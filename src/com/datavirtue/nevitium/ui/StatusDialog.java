@@ -10,7 +10,8 @@
  */
 
 package com.datavirtue.nevitium.ui;
-import datavirtue.*;
+import com.datavirtue.nevitium.services.util.DV;
+
 
 /**
  *

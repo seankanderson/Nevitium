@@ -14,21 +14,16 @@
 
 package com.datavirtue.nevitium.services;
 
-import datavirtue.*;
 import com.lowagie.text.BadElementException;
 import com.lowagie.text.DocumentException;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import com.lowagie.text.Cell;
 import com.lowagie.text.Document;
 import com.lowagie.text.ExceptionConverter;
-import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.Phrase;
-import com.lowagie.text.Table;
 import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.Chunk;
@@ -43,9 +38,6 @@ import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.ColumnText;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.awt.Color;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *

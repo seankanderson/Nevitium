@@ -5,8 +5,9 @@
  */
 
 package com.datavirtue.nevitium.ui.inventory;
+import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import datavirtue.*;
+
 
 
 /**

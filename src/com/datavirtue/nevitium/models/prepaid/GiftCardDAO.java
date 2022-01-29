@@ -6,7 +6,6 @@
 package com.datavirtue.nevitium.models.prepaid;
 
 import com.datavirtue.nevitium.ui.util.Tools;
-import datavirtue.DbEngine;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -15,16 +14,10 @@ import java.util.Date;
  * @author Data Virtue
  */
 public class GiftCardDAO {
-
-    public GiftCardDAO(DbEngine db){
-
-        this.db = db;
-
-    }
-
+    
     public boolean loadAccount(String acct){
         
-        ArrayList al = db.search("card", 1, acct, false);
+        ArrayList al = null; //= db.search("card", 1, acct, false);
         if (al != null && al.size() >= 1){
             al.trimToSize();
             if (al.size() > 1){
@@ -34,7 +27,7 @@ public class GiftCardDAO {
             }
             
             int k = (Integer)al.get(0);
-            data = db.getRecord("card", k);
+            //data = db.getRecord("card", k);
             populated = true;
             return true;
         }
@@ -53,7 +46,7 @@ public class GiftCardDAO {
         if (amount > balance) {
             data[3] = 0.00f;
             data[4] = new Date().getTime();
-            db.saveRecord("card", data, false);
+            //db.saveRecord("card", data, false);
             return balance;
         }
 
@@ -61,12 +54,12 @@ public class GiftCardDAO {
             data[3] = (balance - amount);
             data[4] = new Date().getTime();
         }
-        db.saveRecord("card", data, false);
+        //db.saveRecord("card", data, false);
         return amount;
 
     }
 
     private boolean populated = false;
     private Object[] data;
-    private DbEngine db;
+    
 }

@@ -5,8 +5,8 @@
 
 package com.datavirtue.nevitium.ui.layoutdesigner;
 
-import datavirtue.DV;
-import datavirtue.ExtensionFileFilter;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.services.util.ExtensionFileFilter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

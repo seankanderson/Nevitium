@@ -15,7 +15,7 @@
 package com.datavirtue.nevitium.database.reports;
 
 
-import datavirtue.*;
+import com.datavirtue.nevitium.services.util.DV;
 import java.io.*;
 
 /**

@@ -3,7 +3,7 @@ package com.datavirtue.nevitium.models.invoices;
 
 import com.datavirtue.nevitium.models.AbstractCollectionTableModel;
 import com.datavirtue.nevitium.services.InvoiceService;
-import datavirtue.DV;
+import com.datavirtue.nevitium.services.util.DV;
 import java.util.Date;
 import java.util.List;
 

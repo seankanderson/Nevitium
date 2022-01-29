@@ -10,14 +10,9 @@
  */
 package com.datavirtue.nevitium.ui.contacts;
 
-import RuntimeManagement.GlobalApplicationDaemon;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
-import com.datavirtue.nevitium.models.contacts.old.ConnectionsDAO;
-import com.datavirtue.nevitium.models.contacts.old.ShipToDAO;
 
-import datavirtue.*;
 import java.awt.Image;
-import java.awt.Point;
 import java.awt.Toolkit;
 import javax.swing.table.*;
 import java.util.*;
@@ -27,9 +22,8 @@ import com.datavirtue.nevitium.models.contacts.ContactAddressTableModel;
 import com.datavirtue.nevitium.services.ContactService;
 import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.util.DV;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -46,8 +40,6 @@ public class ContactShippingDialog extends javax.swing.JDialog {
     private ContactAddress returnValue;
 
     private final int parentKey = 0;
-    private DbEngine db;
-    private ConnectionsDAO cDAO;
     private Object[] connShip = null;
     private DefaultTableModel shipToTableModel;
     private boolean selectMode = false;

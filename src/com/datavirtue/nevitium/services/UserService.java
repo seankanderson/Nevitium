@@ -5,8 +5,8 @@ import java.sql.SQLException;
 import com.datavirtue.nevitium.models.security.User;
 import com.datavirtue.nevitium.services.exceptions.DuplicateUserNameException;
 import com.datavirtue.nevitium.services.exceptions.FailedPasswordException;
+import com.datavirtue.nevitium.services.util.PBE;
 import com.j256.ormlite.dao.DaoManager;
-import datavirtue.PBE;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -51,7 +51,7 @@ public class UserService extends BaseService<UserDao, User> {
         return !StringUtils.isEmpty(results.get(0).getPassword());
     }
 
-    public User authenticateUser(String username, char[] password) throws FailedPasswordException, DuplicateUserNameException, SQLException {
+    public User authenticateUser(String username, char[] password) throws DuplicateUserNameException, SQLException, Exception {
                         
         var users = this.getDao().queryForEq("username", username);
         if (users == null) {
@@ -68,7 +68,8 @@ public class UserService extends BaseService<UserDao, User> {
         try {
             decrypted = PBE.decrypt(password, cipher);
         } catch (Exception ex) {            
-            throw new FailedPasswordException();
+            throw ex;
+            //throw new FailedPasswordException();
         }
         if (decrypted != null) {
             var pw = new String(password);

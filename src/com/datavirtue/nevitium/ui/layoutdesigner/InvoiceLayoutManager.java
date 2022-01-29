@@ -12,11 +12,9 @@
 package com.datavirtue.nevitium.ui.layoutdesigner;
 
 
-import RuntimeManagement.GlobalApplicationDaemon;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.services.util.ExtensionFileFilter;
 import com.datavirtue.nevitium.ui.util.TreeUtil;
-//import businessmanager.ExportDialog;
-import datavirtue.DV;
-import datavirtue.ExtensionFileFilter;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -65,27 +63,25 @@ public class InvoiceLayoutManager extends javax.swing.JFrame {
 private DocumentLayout layout;
     /** Creates new form InvoiceLayoutManager */
     private Image winIcon;
-    public InvoiceLayoutManager(GlobalApplicationDaemon application, String filename) {
+    public InvoiceLayoutManager(String filename) {
 
         initComponents();
         String file_sep = System.getProperty("file.separator");
         Toolkit tools = Toolkit.getDefaultToolkit();
         Image winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         this.setIconImage(winIcon);
-        this.application = application;
-        String working_path = application.getWorkingPath() + "layouts"+file_sep;
-         
+        
         //System.out.println(working_path+filename);
         setPopup();
         this.setVisible(true);
-        if (!new File(working_path+filename).exists()){
-            JOptionPane.showMessageDialog(null, "The file "+working_path+filename+" was not found.");
-        }else {
-            layout = new DocumentLayout(working_path + filename);
-            this.setTitle("Form Builder "+ "["+working_path+filename+"]");
-            jTree.setModel(layout.getTreeModel());
-            preview(false);
-        }
+//        if (!new File(working_path+filename).exists()){
+//            JOptionPane.showMessageDialog(null, "The file "+working_path+filename+" was not found.");
+//        }else {
+//            layout = new DocumentLayout(working_path + filename);
+//            this.setTitle("Form Builder "+ "["+working_path+filename+"]");
+//            jTree.setModel(layout.getTreeModel());
+//            preview(false);
+//        }
         
         ImageIcon rootCell = new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Measure.png"));
         ImageIcon subCell = new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Drawing.png"));
@@ -117,7 +113,7 @@ private DocumentLayout layout;
 
     }
 
-    private GlobalApplicationDaemon application;
+    
 private void loadLayout(){
 
     JFileChooser jfc = new JFileChooser(current_file);
@@ -127,7 +123,7 @@ private void loadLayout(){
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         FileFilter filter = new ExtensionFileFilter(".xml Files", new String[] { "xml"});
         jfc.setFileFilter(filter);
-        jfc.setSelectedFile(new File(application.getWorkingPath()+"/layouts/"));
+        jfc.setSelectedFile(new File("/layouts/"));
         /* the JFileChooser method returns an integer value denoting the status of the file dialog based on the user's choice */
         int status = jfc.showOpenDialog(this);
         /* Exit the method if the user hit cancel */

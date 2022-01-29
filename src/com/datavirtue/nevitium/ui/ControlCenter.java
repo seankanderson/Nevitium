@@ -9,8 +9,7 @@ package com.datavirtue.nevitium.ui;
 import com.datavirtue.nevitium.ui.checks.CheckDialog;
 import com.datavirtue.nevitium.ui.inventory.MyInventoryApp;
 import com.datavirtue.nevitium.ui.contacts.ContactsApp;
-import RuntimeManagement.KeyCard;
-import RuntimeManagement.GlobalApplicationDaemon;
+
 
 import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.database.reports.ReportFactory;
@@ -19,8 +18,7 @@ import com.datavirtue.nevitium.ui.invoices.InvoiceManager;
 import com.datavirtue.nevitium.ui.layoutdesigner.InvoiceLayoutManager;
 import com.datavirtue.nevitium.database.reports.ReportTableDialog;
 import businessmanager.ReturnMessageThread;
-import com.datavirtue.nevitium.models.invoices.Invoice;
-import datavirtue.*;
+
 import de.schlichtherle.io.*;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
@@ -35,6 +33,7 @@ import com.datavirtue.nevitium.services.DatabaseService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.util.DV;
 import com.google.inject.Inject;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -48,7 +47,7 @@ import java.util.prefs.BackingStoreException;
  */
 public class ControlCenter extends javax.swing.JFrame {
 
-    private KeyCard accessKey;
+    
     private Toolkit tools = Toolkit.getDefaultToolkit();
     @Inject
     private final AppSettingsService appSettingsService = null;
@@ -342,7 +341,11 @@ public class ControlCenter extends javax.swing.JFrame {
 
         var contactsApp = new ContactsApp(this, true, true, true, false);
         
-        contactsApp.display();
+        try {
+            contactsApp.display();
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing local settings");
+        }
 
         var contact = contactsApp.getReturnValue();  
 
@@ -351,7 +354,7 @@ public class ControlCenter extends javax.swing.JFrame {
         }
 
         contactsApp.dispose();
-        ReportFactory.generateCustomerStatement(application, contact);
+        //ReportFactory.generateCustomerStatement(application, contact);
 
     }
 
@@ -827,7 +830,10 @@ public class ControlCenter extends javax.swing.JFrame {
             contactsApp.display();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error getting contacts");
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing local settings");
         }
+        
 
     }//GEN-LAST:event_connectionsButtonActionPerformed
 
@@ -875,18 +881,18 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void openInvoiceReport() {
 
-        if (!accessKey.checkReports(300)) {
-            accessKey.showMessage("Reports");
-            return;
-        }
+//        if (!accessKey.checkReports(300)) {
+//            accessKey.showMessage("Reports");
+//            return;
+//        }
 
-        sys_stat = ReportFactory.generateOpenInvoiceReport(application);
-
-        if (sys_stat.equals("none")) {
-
-            javax.swing.JOptionPane.showMessageDialog(null, "No open invoices found.");
-            sys_stat = "";
-        }
+//        sys_stat = ReportFactory.generateOpenInvoiceReport(application);
+//
+//        if (sys_stat.equals("none")) {
+//
+//            javax.swing.JOptionPane.showMessageDialog(null, "No open invoices found.");
+//            sys_stat = "";
+//        }
 
     }
 
@@ -1376,8 +1382,7 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private boolean debug = false;
 
-    private GlobalApplicationDaemon application = new GlobalApplicationDaemon();
-
+    
     private Image winIcon;
 
     private String nl = System.getProperty("line.separator");
@@ -1449,10 +1454,10 @@ public class ControlCenter extends javax.swing.JFrame {
     /* BEGIN ACT PERF */
     private void workOrderItemActionPerformed(java.awt.event.ActionEvent evt) {//event_workOrderItemActionPerformed
 
-        boolean stat = ReportFactory.generateWorkOrder(null);
-        if (stat == false) {
-            javax.swing.JOptionPane.showMessageDialog(null, "A problem occurred while building the workorder.");
-        }
+//        boolean stat = ReportFactory.generateWorkOrder(null);
+//        if (stat == false) {
+//            javax.swing.JOptionPane.showMessageDialog(null, "A problem occurred while building the workorder.");
+//        }
 
     }//event_workOrderItemActionPerformed
 
@@ -1462,33 +1467,33 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void checkMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//event_checkMenuItemActionPerformed
 
-        if (accessKey.checkCheck(500)) {
-            new CheckDialog(this, true, application, null, 0, "");
-        } else {
-
-            accessKey.showMessage("Check Printing");
-
-        }
+//        if (accessKey.checkCheck(500)) {
+//            new CheckDialog(this, true, application, null, 0, "");
+//        } else {
+//
+//            accessKey.showMessage("Check Printing");
+//
+//        }
 
     }//event_checkMenuItemActionPerformed
 
     private void upgradeImportItemActionPerformed(java.awt.event.ActionEvent evt) {//event_upgradeImportItemActionPerformed
 
-        if (accessKey.checkExports(500)) {
-            int a = javax.swing.JOptionPane.showConfirmDialog(null,
-                    "This feature is intended for importing data from a Full Export of "
-                    + System.getProperty("line.separator")
-                    + "Nevitium into a blank database and will overwrite your data."
-                    + System.getProperty("line.separator") + "Do you want to continue?",
-                    "WARNING", JOptionPane.WARNING_MESSAGE);
-            if (a == 0) {
-                upgradeImport();
-            }
-        } else {
-
-            accessKey.showMessage("Export/Import");
-
-        }
+//        if (accessKey.checkExports(500)) {
+//            int a = javax.swing.JOptionPane.showConfirmDialog(null,
+//                    "This feature is intended for importing data from a Full Export of "
+//                    + System.getProperty("line.separator")
+//                    + "Nevitium into a blank database and will overwrite your data."
+//                    + System.getProperty("line.separator") + "Do you want to continue?",
+//                    "WARNING", JOptionPane.WARNING_MESSAGE);
+//            if (a == 0) {
+//                upgradeImport();
+//            }
+//        } else {
+//
+//            accessKey.showMessage("Export/Import");
+//
+//        }
 
     }//event_upgradeImportItemActionPerformed
 
@@ -1501,64 +1506,64 @@ public class ControlCenter extends javax.swing.JFrame {
          *Export jrnls, hold & grps folders
          *
          */
-        if (accessKey.checkExports(500)) {
-            upgradeExport();
-        } else {
-
-            accessKey.showMessage("Export");
-
-        }
+//        if (accessKey.checkExports(500)) {
+//            upgradeExport();
+//        } else {
+//
+//            accessKey.showMessage("Export");
+//
+//        }
     }//event_upgradeExportItemActionPerformed
 
     private void exportItemActionPerformed(java.awt.event.ActionEvent evt) {//event_exportItemActionPerformed
 
-        if (accessKey.checkExports(500)) {
-            new ExportDialog(null, true, null);
-        } else {
-
-            accessKey.showMessage("Export");
-
-        }
+//        if (accessKey.checkExports(500)) {
+//            new ExportDialog(null, true, null);
+//        } else {
+//
+//            accessKey.showMessage("Export");
+//
+//        }
     }//event_exportItemActionPerformed
 
     private void reorderReportActionPerformed(java.awt.event.ActionEvent evt) {//event_reorderReportActionPerformed
 
-        if (!accessKey.checkReports(300)) {
-            accessKey.showMessage("Reports");
-            return;
-        }
-        sys_stat = ReportFactory.generateReorderReport(null, null);
+//        if (!accessKey.checkReports(300)) {
+//            accessKey.showMessage("Reports");
+//            return;
+//        }
+        //sys_stat = ReportFactory.generateReorderReport();
 
     }//event_reorderReportActionPerformed
 
     private void vendorListActionPerformed(java.awt.event.ActionEvent evt) {//event_vendorListActionPerformed
 
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Customer/Supplier Reports");
-            return;
-        }
-        sys_stat = ReportFactory.generateCustomerReport(null, null, true);
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Customer/Supplier Reports");
+//            return;
+//        }
+//        sys_stat = ReportFactory.generateCustomerReport(null, null, true);
 
     }//event_vendorListActionPerformed
 
     private void VendorPhoneListActionPerformed(java.awt.event.ActionEvent evt) {//event_VendorPhoneListActionPerformed
 
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Customer/Supplier Reports");
-            return;
-        }
-
-        sys_stat = ReportFactory.generatePhoneList(null, null, false, 11);
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Customer/Supplier Reports");
+//            return;
+//        }
+//
+//        sys_stat = ReportFactory.generatePhoneList(null, null, false, 11);
 
     }//event_VendorPhoneListActionPerformed
 
     private void CustPhoneListActionPerformed(java.awt.event.ActionEvent evt) {//event_CustPhoneListActionPerformed
 
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Customer/Supplier Reports");
-            return;
-        }
-        sys_stat = ReportFactory.generatePhoneList(null, null, true, 11);
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Customer/Supplier Reports");
+//            return;
+//        }
+//        sys_stat = ReportFactory.generatePhoneList(null, null, true, 11);
 
     }//event_CustPhoneListActionPerformed
 
@@ -1578,11 +1583,11 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void revenueItemActionPerformed(java.awt.event.ActionEvent evt) {//event_revenueItemActionPerformed
 
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Financial Reports");
-            return;
-        }
-        new ReportTableDialog(this, false, application, "revenue");
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Financial Reports");
+//            return;
+//        }
+//        new ReportTableDialog(this, false, application, "revenue");
 
     }//event_revenueItemActionPerformed
 
@@ -1594,12 +1599,12 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void inventoryReportItemActionPerformed(java.awt.event.ActionEvent evt) {//event_inventoryReportItemActionPerformed
 
-        if (!accessKey.checkReports(300)) {
-            accessKey.showMessage("Reports");
-            return;
-        }
-
-        sys_stat = ReportFactory.generateInventoryStatusReport(null, null);
+//        if (!accessKey.checkReports(300)) {
+//            accessKey.showMessage("Reports");
+//            return;
+//        }
+//
+//        sys_stat = ReportFactory.generateInventoryStatusReport(null, null);
 
     }//event_inventoryReportItemActionPerformed
 
@@ -1621,21 +1626,21 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void custReportActionPerformed(java.awt.event.ActionEvent evt) {//event_custReportActionPerformed
 
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Customer/Supplier Reports");
-            return;
-        }
-        sys_stat = ReportFactory.generateCustomerReport(null, null, false);
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Customer/Supplier Reports");
+//            return;
+//        }
+//        sys_stat = ReportFactory.generateCustomerReport(null, null, false);
 
     }//event_custReportActionPerformed
 
     private void salesItemActionPerformed(java.awt.event.ActionEvent evt) {//event_salesItemActionPerformed
 
-        if (!accessKey.checkReports(500)) {
-            accessKey.showMessage("Financial Reports");
-            return;
-        }
-        new ReportTableDialog(this, false, application, "sales");
+//        if (!accessKey.checkReports(500)) {
+//            accessKey.showMessage("Financial Reports");
+//            return;
+//        }
+//        new ReportTableDialog(this, false, application, "sales");
     }//event_salesItemActionPerformed
 
     private void quickItemActionPerformed(java.awt.event.ActionEvent evt) {//event_quickItemActionPerformed
@@ -1647,10 +1652,10 @@ public class ControlCenter extends javax.swing.JFrame {
 
     private void invoiceItemActionPerformed(java.awt.event.ActionEvent evt) {//event_invoiceItemActionPerformed
 
-        if (!accessKey.checkManager(300)) {
-            accessKey.showMessage("Invoice Manager");
-            return;
-        }
+//        if (!accessKey.checkManager(300)) {
+//            accessKey.showMessage("Invoice Manager");
+//            return;
+//        }
         //InvoiceModel temp = (InvoiceModel) DV.DeSerial("data/hold/I.10010.inv");
         //  InvoiceModel temp = null;             
         //invDialog id = new invDialog (this, true, dbsys, cso, temp); //no select
@@ -1678,6 +1683,8 @@ public class ControlCenter extends javax.swing.JFrame {
             contactsApp.display();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error access contacts database");
+        } catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing local settings");
         }
 
     }//event_connectionsItemActionPerformed
@@ -1704,7 +1711,7 @@ public class ControlCenter extends javax.swing.JFrame {
     }//event_creditsItemActionPerformed
 
     private void prepaidItemActionPerformed(java.awt.event.ActionEvent evt) {//event_prepaidItemActionPerformed
-        new GiftCardManager(this, true, application);
+        //new GiftCardManager(this, true);
     }//event_prepaidItemActionPerformed
 
     private void conversionImportActionPerformed(java.awt.event.ActionEvent evt) {//event_conversionImportActionPerformed
@@ -1720,11 +1727,11 @@ public class ControlCenter extends javax.swing.JFrame {
     }//event_enhancedModeBoxActionPerformed
 
     private void layoutManagerItemActionPerformed(java.awt.event.ActionEvent evt) {//event_layoutManagerItemActionPerformed
-        new InvoiceLayoutManager(application, "layout.invoice.xml");
+        //new InvoiceLayoutManager(application, "layout.invoice.xml");
     }//event_layoutManagerItemActionPerformed
 
     private void miscInvoiceReportItemActionPerformed(java.awt.event.ActionEvent evt) {//event_miscInvoiceReportItemActionPerformed
-        ReportFactory.generateCustomerStatement(application, null);
+        //ReportFactory.generateCustomerStatement(application, null);
     }//event_miscInvoiceReportItemActionPerformed
 
     private void paymentSystemMenuItemActionPerformed1(java.awt.event.ActionEvent evt) {

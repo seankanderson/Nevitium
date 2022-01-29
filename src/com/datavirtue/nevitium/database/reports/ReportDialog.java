@@ -6,10 +6,11 @@
  */
 
 package com.datavirtue.nevitium.database.reports;
-import datavirtue.*;
+import com.datavirtue.nevitium.services.util.DV;
 import java.awt.Toolkit;
 import java.io.*;
 import javax.swing.JFileChooser;
+import org.h2.jdbc.JdbcConnection.Settings;
 
 
 /**
@@ -21,8 +22,8 @@ public class ReportDialog extends javax.swing.JDialog {
     
     /** Creates new form ReportDialog */
     public ReportDialog(java.awt.Frame parent, boolean modal, String file,
-            boolean date, String title, Settings props) {
-            this(parent, modal, file, date, title, props, false, true);
+            boolean date, String title) {
+            this(parent, modal, file, date, title, null, false, true);
     }
 
     

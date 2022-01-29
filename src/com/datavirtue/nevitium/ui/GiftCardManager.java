@@ -12,14 +12,10 @@
 package com.datavirtue.nevitium.ui;
 
 
-import RuntimeManagement.GlobalApplicationDaemon;
-import RuntimeManagement.KeyCard;
+
+import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
-import com.datavirtue.nevitium.ui.invoices.InvoiceApp;
-
-import datavirtue.DV;
-import datavirtue.DbEngine;
 import java.awt.Point;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -36,18 +32,15 @@ import javax.swing.table.TableModel;
 public class GiftCardManager extends javax.swing.JDialog {
 
     /** Creates new form GiftCardManager */
-    GlobalApplicationDaemon application;
-    public GiftCardManager(java.awt.Frame parent, boolean modal, 
-            GlobalApplicationDaemon application) {
+    
+    public GiftCardManager(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        accessKey = application.getKey_card();
-        workingPath = application.getWorkingPath();
+        
                 
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
         this.setLocation(dim.width, dim.height);
 
-        db = application.getDb();
         refreshCardTable();
 
         useageTable.setModel(new DefaultTableModel());
@@ -66,9 +59,9 @@ public class GiftCardManager extends javax.swing.JDialog {
 
     private void refreshCardTable(){
 
-      DefaultTableModel tm = (DefaultTableModel)db.createTableModel("card");
-      cardTable.setModel(tm);
-      setCardView();
+      //DefaultTableModel tm = (DefaultTableModel)db.createTableModel("card");
+      //cardTable.setModel(tm);
+      //setCardView();
 
 
     }
@@ -89,81 +82,81 @@ public class GiftCardManager extends javax.swing.JDialog {
 
     }
     private void populateFields(){
-        int row = cardTable.getSelectedRow();
-        if (row < 0) return;
-
-        TableModel tm = cardTable.getModel();
-        DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
-        dataOut[0] = new Integer((Integer)tm.getValueAt(row, 0));
-
-        String cardNo = (String)tm.getValueAt(row, 1);
-        cardField.setText(cardNo);
-
-        nameField.setText((String)tm.getValueAt(row, 2));
-        balanceField.setText(DV.money((Float)tm.getValueAt(row, 3)));
-
-        lastUseField.setText(df.format((Long)tm.getValueAt(row, 4)));
-        dataOut[4] = new Long((Long)tm.getValueAt(row, 4));
-
-        inceptionField.setText(df.format((Long)tm.getValueAt(row, 5)));
-        dataOut[5] = new Long((Long)tm.getValueAt(row, 5));
-
-        notePane.setText((String)tm.getValueAt(row, 6));
-
-        setFieldsEnabled(true);
-        statusBar.setText("Remember to Click 'Save' After Making Changes.");
-        
-        /* Populate useage Table */
-        ArrayList al = db.search("payments", 4, cardNo, false);
-        TableModel um ;
-
-        if (al != null) {
-
-            um = (TableModel)db.createTableModel("payments", al, true);
-            useageTable.setModel(um);
-
-            /* Clean up table */
-            if (useageTable.getColumnCount() == 0){
-                return;
-            }
-
-            int [] cols = {0,2,2,2};
-            TableColumnModel cm = useageTable.getColumnModel();
-            TableColumn tc;
-
-            for (int i =0; i < cols.length; i++){
-
-                tc = cm.getColumn(cols[i]);
-                useageTable.removeColumn(tc);
-
-            }
-
-        }else {
-
-            useageTable.setModel(new DefaultTableModel());
-        }
-
+//        int row = cardTable.getSelectedRow();
+//        if (row < 0) return;
+//
+//        TableModel tm = cardTable.getModel();
+//        DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
+//        dataOut[0] = new Integer((Integer)tm.getValueAt(row, 0));
+//
+//        String cardNo = (String)tm.getValueAt(row, 1);
+//        cardField.setText(cardNo);
+//
+//        nameField.setText((String)tm.getValueAt(row, 2));
+//        balanceField.setText(DV.money((Float)tm.getValueAt(row, 3)));
+//
+//        lastUseField.setText(df.format((Long)tm.getValueAt(row, 4)));
+//        dataOut[4] = new Long((Long)tm.getValueAt(row, 4));
+//
+//        inceptionField.setText(df.format((Long)tm.getValueAt(row, 5)));
+//        dataOut[5] = new Long((Long)tm.getValueAt(row, 5));
+//
+//        notePane.setText((String)tm.getValueAt(row, 6));
+//
+//        setFieldsEnabled(true);
+//        statusBar.setText("Remember to Click 'Save' After Making Changes.");
+//        
+//        /* Populate useage Table */
+//        ArrayList al = db.search("payments", 4, cardNo, false);
+//        TableModel um ;
+//
+//        if (al != null) {
+//
+//            um = (TableModel)db.createTableModel("payments", al, true);
+//            useageTable.setModel(um);
+//
+//            /* Clean up table */
+//            if (useageTable.getColumnCount() == 0){
+//                return;
+//            }
+//
+//            int [] cols = {0,2,2,2};
+//            TableColumnModel cm = useageTable.getColumnModel();
+//            TableColumn tc;
+//
+//            for (int i =0; i < cols.length; i++){
+//
+//                tc = cm.getColumn(cols[i]);
+//                useageTable.removeColumn(tc);
+//
+//            }
+//
+//        }else {
+//
+//            useageTable.setModel(new DefaultTableModel());
+//        }
+//
 
         
     }
 
     private void clearFields(){
-        dataOut[0] = new Integer(0);
-        
-        dataOut[4] = new Long(new Date().getTime());
-        dataOut[5] = new Long(new Date().getTime());
-
-        cardField.setText("");
-        nameField.setText("");
-        balanceField.setText("0.00");
-        lastUseField.setText(df.format(new Date()));
-        inceptionField.setText(df.format(new Date()));
-        notePane.setText("");
-
-        setFieldsEnabled(false);
-         useageTable.setModel(new DefaultTableModel());
-         statusBar.setText("Click the 'Acct Number' Field to Start a New Record.");
-         searchField.requestFocus();
+//        dataOut[0] = new Integer(0);
+//        
+//        dataOut[4] = new Long(new Date().getTime());
+//        dataOut[5] = new Long(new Date().getTime());
+//
+//        cardField.setText("");
+//        nameField.setText("");
+//        balanceField.setText("0.00");
+//        lastUseField.setText(df.format(new Date()));
+//        inceptionField.setText(df.format(new Date()));
+//        notePane.setText("");
+//
+//        setFieldsEnabled(false);
+//         useageTable.setModel(new DefaultTableModel());
+//         statusBar.setText("Click the 'Acct Number' Field to Start a New Record.");
+//         searchField.requestFocus();
 
     }
 
@@ -546,13 +539,13 @@ public class GiftCardManager extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cardFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardFieldMouseClicked
-        if (!cardField.isEnabled()){
-            dataOut [0] = new Integer (0);
-            clearFields();
-            setFieldsEnabled(true);
-            statusBar.setText("Remember to Click 'Save' After Making Changes.");
-            cardField.requestFocus();
-        }
+//        if (!cardField.isEnabled()){
+//            dataOut [0] = new Integer (0);
+//            clearFields();
+//            setFieldsEnabled(true);
+//            statusBar.setText("Remember to Click 'Save' After Making Changes.");
+//            cardField.requestFocus();
+//        }
     }//GEN-LAST:event_cardFieldMouseClicked
 
     private void useageTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_useageTableKeyPressed
@@ -560,29 +553,29 @@ public class GiftCardManager extends javax.swing.JDialog {
     }//GEN-LAST:event_useageTableKeyPressed
 
     private void useageTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_useageTableMouseClicked
-        int mouseButton = evt.getButton();
-        if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) return;
-        String inumber = "";
-
-        if (evt.getClickCount() == 2){
-            Point p = evt.getPoint();
-
-            int row = useageTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
-
-             if (useageTable.getSelectedRow() > -1) {
-
-                inumber = (String) useageTable.getModel().getValueAt(row, 1);
-
-                ArrayList al = db.search("invoice", 1, inumber, false);
-                if (al != null) {
-                    int k = (Integer)al.get(0);
-                    //InvoiceDialog id = new InvoiceDialog (null, true, application, k);
-                    //id.setVisible(true);
-                }
-
-             }
-
-           }
+//        int mouseButton = evt.getButton();
+//        if (mouseButton == evt.BUTTON2 || mouseButton == evt.BUTTON3) return;
+//        String inumber = "";
+//
+//        if (evt.getClickCount() == 2){
+//            Point p = evt.getPoint();
+//
+//            int row = useageTable.rowAtPoint(new Point(evt.getX(), evt.getY()));
+//
+//             if (useageTable.getSelectedRow() > -1) {
+//
+//                inumber = (String) useageTable.getModel().getValueAt(row, 1);
+//
+//                ArrayList al = db.search("invoice", 1, inumber, false);
+//                if (al != null) {
+//                    int k = (Integer)al.get(0);
+//                    //InvoiceDialog id = new InvoiceDialog (null, true, application, k);
+//                    //id.setVisible(true);
+//                }
+//
+//             }
+//
+//           }
     }//GEN-LAST:event_useageTableMouseClicked
 
     private void cardTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cardTableKeyPressed
@@ -595,30 +588,30 @@ public class GiftCardManager extends javax.swing.JDialog {
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
 
-        boolean valid = validateForm();
-        if (!valid) return;
-
-        /* Check for duplicate acct number */
-        int x = (Integer)dataOut[0];
-
-        if (x==0){
-            ArrayList al = db.search("card", 1, cardField.getText(), false);
-            if (al != null && al.size() > 0){
-                javax.swing.JOptionPane.showMessageDialog(null,
-                        "Duplicate Account Number!");
-                return;
-            }
-        }
-
-
-        dataOut[1] = new String(cardField.getText().trim());
-        dataOut[2] = new String(nameField.getText());
-        dataOut[3] = new Float(Float.parseFloat(balanceField.getText()));
-        
-        dataOut[6] = new String(notePane.getText());
-        db.saveRecord("card", dataOut, false);
-        clearFields();
-        refreshCardTable();
+//        boolean valid = validateForm();
+//        if (!valid) return;
+//
+//        /* Check for duplicate acct number */
+//        int x = (Integer)dataOut[0];
+//
+//        if (x==0){
+//            ArrayList al = db.search("card", 1, cardField.getText(), false);
+//            if (al != null && al.size() > 0){
+//                javax.swing.JOptionPane.showMessageDialog(null,
+//                        "Duplicate Account Number!");
+//                return;
+//            }
+//        }
+//
+//
+//        dataOut[1] = new String(cardField.getText().trim());
+//        dataOut[2] = new String(nameField.getText());
+//        dataOut[3] = new Float(Float.parseFloat(balanceField.getText()));
+//        
+//        dataOut[6] = new String(notePane.getText());
+//        db.saveRecord("card", dataOut, false);
+//        clearFields();
+//        refreshCardTable();
 
 
     }//GEN-LAST:event_saveButtonActionPerformed
@@ -659,19 +652,19 @@ public class GiftCardManager extends javax.swing.JDialog {
     }//GEN-LAST:event_searchFieldFocusGained
 
     private void deleteAcct(){
-        int row = cardTable.getSelectedRow();
-        if (row < 0) return;
-
-        int acctKey = (Integer)cardTable.getModel().getValueAt(row, 0);
-
-        String iValue = javax.swing.JOptionPane.showInputDialog(
-                "Type 'Delete' to Remove This Account.");
-
-        if (iValue != null && iValue.equalsIgnoreCase("delete")){
-            db.removeRecord("card", acctKey);
-            refreshCardTable();
-            clearFields();
-        }
+//        int row = cardTable.getSelectedRow();
+//        if (row < 0) return;
+//
+//        int acctKey = (Integer)cardTable.getModel().getValueAt(row, 0);
+//
+//        String iValue = javax.swing.JOptionPane.showInputDialog(
+//                "Type 'Delete' to Remove This Account.");
+//
+//        if (iValue != null && iValue.equalsIgnoreCase("delete")){
+//            db.removeRecord("card", acctKey);
+//            refreshCardTable();
+//            clearFields();
+//        }
 
     }
     private void search(){
@@ -682,54 +675,52 @@ public class GiftCardManager extends javax.swing.JDialog {
         /* build search from button status  */
 
         if (acctRadio.isSelected()) { //search for acct
-
-             java.util.ArrayList al = db.search("card",1, text, false);
-
-             if (al == null) {
-                refreshCardTable();
-                clearFields();
-
-             }else {
-                tm = db.createTableModel("card", al, true);
-
-                cardTable.setModel(tm);
-
-                setCardView();
-
-                //match = true;
-
-                searchField.selectAll();
-             }
+//
+//             java.util.ArrayList al = db.search("card",1, text, false);
+//
+//             if (al == null) {
+//                refreshCardTable();
+//                clearFields();
+//
+//             }else {
+//                tm = db.createTableModel("card", al, true);
+//
+//                cardTable.setModel(tm);
+//
+//                setCardView();
+//
+//                //match = true;
+//
+//                searchField.selectAll();
+//             }
         }
 
         if (nameRadio.isSelected()) { //search for name
 
-             java.util.ArrayList al = db.search("card",2, text, false);
-
-             if (al == null) {
-                refreshCardTable();
-                clearFields();
-
-             }else {
-                tm = db.createTableModel("card", al, true);
-
-                cardTable.setModel(tm);
-
-                setCardView();
-
-                //match = true;
-
-                searchField.selectAll();
-             }
+//             java.util.ArrayList al = db.search("card",2, text, false);
+//
+//             if (al == null) {
+//                refreshCardTable();
+//                clearFields();
+//
+//             }else {
+//                tm = db.createTableModel("card", al, true);
+//
+//                cardTable.setModel(tm);
+//
+//                setCardView();
+//
+//                //match = true;
+//
+//                searchField.selectAll();
+//             }
         }
 
 
 }
-private DbEngine db;
-private Object [] dataOut = new Object [7];
+
+
 private DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
-private KeyCard accessKey;
-private String workingPath;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton acctRadio;

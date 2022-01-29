@@ -10,7 +10,6 @@
  */
 
 package com.datavirtue.nevitium.ui;
-import datavirtue.*;
 import javax.swing.table.*;
 
 /**
@@ -20,14 +19,13 @@ import javax.swing.table.*;
 public class TableView extends javax.swing.JDialog {
 
     /** Creates new form TableView */
-    public TableView(java.awt.Frame parent, boolean modal,
-            DbEngine dbe, String table, int col, String message, int [] rowsToRemove) {
+    public TableView(java.awt.Frame parent, boolean modal, String table, int col, String message, int [] rowsToRemove) {
         super(parent, modal);
         initComponents();
 
         messageField.setText(message);
         valueCol = col;
-        db = dbe;
+        
         getTableModel(table);
         setView(rowsToRemove);
         this.setVisible(true);
@@ -61,7 +59,7 @@ public class TableView extends javax.swing.JDialog {
 
     private void getTableModel(String table) {
 
-        jTable1.setModel(db.createTableModel(table, jTable1));
+        //jTable1.setModel(db.createTableModel(table, jTable1));
 
     }
 
@@ -187,7 +185,7 @@ public class TableView extends javax.swing.JDialog {
 
    private Object value = null;
    private int valueCol = 0;
-   private DbEngine db;
+  
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;

@@ -13,11 +13,11 @@ import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.InventoryService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
+import com.datavirtue.nevitium.services.util.DV;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 import com.datavirtue.nevitium.ui.VATCalculator;
-import datavirtue.*;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import java.util.Date;

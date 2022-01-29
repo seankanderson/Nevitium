@@ -6,7 +6,7 @@
  * This application will contain various modules (JDialogs) that operate
  *on the various databases allowing modification and providing consolidated
  *veiws of the data to help manage a service or retail oriented business
- ** Copyright (c) Data Virtue 2006
+ ** Copyright (c) Data Virtue 2006, 2022
  *
  */
 package businessmanager;
@@ -24,7 +24,7 @@ import com.datavirtue.nevitium.ui.LocalSettingsDialog;
 /**
  *
  * @author  Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007 All Rights Reserved.
+ * @rights Copyright Data Virtue 2006, 2007, 2022 All Rights Reserved.
  */
 public class Main {
     

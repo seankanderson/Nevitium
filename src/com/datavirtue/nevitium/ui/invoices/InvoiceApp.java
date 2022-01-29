@@ -16,8 +16,6 @@ import com.datavirtue.nevitium.ui.contacts.ContactShippingDialog;
 import com.datavirtue.nevitium.ui.util.NewEmail;
 import com.datavirtue.nevitium.ui.VATCalculator;
 import com.datavirtue.nevitium.ui.inventory.MyInventoryApp;
-
-import datavirtue.*;
 import java.beans.PropertyVetoException;
 import javax.swing.JTextField;
 import javax.swing.table.*;
@@ -50,6 +48,8 @@ import com.datavirtue.nevitium.services.InvoiceItemService;
 import com.datavirtue.nevitium.services.InvoiceService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.services.util.LinePrinter;
 import com.datavirtue.nevitium.ui.EnhancedTableCellRenderer;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 import com.formdev.flatlaf.util.StringUtils;
@@ -194,9 +194,6 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
-
-        var dimension = DV.computeCenter((java.awt.Window) this);
-        this.setLocation(dimension.width, 1);
 
         qtyTextField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
         addCategoryInfo = appSettings.getInventory().isAddCategoryLineToInvoiceItems();
@@ -1068,7 +1065,6 @@ public class InvoiceApp extends javax.swing.JDialog {
         invoiceItemsTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         invoiceItemsTable.setInheritsPopupMenu(true);
         invoiceItemsTable.setRowSelectionAllowed(false);
-        invoiceItemsTable.setDefaultRenderer(java.lang.Float.class,  new FractionCellRenderer (10, 2, javax.swing.SwingConstants.RIGHT));
         invoiceItemsTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 invoiceItemsTableMouseClicked(evt);
@@ -1619,7 +1615,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         var company = appSettings.getCompany();
         var inventory = appSettings.getInventory();
         String measure = inventory.getWeightUnit();
-        datavirtue.LinePrinter lp = new datavirtue.LinePrinter(true);
+        LinePrinter lp = new LinePrinter(true);
         ArrayList al = calcWeight(false);
         String zone = company.getAddressFormat();
         StringBuilder sb = new StringBuilder();
@@ -2267,6 +2263,8 @@ public class InvoiceApp extends javax.swing.JDialog {
             contactsApp.display();
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error accessing settings database");
+        }catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing local settings");
         }
 
         var shippingContact = contactsApp.getReturnValue();
@@ -2308,6 +2306,10 @@ public class InvoiceApp extends javax.swing.JDialog {
         } catch (SQLException ex) {
             ExceptionService.showErrorDialog(this, ex, "Error accessing settings database");
         }
+         catch (BackingStoreException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing local settings");
+        }
+        
 
         var contact = contactsApp.getReturnValue();  //real value
 

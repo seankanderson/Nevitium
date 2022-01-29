@@ -7,7 +7,6 @@ package com.datavirtue.nevitium.ui;
 
 import com.datavirtue.nevitium.models.security.UsersTableModel;
 import com.google.inject.Injector;
-import datavirtue.*;
 import com.datavirtue.nevitium.services.DiService;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -16,6 +15,8 @@ import com.datavirtue.nevitium.services.UserService;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import com.datavirtue.nevitium.models.security.User;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.services.util.PBE;
 import org.apache.commons.lang3.StringUtils;
 
 /**

@@ -11,8 +11,8 @@
 
 package com.datavirtue.nevitium.ui.layoutdesigner;
 
+import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.PrintPanel;
-import datavirtue.DV;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;

@@ -5,8 +5,9 @@
  */
 
 package com.datavirtue.nevitium.ui;
+import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.ui.util.ProgressDialogInterface;
 import javax.swing.JFileChooser;
-import datavirtue.*;
 import java.awt.Image;
 import java.awt.Toolkit;
 
@@ -17,14 +18,13 @@ import java.awt.Toolkit;
 public class ExportDialog extends javax.swing.JDialog implements Runnable,  ProgressDialogInterface {
     
     /** Creates new form ExportDialog */
-    public ExportDialog(java.awt.Frame parent, boolean modal, DbEngine db) {
+    public ExportDialog(java.awt.Frame parent, boolean modal) {
         super(parent, false);
         initComponents();
         Toolkit tools = Toolkit.getDefaultToolkit();
         Image winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Orange.png"));
         this.setIconImage(winIcon);
-        this.db = db;
-        
+                
         String path = System.getProperty("user.home");
         if (System.getProperty("os.name").contains("Windows")) path = path + "\\My Documents\\";
         
@@ -44,15 +44,12 @@ public class ExportDialog extends javax.swing.JDialog implements Runnable,  Prog
         
     }
    
-    private DbEngine db;
-    
+        
     private String n = System.getProperty ("line.separator");
     
         public void run () {
         
-            
-          //  System.out.println("THREAD WAITING!!!!!!!!!!!!");
-            
+        
         try{synchronized(this){wait();}}
             catch (InterruptedException e){}
         
@@ -65,7 +62,7 @@ public class ExportDialog extends javax.swing.JDialog implements Runnable,  Prog
                   
             int [] connFields = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
             
-               db.csvExport("conn", new java.io.File(dir + "Connections.csv"), connFields, this);
+               //db.csvExport("conn", new java.io.File(dir + "Connections.csv"), connFields, this);
                connBox.setSelected(false);
                
         }
@@ -75,7 +72,7 @@ public class ExportDialog extends javax.swing.JDialog implements Runnable,  Prog
         
             int [] inventoryFields = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
             jProgressBar1.setValue(0);
-            db.csvExport("inventory", new java.io.File(dir + "Inventory.csv"), inventoryFields, this);
+            //db.csvExport("inventory", new java.io.File(dir + "Inventory.csv"), inventoryFields, this);
              inventoryBox.setSelected(false);
              
         }
@@ -87,12 +84,12 @@ public class ExportDialog extends javax.swing.JDialog implements Runnable,  Prog
             
             //new ExportProgressDialog(null, true, db, "invoice", invFields, new java.io.File(dir + "Invoices.csv"), "Exporting Invoices", false );
             //jProgressBar1.setValue(0);
-            db.csvExport("invoice", new java.io.File(dir + "Invoices.csv"), invFields, this);
+            //db.csvExport("invoice", new java.io.File(dir + "Invoices.csv"), invFields, this);
             
                         
             //new ExportProgressDialog(null, true, db, "invitems", itemFields, new java.io.File(dir + "Invoice_Items.csv"), "Exporting Invoice Items", false );
            //jProgressBar1.setValue(0);
-            db.csvExport("invitems", new java.io.File(dir + "Invoice_Items.csv"), itemFields, this);
+            //db.csvExport("invitems", new java.io.File(dir + "Invoice_Items.csv"), itemFields, this);
             invBox.setSelected(false);                        
         }
         
@@ -102,7 +99,7 @@ public class ExportDialog extends javax.swing.JDialog implements Runnable,  Prog
                       
             //new ExportProgressDialog(null, true, db, "payments", payFields, new java.io.File(dir + "Invoice_Payments.csv"), "Exporting Invoice Payments", false );
             //jProgressBar1.setValue(0);
-            db.csvExport("payments", new java.io.File(dir + "Invoice_Payments.csv"), payFields, this);
+            //db.csvExport("payments", new java.io.File(dir + "Invoice_Payments.csv"), payFields, this);
              payBox.setSelected(false);           
         }
         
