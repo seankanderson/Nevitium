@@ -286,6 +286,14 @@ public class Tools {
 
     }
     
+    public static String arrayToString(String [] array) {
+        var builder = new StringBuilder();
+        for(String element : array) {
+            builder.append(element);
+        }
+        return builder.toString();
+    }
+    
 
     public static void exportTable(TableModel tm, String filename, boolean header) {
         Object value;

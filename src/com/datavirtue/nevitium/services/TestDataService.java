@@ -4,8 +4,11 @@ import com.google.inject.Injector;
 import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.contacts.ContactAddress;
 import com.datavirtue.nevitium.models.inventory.Inventory;
+import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.ui.util.Tools;
 import java.sql.SQLException;
-import com.datavirtue.nevitium.models.security.User;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.prefs.BackingStoreException;
 
 /**
@@ -19,6 +22,8 @@ public class TestDataService {
         Injector injector = DiService.getInjector();
                 
         var inventoryService = injector.getInstance(InventoryService.class);
+        var invoiceService = injector.getInstance(InvoiceService.class);
+        var invoiceItemService = injector.getInstance(InvoiceItemService.class);
         var contactService = injector.getInstance(ContactService.class);
         var userService = injector.getInstance(UserService.class);
         
@@ -73,14 +78,28 @@ public class TestDataService {
         inventory.setPrice(14.99);
         inventory.setCategory("DVD - SciFi");          
         inventoryService.save(inventory);
-
+        
+        var invoice = new Invoice();
+        var billTo = Tools.formatAddress(contact);
+        invoice.setCustomer(Tools.arrayToString(billTo));
+        var items = new ArrayList();
+        var item = invoiceItemService.mapInventoryToInvoiceItem(2, invoice, inventory);
+        item.setTaxable1(true);
+        item.setTaxable1Rate(0.07);        
+        items.add(item);
+        invoice.setInvoiceDate(new Date());
+        invoice.setItems(items);
+        invoice.setInvoiceNumber(invoiceService.getNewInvoiceNumber("Q"));
+        invoice.setQuote(true);
+        invoiceService.postInvoice(invoice);
+        
         inventory = new Inventory();
         inventory.setDescription("Star Wars");
         inventory.setCode("045892797824");
         inventory.setQuantity(10.00);
         inventory.setCost(8.69);
         inventory.setPrice(17.99);
-        inventory.setCategory("DVD - SciFi");          
+        inventory.setCategory("DVD - SciFi");       
         inventoryService.save(inventory);
         
         inventory = new Inventory();
@@ -91,6 +110,20 @@ public class TestDataService {
         inventory.setPrice(199.99);
         inventory.setCategory("USB - GAMING");          
         inventoryService.save(inventory);
+        
+        invoice = new Invoice();
+        billTo = Tools.formatAddress(contact);
+        invoice.setCustomer(Tools.arrayToString(billTo));
+        items = new ArrayList();
+        item = invoiceItemService.mapInventoryToInvoiceItem(1, invoice, inventory);
+        item.setTaxable1(true);
+        item.setTaxable1Rate(0.07);        
+        items.add(item);
+        invoice.setInvoiceDate(new Date());
+        invoice.setItems(items);
+        invoice.setInvoiceNumber(invoiceService.getNewInvoiceNumber("I"));
+        invoice.setQuote(false);
+        invoiceService.postInvoice(invoice);
         
         
         

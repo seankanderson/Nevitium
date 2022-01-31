@@ -18,6 +18,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -42,7 +43,27 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     public List<Invoice> getAllInvoices() throws SQLException {
         return this.getDao().queryForAll();
     }
-    
+
+    public List<Invoice> getAllQuotes() throws SQLException {
+        var result = this.getDao().queryBuilder().where().eq("quote", true).and().eq("voided", false);
+        return result.query();
+    }
+
+    public List<Invoice> getUnpaidInvoices() throws SQLException {
+        var result = this.getDao().queryBuilder().where().eq("paid", false).and().eq("voided", false).and().eq("quote", false);
+        return result.query();
+    }
+
+    public List<Invoice> getPaidInvoices() throws SQLException {
+        var result = this.getDao().queryBuilder().where().eq("paid", true).and().eq("voided", false).and().eq("quote", false);
+        return result.query();
+    }
+
+    public List<Invoice> getVoidInvoices() throws SQLException {
+        var result = this.getDao().queryBuilder().where().eq("voided", true).and().eq("quote", true);;
+        return result.query();
+    }
+
     public String getNewInvoiceNumber(String prefix) {
         var now = Calendar.getInstance().getTime();
         var dateFormat = new SimpleDateFormat("yyyyMMddHHmmssS");
@@ -89,7 +110,30 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         var tax2 = getTax2Total(invoice);
         return subtotal + tax1 + tax2;
     }
+
+    public double calculateTotalPayments(Invoice invoice) throws SQLException  {
+        var payments = invoicePaymentService.getAllPaymentsForInvoice(invoice);
+        var debits = payments.stream().mapToDouble(x -> x.getDebit()).sum();
+        var credits = payments.stream().mapToDouble(x -> x.getCredit()).sum();        
+        return debits + credits;     
+    }
     
+    public double calculateInvoiceAmountDue(Invoice invoice) throws SQLException {
+        var total = calculateGrandTotal(invoice);
+        var activityTotal = calculateTotalPayments(invoice);
+        return total - activityTotal;
+    }
+    
+    public double calculateNumberSold(InvoiceItem item) {
+        return 0.00;
+    }
+
+    public double calculateNumberReturned(InvoiceItem item) {
+        return 0.00;
+    }
+
+    
+
     public static double getItemSubTotal(InvoiceItem item) {
         return item.getQuantity() > 0 && item.getUnitPrice() > 0 ? (item.getQuantity() * item.getUnitPrice()) : 0;
     }
@@ -116,7 +160,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
                     item.setInvoice(invoice);
                     invoiceItemService.save(item);
                 }
-                
+
                 if (!invoice.isQuote() && !invoice.isVoided()) {
                     for (var item : invoice.getItems()) { // reduce inventory quantities
                         if (item.getSourceInventoryId() == null) {
@@ -223,7 +267,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
                 invoiceRefund.setPaymentEffectiveDate(new Date()); // we are paying the customer today
                 invoiceRefund.setType("REFUND");
 
-                //k m67 867y nmhuj, nmb8invoice.getPaymentActivity().add(invoiceRefund);                
+                //invoice.getPaymentActivity().add(invoiceRefund);                
                 //this.invoicePaymentService.save(invoiceRefund);
                 return invoiceRefund;
             }
@@ -231,18 +275,6 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         }
 
         return null;
-    }
-
-    public double calculateNumberSold(InvoiceItem item) {
-        return 0.00;
-    }
-
-    public double calculateNumberReturned(InvoiceItem item) {
-        return 0.00;
-    }
-
-    public double calculateInvoiceAmountDue(Invoice invoice) {
-        return 0.00;
     }
 
     public void deletePayment(InvoicePayment payment) throws SQLException {

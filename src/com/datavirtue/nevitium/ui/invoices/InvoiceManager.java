@@ -17,7 +17,6 @@ import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.ui.util.DateCellRenderer;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 
-
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Image;
@@ -28,6 +27,8 @@ import java.util.ArrayList;
 import java.awt.event.*;
 import java.util.prefs.BackingStoreException;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -108,14 +109,14 @@ public class InvoiceManager extends javax.swing.JDialog {
         searchField.requestFocus();
         statusToolbar.setLayout(new FlowLayout());
         actionToolbar.setLayout(new FlowLayout());
-        
+
         invoiceTable.getColumnModel().getColumn(0).setCellRenderer(new DateCellRenderer());
-        invoiceTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18,2,SwingConstants.RIGHT));
+        invoiceTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18, 2, SwingConstants.RIGHT));
 //        invoiceTable.setShowGrid(true);
 //        invoiceTable.setGridColor(Color.WHITE);
 //        invoiceTable.setShowHorizontalLines(true);
 //        invoiceTable.setShowVerticalLines(true);
-        
+
         this.setVisible(true);
     }
 
@@ -185,8 +186,7 @@ public class InvoiceManager extends javax.swing.JDialog {
             tc.setPreferredWidth(widths[i]);
 
         }
-        
-        
+
     }
 
     private void resetSearch() {
@@ -210,13 +210,49 @@ public class InvoiceManager extends javax.swing.JDialog {
             return;
         }
 
-        try {
-            var invoices = invoiceService.getAllInvoices();
-            var tableModel = new InvoiceManagerTableModel(invoices);
-            this.invoiceTable.setModel(tableModel);
-        } catch (SQLException ex) {
-            ExceptionService.showErrorDialog(this, ex, "Error getting invoices from database");
-            return;
+        if (this.quoteRadio.isSelected()) {
+            try {
+                var invoices = invoiceService.getAllQuotes();
+                var tableModel = new InvoiceManagerTableModel(invoices);
+                this.invoiceTable.setModel(tableModel);
+
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error getting invoices from database");
+                return;
+            }
+        }
+
+        if (this.unpaidRadio.isSelected()) {
+            try {
+                var invoices = invoiceService.getUnpaidInvoices();
+                var tableModel = new InvoiceManagerTableModel(invoices);
+                this.invoiceTable.setModel(tableModel);
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error getting invoices from database");
+                return;
+            }
+        }
+        
+        if (this.paidRadio.isSelected()) {
+            try {
+                var invoices = invoiceService.getPaidInvoices();
+                var tableModel = new InvoiceManagerTableModel(invoices);
+                this.invoiceTable.setModel(tableModel);
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error getting invoices from database");
+                return;
+            }
+        }
+        
+        if (this.voidRadio.isSelected()) {
+            try {
+                var invoices = invoiceService.getVoidInvoices();
+                var tableModel = new InvoiceManagerTableModel(invoices);
+                this.invoiceTable.setModel(tableModel);
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error getting invoices from database");
+                return;
+            }
         }
 
 //        boolean quotes = quoteRadio.isSelected();
@@ -384,7 +420,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 //                searchResults = true;
 //                searchString = searchField.getText();
 //            }
-
         }
 
         if (searchCombo.getSelectedIndex() == 1) { //search invoice items
@@ -419,8 +454,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 //                        clean.add(tkey); //geerally causes a resize of the clean AL
 //                    }
 //                }
-
-               // tm = db.createTableModel("invoice", clean, invoiceTable);
+                // tm = db.createTableModel("invoice", clean, invoiceTable);
                 invoiceTable.setModel(tm);
 
                 this.customizeView();
@@ -997,7 +1031,6 @@ public class InvoiceManager extends javax.swing.JDialog {
         /* Get an Invoice instance for this invoice and check balance */
  /* if the balance is over 0.00 mark unpaid, save and refresh tables */
         //OldInvoice inv = new OldInvoice(null, invKey);
-
 //        float balance = inv.getInvoiceDueNow();
 //
 //        if (balance > 0) {
@@ -1029,7 +1062,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 //        }
 //
 //        setPayments();
-
     }
 
     private void voidButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_voidButtonActionPerformed
@@ -1054,7 +1086,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 //
 //            //int a = JOptionPane.showConfirmDialog(this, "Sure you want to VOID the selected invoice?" + System.getProperty("line.separator") +"VOID is Permanent!","V O I D",  JOptionPane.YES_NO_OPTION);
 //            String iValue = JOptionPane.showInputDialog("To void this invoice type VOID and click OK.");
-
 //            if (iValue != null && iValue.equalsIgnoreCase("void")) {
 //
 //                int r = invoiceTable.getSelectedRow();
@@ -1127,7 +1158,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 //
 //            }
 //        }
-
     }
 
     private void voidRadioAction() {
@@ -1338,7 +1368,13 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         } else {
             var paymentDialog = new PaymentDialog(parentWin, true, invoice);
-            paymentDialog.setVisible(true);
+            
+            try {
+                paymentDialog.display();
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error accessing invoice payments in database");
+            }
+            
             refreshTables();
         }
 
@@ -1384,7 +1420,7 @@ public class InvoiceManager extends javax.swing.JDialog {
     }//GEN-LAST:event_searchComboActionPerformed
 
     private void quoteRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_quoteRadioActionPerformed
-        quoteRadioAction();        // TODO add your handling code here:
+        quoteRadioAction();
     }//GEN-LAST:event_quoteRadioActionPerformed
 
     private void unpaidRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unpaidRadioActionPerformed
@@ -1454,11 +1490,11 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     private java.awt.Frame parentWin;
     private javax.swing.table.TableModel tm;
-    
+
     private int[] cols = new int[]{0, 3, 3, 3, 3, 6, 3, 3};
     private String stat = "";
     private String nl = System.getProperty("line.separator");
-   
+
     private Image winIcon;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

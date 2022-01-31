@@ -7,17 +7,16 @@
 package com.datavirtue.nevitium.ui.invoices;
 
 import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.services.DiService;
+import com.datavirtue.nevitium.services.InvoiceService;
 import com.datavirtue.nevitium.ui.util.Tools;
-
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import com.datavirtue.nevitium.models.prepaid.GiftCardDAO;
 import com.datavirtue.nevitium.services.util.DV;
-import java.util.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.text.*;
-import org.h2.jdbc.JdbcConnection.Settings;
+import java.text.DateFormat;
+import java.sql.SQLException;
 
 /**
  *
@@ -26,12 +25,18 @@ import org.h2.jdbc.JdbcConnection.Settings;
  */
 public class PaymentDialog extends javax.swing.JDialog {
 
+    private InvoiceService invoiceService;
+    private Invoice currentInvoice;
+    
     public PaymentDialog(java.awt.Frame parent, boolean modal, Invoice invoice) {
 
         super(parent, modal);
-
+        this.currentInvoice = invoice;
         initComponents();
         amtField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
+
+        var injector = DiService.getInjector();
+        this.invoiceService = injector.getInstance(InvoiceService.class);
 
         /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();
@@ -67,18 +72,30 @@ public class PaymentDialog extends javax.swing.JDialog {
             //daily_rate = Float.parseFloat( props.getProp("CR RATE")) / 365;
         } catch (Exception ex) {
 
-            daily_rate = 0.00f;
+            //daily_rate = 0.00f;
 
         }
 
-        populate();
-
-        setDetails();
+        
 
     }
-    private String workingPath = "";
+   
+    public void display() throws SQLException {
+        modelToView(currentInvoice);
+        setDetails();
+        this.setVisible(true);
+        
+    }
+    
+    private void modelToView(Invoice invoice) throws SQLException {
 
-    private void populate() {
+        this.invoiceNumberField.setText(invoice.getInvoiceNumber());
+        DateFormat df = paymentDatePicker.getDateFormat();
+        this.invoiceDateField.setText(df.format(invoice .getInvoiceDate()));
+        var balanceDue = invoiceService.calculateInvoiceAmountDue(invoice); 
+        this.previousBalanceField.setText(DV.money(balanceDue));
+        this.interestField.setText("0.00");
+        this.balanceDueField.setText(DV.money(balanceDue));
 
 //        inv_num = theInvoice.getInvoiceNumber();
 //        issueDate = new Date(theInvoice.getDate());
@@ -95,7 +112,6 @@ public class PaymentDialog extends javax.swing.JDialog {
 //        refField.requestFocus();
 //
 //        setInterest();
-
     }
 
     private void setInterest() {
@@ -416,11 +432,11 @@ public class PaymentDialog extends javax.swing.JDialog {
         jPanel2 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
-        previousField = new javax.swing.JTextField();
+        previousBalanceField = new javax.swing.JTextField();
         interestField = new javax.swing.JTextField();
-        dueField = new javax.swing.JTextField();
+        balanceDueField = new javax.swing.JTextField();
         intBox = new javax.swing.JCheckBox();
+        jLabel11 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         typeCombo = new javax.swing.JComboBox();
         refField = new javax.swing.JTextField();
@@ -434,11 +450,11 @@ public class PaymentDialog extends javax.swing.JDialog {
         postButton = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
-        invoiceField = new javax.swing.JTextField();
+        invoiceNumberField = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        dateField = new javax.swing.JTextField();
+        invoiceDateField = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
-        datePicker1 = new com.michaelbaranov.microba.calendar.DatePicker();
+        paymentDatePicker = new com.michaelbaranov.microba.calendar.DatePicker();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Payment Entry");
@@ -454,26 +470,27 @@ public class PaymentDialog extends javax.swing.JDialog {
         jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel9.setText("Current Interest: ");
 
-        jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel11.setText("Balance Due: ");
-
-        previousField.setEditable(false);
-        previousField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        previousBalanceField.setEditable(false);
+        previousBalanceField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
 
         interestField.setEditable(false);
         interestField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
 
-        dueField.setEditable(false);
-        dueField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        balanceDueField.setEditable(false);
+        balanceDueField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
 
         intBox.setSelected(true);
         intBox.setText("Include Interest");
         intBox.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        intBox.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
         intBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 intBoxActionPerformed(evt);
             }
         });
+
+        jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel11.setText("Balance Due: ");
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -484,17 +501,20 @@ public class PaymentDialog extends javax.swing.JDialog {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(jLabel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 122, Short.MAX_VALUE)
-                            .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 122, Short.MAX_VALUE))
+                            .add(jLabel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(previousField)
+                            .add(previousBalanceField)
                             .add(interestField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 91, Short.MAX_VALUE)))
-                    .add(jPanel2Layout.createSequentialGroup()
-                        .add(jLabel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 122, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(dueField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 91, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, intBox))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
+                        .add(0, 65, Short.MAX_VALUE)
+                        .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, intBox)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
+                                .add(jLabel11)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(balanceDueField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 91, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -503,21 +523,21 @@ public class PaymentDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel7)
-                    .add(previousField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(previousBalanceField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel9)
                     .add(interestField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(dueField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel11))
-                .add(7, 7, 7)
                 .add(intBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(10, 10, 10)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(balanceDueField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel11))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel3.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        jPanel3.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         typeCombo.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         typeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Cash", "Check", "CC", "Debit/EFT", "Credit", "Prepaid", "Fee", "Refund" }));
@@ -587,7 +607,7 @@ public class PaymentDialog extends javax.swing.JDialog {
             .add(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(paymentSystemBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 493, Short.MAX_VALUE)
+                    .add(paymentSystemBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 129, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -601,8 +621,8 @@ public class PaymentDialog extends javax.swing.JDialog {
                             .add(jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(amtField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 92, Short.MAX_VALUE))
-                    .add(detailsBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 493, Short.MAX_VALUE))
+                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE))
+                    .add(detailsBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -616,10 +636,9 @@ public class PaymentDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, refField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, amtField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE)
-                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(typeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 33, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, refField)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, amtField)
+                    .add(typeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 33, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(paymentSystemBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
@@ -628,24 +647,24 @@ public class PaymentDialog extends javax.swing.JDialog {
         );
 
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel1.setText("Invoice:");
+        jLabel1.setText("Invoice#:");
 
-        invoiceField.setEditable(false);
+        invoiceNumberField.setEditable(false);
 
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel3.setText("Invoice Date:");
 
-        dateField.setEditable(false);
+        invoiceDateField.setEditable(false);
 
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel2.setText("Date: ");
+        jLabel2.setText("Payment Date: ");
 
-        datePicker1.setFieldEditable(false);
-        datePicker1.setShowNoneButton(false);
-        datePicker1.setStripTime(true);
-        datePicker1.addActionListener(new java.awt.event.ActionListener() {
+        paymentDatePicker.setFieldEditable(false);
+        paymentDatePicker.setShowNoneButton(false);
+        paymentDatePicker.setStripTime(true);
+        paymentDatePicker.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                datePicker1ActionPerformed(evt);
+                paymentDatePickerActionPerformed(evt);
             }
         });
 
@@ -658,14 +677,13 @@ public class PaymentDialog extends javax.swing.JDialog {
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, dateField)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, invoiceField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 103, Short.MAX_VALUE))
-                    .add(datePicker1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(44, 44, 44))
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(paymentDatePicker, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
+                    .add(invoiceDateField)
+                    .add(invoiceNumberField))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -673,16 +691,16 @@ public class PaymentDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(invoiceField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(invoiceNumberField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel3)
-                    .add(dateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(invoiceDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel2)
-                    .add(datePicker1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(27, Short.MAX_VALUE))
+                    .add(paymentDatePicker, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
@@ -694,8 +712,8 @@ public class PaymentDialog extends javax.swing.JDialog {
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE)
-                        .add(18, 18, 18)
+                        .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -704,11 +722,9 @@ public class PaymentDialog extends javax.swing.JDialog {
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(11, 11, 11))
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(11, 11, 11)
                 .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -895,9 +911,9 @@ public class PaymentDialog extends javax.swing.JDialog {
 
     }//GEN-LAST:event_amtFieldKeyPressed
 
-    private void datePicker1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_datePicker1ActionPerformed
+    private void paymentDatePickerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paymentDatePickerActionPerformed
         setInterest();
-    }//GEN-LAST:event_datePicker1ActionPerformed
+    }//GEN-LAST:event_paymentDatePickerActionPerformed
 
     private void intBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intBoxActionPerformed
         setInterest();
@@ -952,7 +968,6 @@ public class PaymentDialog extends javax.swing.JDialog {
 //            detailsBox.setText(msg);
 //            paymentSystemBox.setSelected(false);
 //            amtField.setText(this.roundAmountDue());
-
         }
 
         if (p.equalsIgnoreCase("CC")) {
@@ -1017,25 +1032,11 @@ public class PaymentDialog extends javax.swing.JDialog {
 
     }
 
-    private Object[] invoice = new Object[11]; //hold invoice the payment is applied to
-    private boolean debug = false;
-    
-    private Settings props;
-    
-    private int invoice_key;
+  
     private String nl = System.getProperty("line.separator");
-    private Date issueDate; //Version 1.5
-    private String inv_num;
-    private float invoice_total;
+   
     private float due_now;
-    private float daily_rate;
-    //private String last_payment_date;
-    private long last_payment_date;  //Version 1.5
-
-    private float prev_balance;
-    private float current_interest;
-    private int oskey;
-
+   
     String paymentURL = "";
     boolean usePaymentSystem = false;
     boolean webPayment = false;
@@ -1045,13 +1046,12 @@ public class PaymentDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField amtField;
-    private javax.swing.JTextField dateField;
-    private com.michaelbaranov.microba.calendar.DatePicker datePicker1;
+    private javax.swing.JTextField balanceDueField;
     private javax.swing.JTextField detailsBox;
-    private javax.swing.JTextField dueField;
     private javax.swing.JCheckBox intBox;
     private javax.swing.JTextField interestField;
-    private javax.swing.JTextField invoiceField;
+    private javax.swing.JTextField invoiceDateField;
+    private javax.swing.JTextField invoiceNumberField;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
@@ -1066,9 +1066,10 @@ public class PaymentDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JLabel memoLabel;
+    private com.michaelbaranov.microba.calendar.DatePicker paymentDatePicker;
     private javax.swing.JCheckBox paymentSystemBox;
     private javax.swing.JButton postButton;
-    private javax.swing.JTextField previousField;
+    private javax.swing.JTextField previousBalanceField;
     private javax.swing.JTextField refField;
     private javax.swing.JComboBox typeCombo;
     // End of variables declaration//GEN-END:variables

@@ -47,6 +47,7 @@ public class Main {
         try {
             TestDataService.populateTestData();  
         }catch(SQLException e) {
+            e.printStackTrace();
             ExceptionService.showErrorDialog(frame, e, "Error accessing database");
             System.exit(-2);
         }
