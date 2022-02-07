@@ -3,7 +3,6 @@ package com.datavirtue.nevitium.models.invoices;
 
 import com.datavirtue.nevitium.models.AbstractCollectionTableModel;
 import com.datavirtue.nevitium.services.InvoiceService;
-import com.datavirtue.nevitium.services.util.DV;
 import java.util.Date;
 import java.util.List;
 
@@ -57,7 +56,7 @@ public class InvoiceManagerTableModel extends AbstractCollectionTableModel<Invoi
             case 2:
                 return item.getCustomer();
             case 3:
-                return Double.parseDouble(DV.money(InvoiceService.calculateGrandTotal(item)));
+                return InvoiceService.calculateGrandTotal(item);
 
         }
         return null;

@@ -2,12 +2,17 @@
  * PaymentDialog.java
  *
  * Created on July 22, 2006, 12:29 PM
- ** Copyright (c) Data Virtue 2006
+ ** Copyright (c) Data Virtue 2006, 2022
  */
 package com.datavirtue.nevitium.ui.invoices;
 
 import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.models.invoices.InvoicePayment;
+import com.datavirtue.nevitium.models.invoices.InvoicePaymentType;
+import com.datavirtue.nevitium.models.invoices.PaymentTypeComboModel;
 import com.datavirtue.nevitium.services.DiService;
+import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.InvoicePaymentService;
 import com.datavirtue.nevitium.services.InvoiceService;
 import com.datavirtue.nevitium.ui.util.Tools;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
@@ -17,6 +22,8 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.sql.SQLException;
+import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -27,16 +34,19 @@ public class PaymentDialog extends javax.swing.JDialog {
 
     private InvoiceService invoiceService;
     private Invoice currentInvoice;
-    
+    private InvoicePaymentService paymentService;
+    private List<InvoicePaymentType> paymentTypes;
+
     public PaymentDialog(java.awt.Frame parent, boolean modal, Invoice invoice) {
 
         super(parent, modal);
         this.currentInvoice = invoice;
         initComponents();
-        amtField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
+        paymentAmountField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
 
         var injector = DiService.getInjector();
         this.invoiceService = injector.getInstance(InvoiceService.class);
+        this.paymentService = injector.getInstance(InvoicePaymentService.class);
 
         /* Close dialog on escape */
         ActionMap am = getRootPane().getActionMap();
@@ -73,26 +83,30 @@ public class PaymentDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
 
             //daily_rate = 0.00f;
-
         }
 
-        
-
     }
-   
+
     public void display() throws SQLException {
         modelToView(currentInvoice);
+
+        // get payment types
+        this.paymentTypes = paymentService.getPaymentTypes();
+
+        this.paymentTypeCombo.setModel(new PaymentTypeComboModel(this.paymentTypes));
+        this.paymentTypeCombo.setSelectedIndex(0);
         setDetails();
         this.setVisible(true);
-        
+
     }
-    
+
     private void modelToView(Invoice invoice) throws SQLException {
 
         this.invoiceNumberField.setText(invoice.getInvoiceNumber());
         DateFormat df = paymentDatePicker.getDateFormat();
-        this.invoiceDateField.setText(df.format(invoice .getInvoiceDate()));
-        var balanceDue = invoiceService.calculateInvoiceAmountDue(invoice); 
+        this.invoiceDateField.setText(df.format(invoice.getInvoiceDate()));
+
+        this.balanceDue = invoiceService.calculateInvoiceAmountDue(invoice);
         this.previousBalanceField.setText(DV.money(balanceDue));
         this.interestField.setText("0.00");
         this.balanceDueField.setText(DV.money(balanceDue));
@@ -160,40 +174,8 @@ public class PaymentDialog extends javax.swing.JDialog {
 
     }
 
-    private float getHundredth(float decimal) {
-        float hundredth = Tools.round(((decimal * .1f) % 1) * 10);
-        return hundredth;
-    }
+    private boolean postPaymentOld() {
 
-    private float getDecimal(float amt) {
-        float decimal = Tools.round((amt % 1) * 100);
-        decimal = decimal - (decimal % 1);
-        return decimal;
-    }
-
-    private float roundToNearest5th(float amt) {
-        float hundredth = getHundredth(getDecimal(amt));
-        if (hundredth <= 3) {
-            return (amt -= (hundredth * .01)); //rounded down to nearest 5th
-        }
-        if (hundredth > 3) {
-            return (amt += (.05 - (hundredth * .01))); //rounded up to nearest 5th
-        }
-        return amt;
-    }
-
-    private float roundToNearest10th(float amt) {
-        float hundredth = getHundredth(getDecimal(amt));
-        if (hundredth <= 5) {
-            return (amt -= (hundredth * .01)); //rounded down to nearest 10th
-        }
-        if (hundredth > 5) {
-            return (amt += (.10 - (hundredth * .01))); //rounded up to nearest 10th
-        }
-        return amt;
-    }
-
-    private boolean postPayment() {
 //
 //        float total_payment = 0.00f;
 //
@@ -438,14 +420,14 @@ public class PaymentDialog extends javax.swing.JDialog {
         intBox = new javax.swing.JCheckBox();
         jLabel11 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
-        typeCombo = new javax.swing.JComboBox();
-        refField = new javax.swing.JTextField();
-        amtField = new javax.swing.JTextField();
+        paymentTypeCombo = new javax.swing.JComboBox();
+        paymentMemoField = new javax.swing.JTextField();
+        paymentAmountField = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
         memoLabel = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         paymentSystemBox = new javax.swing.JCheckBox();
-        detailsBox = new javax.swing.JTextField();
+        helpTextField = new javax.swing.JTextField();
         jToolBar1 = new javax.swing.JToolBar();
         postButton = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
@@ -539,32 +521,28 @@ public class PaymentDialog extends javax.swing.JDialog {
 
         jPanel3.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        typeCombo.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        typeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Cash", "Check", "CC", "Debit/EFT", "Credit", "Prepaid", "Fee", "Refund" }));
-        typeCombo.setToolTipText("Select The Payment / Fee Type");
-        typeCombo.addMouseListener(new java.awt.event.MouseAdapter() {
+        paymentTypeCombo.setToolTipText("Select The Payment / Fee Type");
+        paymentTypeCombo.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                typeComboMouseClicked(evt);
+                paymentTypeComboMouseClicked(evt);
             }
         });
-        typeCombo.addActionListener(new java.awt.event.ActionListener() {
+        paymentTypeCombo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                typeComboActionPerformed(evt);
+                paymentTypeComboActionPerformed(evt);
             }
         });
 
-        refField.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        refField.addKeyListener(new java.awt.event.KeyAdapter() {
+        paymentMemoField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                refFieldKeyPressed(evt);
+                paymentMemoFieldKeyPressed(evt);
             }
         });
 
-        amtField.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        amtField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        amtField.addKeyListener(new java.awt.event.KeyAdapter() {
+        paymentAmountField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        paymentAmountField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                amtFieldKeyPressed(evt);
+                paymentAmountFieldKeyPressed(evt);
             }
         });
 
@@ -576,29 +554,27 @@ public class PaymentDialog extends javax.swing.JDialog {
 
         paymentSystemBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         paymentSystemBox.setText("Launch Payment System");
-        paymentSystemBox.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        paymentSystemBox.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         paymentSystemBox.setIconTextGap(7);
 
-        detailsBox.setEditable(false);
-        detailsBox.setText("A payment designated as cash received from the customer.");
-        detailsBox.setToolTipText("Payment Type Details");
-        detailsBox.addActionListener(new java.awt.event.ActionListener() {
+        helpTextField.setEditable(false);
+        helpTextField.setText("A payment designated as cash received from the customer.");
+        helpTextField.setToolTipText("Payment Type Details");
+        helpTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                detailsBoxActionPerformed(evt);
+                helpTextFieldActionPerformed(evt);
             }
         });
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        postButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-24/enabled/OK.png"))); // NOI18N
         postButton.setText("Post");
         postButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 postButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(postButton);
 
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -607,22 +583,27 @@ public class PaymentDialog extends javax.swing.JDialog {
             .add(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(paymentSystemBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
+                    .add(paymentSystemBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 129, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(typeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 133, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(paymentTypeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 217, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(refField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 170, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(memoLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 166, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(memoLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 166, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(paymentMemoField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 241, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(amtField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE))
-                    .add(detailsBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE))
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel3Layout.createSequentialGroup()
+                                .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 80, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(92, 92, 92))
+                            .add(jPanel3Layout.createSequentialGroup()
+                                .add(paymentAmountField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 92, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .add(postButton)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
+                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 21, Short.MAX_VALUE))
+                    .add(helpTextField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -634,16 +615,21 @@ public class PaymentDialog extends javax.swing.JDialog {
                     .add(memoLabel)
                     .add(jLabel6))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, refField)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, amtField)
-                    .add(typeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 33, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(paymentAmountField)
+                            .add(postButton)
+                            .add(paymentMemoField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(paymentTypeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(19, 19, 19)))
                 .add(paymentSystemBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(detailsBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .add(helpTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(18, 18, 18))
         );
 
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
@@ -749,25 +735,28 @@ public class PaymentDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void refFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_refFieldKeyPressed
+    private void paymentMemoFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_paymentMemoFieldKeyPressed
 
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
 
-            amtField.requestFocus();
+            paymentAmountField.requestFocus();
 
         }
 
-        // TODO add your handling code here:
-    }//GEN-LAST:event_refFieldKeyPressed
+    }//GEN-LAST:event_paymentMemoFieldKeyPressed
 
-    String paymentType = "";
+    private void post() throws SQLException {
 
-    private void post() {
+        var paymentTypeModel = (PaymentTypeComboModel) paymentTypeCombo.getModel();
+        var paymentType = (InvoicePaymentType) paymentTypeModel.getType(this.paymentTypeCombo.getSelectedIndex());
 
-        //check for proper input
-        paymentType = (String) typeCombo.getSelectedItem();
+        if (paymentType == null) {
+            return;
+        }
+        var balanceDue = invoiceService.calculateInvoiceAmountDue(currentInvoice);
 
-        if (due_now < 0 && !paymentType.equalsIgnoreCase("refund")) {
+        
+        if (balanceDue < 0 && !paymentType.getName().equalsIgnoreCase("refund")) {
 
             JOptionPane.showMessageDialog(null,
                     "Only refunds can be applied to invoices with a negative balance.",
@@ -776,9 +765,9 @@ public class PaymentDialog extends javax.swing.JDialog {
             return;
         }
 
-        if (paymentType.equalsIgnoreCase("refund")) {
+        if (paymentType.getName().equalsIgnoreCase("refund")) {
 
-            if (due_now >= 0) {
+            if (balanceDue >= 0) {
 
                 JOptionPane.showMessageDialog(null,
                         "Refunds are only applied to invoices that have a negative balance." + nl
@@ -788,26 +777,25 @@ public class PaymentDialog extends javax.swing.JDialog {
 
         }
 
-        if (paymentType.equalsIgnoreCase("credit")) {
+        if (paymentType.getName().equalsIgnoreCase("credit")) {
 
-            if (due_now < 0) {
+            if (balanceDue < 0) {
 
                 JOptionPane.showMessageDialog(null,
                         "Credits should not be applied to invoices with a negative balance." + nl
                         + "Try issuing a refund instead.", "Refund Status", JOptionPane.OK_OPTION);
                 return;
             }
-
         }
 
-        if (refField.getText().trim().equalsIgnoreCase("RETURN")) {
+        if (paymentMemoField.getText().trim().equalsIgnoreCase("RETURN")) {
 
             JOptionPane.showMessageDialog(null, "You cannot use 'RETURN' as a memo.", "Form Problem!", JOptionPane.OK_OPTION);
             return;
 
         }
 
-        if (Float.parseFloat(amtField.getText()) <= 0.00f) {
+        if (Float.parseFloat(paymentAmountField.getText()) <= 0.00f) {
 
             JOptionPane.showMessageDialog(null,
                     "You have to supply an amount greater than zero.",
@@ -815,8 +803,13 @@ public class PaymentDialog extends javax.swing.JDialog {
             return;
         }
 
-        boolean pmtstat = postPayment();
-
+        
+        if (paymentType.isInvoiceCredit()) { 
+            postCredit();
+        }else if (paymentType.isInvoiceDebit()) {
+            postDebit();
+        }
+                
         if (usePaymentSystem && paymentSystemBox.isSelected()) {
 
             if (webPayment) {
@@ -835,7 +828,10 @@ public class PaymentDialog extends javax.swing.JDialog {
 
         }
 
-        if (pmtstat == false && paymentType.equals("Prepaid")) {
+        
+        balanceDue = invoiceService.calculateInvoiceAmountDue(currentInvoice);
+        
+        if (balanceDue > 0 && paymentType.getName().equals("Prepaid")) {
             int a = javax.swing.JOptionPane.showConfirmDialog(null,
                     "The Prepaid Account was not able to payout the invoice.  Would you like to accept another payment?",
                     "Another Payment?", JOptionPane.YES_NO_OPTION);
@@ -843,8 +839,64 @@ public class PaymentDialog extends javax.swing.JDialog {
                 return;
             }
         }
+        
+        if (balanceDue <= 0) {
+            this.currentInvoice.setPaid(true);
+            this.invoiceService.save(currentInvoice);
+        }
         this.dispose();
 
+    }
+
+    private InvoicePayment primeNewInvoicePayment() {
+
+        var paymentTypeModel = (PaymentTypeComboModel) paymentTypeCombo.getModel();
+        var paymentType = (InvoicePaymentType) paymentTypeModel.getType(this.paymentTypeCombo.getSelectedIndex());
+
+        if (paymentType == null) {
+            return null;
+        }
+
+        var payment = new InvoicePayment();
+        payment.setInvoice(currentInvoice);
+        payment.setMemo(this.paymentMemoField.getText());
+        payment.setPaymentActivityDate(new Date());
+        payment.setPaymentEffectiveDate(this.paymentDatePicker.getDate());
+        payment.setPaymentType(paymentType);
+        return payment;
+    }
+
+    private void postCredit() {
+        var amount = Double.parseDouble(this.paymentAmountField.getText());
+        var payment = primeNewInvoicePayment();
+        payment.setCredit(amount);
+        try {
+            paymentService.save(payment);
+            
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error saving payment to database");
+        }
+
+        return;
+    }
+
+    /**
+     * Revenue payments
+     *
+     * @param paymentType
+     * @return
+     */
+    private void postDebit() {
+        var amount = Double.parseDouble(this.paymentAmountField.getText());
+        var payment = primeNewInvoicePayment();
+        payment.setDebit(amount);
+        try {
+            paymentService.save(payment);
+            
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error saving payment to database");
+        }
+        return;
     }
 
     private void launchPaymentSystem() {
@@ -877,39 +929,47 @@ public class PaymentDialog extends javax.swing.JDialog {
 
     private void postButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_postButtonActionPerformed
 
-        if (memoLabel.getText().equals("Acct#") && refField.getText().trim().equals("")) {
+        if (memoLabel.getText().equals("Acct#") && paymentMemoField.getText().trim().equals("")) {
 
             javax.swing.JOptionPane.showMessageDialog(null,
-                    "You need to provide an Account Number to process a Prepaid Account payment.");
-            refField.requestFocus();
+                    "You need to provide an account number to process a prepaid account payment.");
+            paymentMemoField.requestFocus();
             return;
         }
 
-        post();
+        try {
+            this.post();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error accessing invoice database");
+        }
 
     }//GEN-LAST:event_postButtonActionPerformed
 
-    private void detailsBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detailsBoxActionPerformed
+    private void helpTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpTextFieldActionPerformed
         // TODO add your handling code here:
-}//GEN-LAST:event_detailsBoxActionPerformed
+}//GEN-LAST:event_helpTextFieldActionPerformed
 
-    private void typeComboMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_typeComboMouseClicked
+    private void paymentTypeComboMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_paymentTypeComboMouseClicked
 
         setDetails();
 
-    }//GEN-LAST:event_typeComboMouseClicked
+    }//GEN-LAST:event_paymentTypeComboMouseClicked
 
-    private void typeComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_typeComboActionPerformed
+    private void paymentTypeComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paymentTypeComboActionPerformed
         setDetails();
-    }//GEN-LAST:event_typeComboActionPerformed
+    }//GEN-LAST:event_paymentTypeComboActionPerformed
 
-    private void amtFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_amtFieldKeyPressed
+    private void paymentAmountFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_paymentAmountFieldKeyPressed
 
         if (evt.getKeyCode() == evt.VK_ENTER) {
-            this.post();
+            try {
+                this.post();
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error accessing invoice database");
+            }
         }
 
-    }//GEN-LAST:event_amtFieldKeyPressed
+    }//GEN-LAST:event_paymentAmountFieldKeyPressed
 
     private void paymentDatePickerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paymentDatePickerActionPerformed
         setInterest();
@@ -920,10 +980,10 @@ public class PaymentDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_intBoxActionPerformed
 
     private String roundAmountDue() {
-        float val = due_now;
-        float decimal = Tools.round((val % 1) * 100);
+
+        double decimal = Tools.round((balanceDue % 1) * 100);
         decimal = decimal - (decimal % 1);
-        float hundredth = Tools.round(((decimal * .1f) % 1) * 10);
+        double hundredth = Tools.round(((decimal * .1f) % 1) * 10);
 
 //        /* 10th */
 //        if (props.getProp("CASHRND").equals(".10")) {
@@ -948,17 +1008,34 @@ public class PaymentDialog extends javax.swing.JDialog {
 //            }
 //            return DV.money(val);
 //        }
-        return DV.money(val);
+        return DV.money(balanceDue);
 
     }
 
+    private double balanceDue = 0.00;
+
     private void setDetails() {
 
-        String p = (String) typeCombo.getSelectedItem();
+        var paymentTypeModel = (PaymentTypeComboModel) paymentTypeCombo.getModel();
+        var paymentType = (InvoicePaymentType) paymentTypeModel.getType(this.paymentTypeCombo.getSelectedIndex());
+
+        if (paymentType == null) {
+            return;
+        }
 
         memoLabel.setText("Memo");
 
-        if (p.equalsIgnoreCase("Cash")) {
+        helpTextField.setText(paymentType.getDescription());
+
+        if (paymentType.isInvoiceCredit()) {
+            paymentAmountField.setText(DV.money(balanceDue));
+        }
+
+        if (paymentType.getName().equals("card")) {
+            paymentSystemBox.setSelected(true);
+        }
+
+        if (paymentType.getName().equalsIgnoreCase("cash")) {
 
 //            String rounding = props.getProp("CASHRND");
 //            String msg = "A payment designated as cash received from the customer.";
@@ -970,73 +1047,19 @@ public class PaymentDialog extends javax.swing.JDialog {
 //            amtField.setText(this.roundAmountDue());
         }
 
-        if (p.equalsIgnoreCase("CC")) {
-            detailsBox.setText(
-                    "A payment designated as a credit card received from the customer.");
-            if (ccPayment) {
-                paymentSystemBox.setSelected(true);
-            }
-            amtField.setText(DV.money(due_now));
+        if (balanceDue < 0 && paymentType.isInvoiceCredit()) {
+            helpTextField.setText(
+                    "A credit can only be applied to a positive balance, try a refund instead.");
         }
 
-        if (p.equalsIgnoreCase("Check")) {
-            detailsBox.setText(
-                    "A payment designated as a check received from the customer.");
-            if (chkPayment) {
-                paymentSystemBox.setSelected(true);
-            }
-            amtField.setText(DV.money(due_now));
+        if (balanceDue > 0 && paymentType.getName().equalsIgnoreCase("refund")) {
+            helpTextField.setText(
+                    "A Refund can only be applied to a negative balance.");
         }
-        if (p.equalsIgnoreCase("Debit/EFT")) {
-            detailsBox.setText(
-                    "A payment by electronic funds transfer received from the customer.");
-            if (ccPayment) {
-                paymentSystemBox.setSelected(true);
-            }
-            amtField.setText(DV.money(due_now));
-        }
-
-        if (p.equalsIgnoreCase("Prepaid")) {
-            memoLabel.setText("Acct#");
-            detailsBox.setText(
-                    "Prepaid Account (Swipe or Scan a Prepaid Card)");
-            amtField.setText(DV.money(due_now));
-            refField.requestFocus();
-        }
-
-        if (p.equalsIgnoreCase("Credit")) {
-            paymentSystemBox.setSelected(false);
-            detailsBox.setText(
-                    "Applies a credit to the invoice but is not counted as revenue.");
-            if (due_now < 0) {
-                detailsBox.setText(
-                        "A credit can only be applied to a positive balance, try a refund instead.");
-            }
-        }
-
-        if (p.equalsIgnoreCase("Fee")) {
-            paymentSystemBox.setSelected(false);
-            detailsBox.setText(
-                    "A fee or charge against an invoice; NSF etc..");
-        }
-
-        if (p.equalsIgnoreCase("Refund")) {
-            paymentSystemBox.setSelected(false);
-            detailsBox.setText(
-                    "Use to adjust overpaid invoices.");
-            if (due_now > 0) {
-                detailsBox.setText(
-                        "A Refund can only be applied to a negative balance.");
-            }
-        }
-
     }
 
-  
     private String nl = System.getProperty("line.separator");
-   
-    private float due_now;
-   
+
     String paymentURL = "";
     boolean usePaymentSystem = false;
     boolean webPayment = false;
@@ -1045,9 +1068,8 @@ public class PaymentDialog extends javax.swing.JDialog {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextField amtField;
     private javax.swing.JTextField balanceDueField;
-    private javax.swing.JTextField detailsBox;
+    private javax.swing.JTextField helpTextField;
     private javax.swing.JCheckBox intBox;
     private javax.swing.JTextField interestField;
     private javax.swing.JTextField invoiceDateField;
@@ -1066,12 +1088,13 @@ public class PaymentDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JLabel memoLabel;
+    private javax.swing.JTextField paymentAmountField;
     private com.michaelbaranov.microba.calendar.DatePicker paymentDatePicker;
+    private javax.swing.JTextField paymentMemoField;
     private javax.swing.JCheckBox paymentSystemBox;
+    private javax.swing.JComboBox paymentTypeCombo;
     private javax.swing.JButton postButton;
     private javax.swing.JTextField previousBalanceField;
-    private javax.swing.JTextField refField;
-    private javax.swing.JComboBox typeCombo;
     // End of variables declaration//GEN-END:variables
 
 }

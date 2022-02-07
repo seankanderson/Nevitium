@@ -13,4 +13,5 @@ import lombok.Setter;
 public class WindowSizeAndPosition {
     Point location;
     Dimension size;    
+    double splitFactor;
 }

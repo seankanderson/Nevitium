@@ -14,7 +14,7 @@ public class PaymentActivityTableModel extends AbstractCollectionTableModel<Invo
 
     public PaymentActivityTableModel(List<InvoicePayment> activity) {
         this.items = activity;
-        this.columns = new String[]{"Process Date", "Effective Date", "Memo", "Debit", "Credit", "Type", "Payment System",};
+        this.columns = new String[]{"Transaction Date", "Effective Date", "Memo", "Type", "Debit", "Credit", "Payment System"};
     }
 
     @Override
@@ -35,14 +35,15 @@ public class PaymentActivityTableModel extends AbstractCollectionTableModel<Invo
                 item.setMemo((String) value);
                 break;
             case 3:
-                item.setDebit((Double) value);
+                item.setPaymentType((InvoicePaymentType) value);
                 break;
             case 4:
-                item.setCredit((Double) value);
+                item.setDebit((Double) value);
                 break;
             case 5:
-                item.setType((String) value);
+                item.setCredit((Double) value);
                 break;
+            
             case 6:
                 item.setPaymentSystem((String) value);
                 break;
@@ -67,13 +68,13 @@ public class PaymentActivityTableModel extends AbstractCollectionTableModel<Invo
                 return item.getMemo();
 
             case 3:
+                return item.getPaymentType().getName();
+            
+            case 4:
                 return item.getDebit();
 
-            case 4:
-                return item.getCredit();
-
             case 5:
-                return item.getType();
+                return item.getCredit();
 
             case 6:
                 return item.getPaymentSystem();

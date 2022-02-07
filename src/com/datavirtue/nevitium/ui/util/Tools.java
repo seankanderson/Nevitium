@@ -22,6 +22,8 @@ import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.contacts.ContactAddress;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.services.util.PlayWave;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.apache.commons.codec.binary.Hex;
 
 /**
@@ -30,7 +32,7 @@ import org.apache.commons.codec.binary.Hex;
  */
 public class Tools {
 
-    public static float totalFloatColumn(TableModel tm, int column) {
+    public static double totalFloatColumn(TableModel tm, int column) {
 
         if (tm == null) {
             return 0.00f;
@@ -41,11 +43,11 @@ public class Tools {
             return 0.0f;
         }
 
-        float colTotal = 0.00f;
+        double colTotal = 0.00;
 
         for (int row = 0; row < rowCount; row++) {
 
-            colTotal += (Float) tm.getValueAt(row, column);
+            colTotal += (Double) tm.getValueAt(row, column);
 
         }
 
@@ -101,11 +103,11 @@ public class Tools {
         return false;
     }
 
-    public static float round(float n) {
-
-        float v = (float) (Math.round(n * 100.00f) / 100.00f);
-        v = DV.flattenZero(v);
-        return v;
+    public static double round(double value) {
+        BigDecimal result = new BigDecimal(Double.toString(value)).setScale(2,  RoundingMode.HALF_UP);
+        //double v = (double) (Math.round(value * 100.00f) / 100.00f);
+        //v = DV.flattenZero(v);
+        return result.doubleValue();
     }
 
     public static String colorToString(Color c) {

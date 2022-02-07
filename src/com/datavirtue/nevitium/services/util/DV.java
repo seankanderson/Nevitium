@@ -641,7 +641,7 @@ public class DV	{
 
     }
     /* get rid of negative signs from zero values */
-    public static float flattenZero(float v){
+    public static double flattenZero(double v){
         v = (float)(Math.round(v*100.00f)/100.00f);
         if (v == -0.00f) return Math.abs(v);
         return v;

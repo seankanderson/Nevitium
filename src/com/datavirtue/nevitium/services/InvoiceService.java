@@ -15,10 +15,11 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.misc.TransactionManager;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -60,7 +61,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     }
 
     public List<Invoice> getVoidInvoices() throws SQLException {
-        var result = this.getDao().queryBuilder().where().eq("voided", true).and().eq("quote", true);;
+        var result = this.getDao().queryBuilder().where().eq("voided", true).and().eq("quote", false);;
         return result.query();
     }
 
@@ -79,7 +80,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         for (var item : invoice.getItems()) {
             taxTotal += getItemTax1Total(item);
         }
-        return taxTotal;
+        return Tools.round(taxTotal);
     }
 
     public static double getTax2Total(Invoice invoice) {
@@ -90,7 +91,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         for (var item : invoice.getItems()) {
             taxTotal += getItemTax2Total(item);
         }
-        return taxTotal;
+        return Tools.round(taxTotal);
     }
 
     public static double getSubtotal(Invoice invoice) {
@@ -101,29 +102,35 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         for (var item : invoice.getItems()) {
             itemTotal += getItemSubTotal(item);
         }
-        return itemTotal;
+        return Tools.round(itemTotal);
     }
 
     public static double calculateGrandTotal(Invoice invoice) {
         var subtotal = getSubtotal(invoice);
         var tax1 = getTax1Total(invoice);
         var tax2 = getTax2Total(invoice);
-        return subtotal + tax1 + tax2;
+        return Tools.round(subtotal + tax1 + tax2);
     }
 
-    public double calculateTotalPayments(Invoice invoice) throws SQLException  {
-        var payments = invoicePaymentService.getAllPaymentsForInvoice(invoice);
-        var debits = payments.stream().mapToDouble(x -> x.getDebit()).sum();
-        var credits = payments.stream().mapToDouble(x -> x.getCredit()).sum();        
-        return debits + credits;     
+    public double calculateTotalCredits(Invoice invoice) throws SQLException {
+        var payments = invoicePaymentService.getAllCreditsForInvoice(invoice);
+        var credits = payments.stream().mapToDouble(x -> x.getCredit()).sum();
+        return Tools.round(credits);
     }
     
+    public double calculateTotalDebits(Invoice invoice) throws SQLException {
+        var payments = invoicePaymentService.getAllDebitsForInvoice(invoice);
+        var debits = payments.stream().mapToDouble(x -> x.getDebit()).sum();        
+        return Tools.round(debits);
+    }
+
     public double calculateInvoiceAmountDue(Invoice invoice) throws SQLException {
         var total = calculateGrandTotal(invoice);
-        var activityTotal = calculateTotalPayments(invoice);
-        return total - activityTotal;
+        var debits = calculateTotalDebits(invoice);
+        var credits = calculateTotalCredits(invoice);
+        return Tools.round((total + debits) - credits);
     }
-    
+
     public double calculateNumberSold(InvoiceItem item) {
         return 0.00;
     }
@@ -131,8 +138,6 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     public double calculateNumberReturned(InvoiceItem item) {
         return 0.00;
     }
-
-    
 
     public static double getItemSubTotal(InvoiceItem item) {
         return item.getQuantity() > 0 && item.getUnitPrice() > 0 ? (item.getQuantity() * item.getUnitPrice()) : 0;
@@ -144,6 +149,19 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
 
     public static double getItemTax2Total(InvoiceItem item) {
         return item.isTaxable2() && item.getTaxable2Rate() > 0 ? (item.getQuantity() * item.getUnitPrice()) * item.getTaxable2Rate() : 0;
+    }
+
+    public List<InvoicePayment> getPaymentsForInvoice(Invoice invoice) throws SQLException {
+
+        List<InvoicePayment> payments = this.invoicePaymentService.getAllPaymentsForInvoice(invoice);
+
+        Collections.sort(payments, new Comparator<InvoicePayment>() {
+            public int compare(InvoicePayment o1, InvoicePayment o2) {
+                return o2.getPaymentActivityDate().compareTo(o1.getPaymentActivityDate());
+            }
+        });
+       
+        return payments;
     }
 
     public void postInvoice(Invoice invoice) throws SQLException {
@@ -247,7 +265,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         refundForItemReturn.setPaymentEffectiveDate(returnDate);
         refundForItemReturn.setMemo("RETURN REFUND");
         refundForItemReturn.setInvoice(invoice);
-        refundForItemReturn.setType("");
+        //refundForItemReturn.setType("");
 
         invoice.getPaymentActivity().add(refundForItemReturn);
         this.invoicePaymentService.save(refundForItemReturn);
@@ -265,7 +283,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
                 invoiceRefund.setMemo("Return caused overpayment");
                 invoiceRefund.setPaymentActivityDate(new Date());
                 invoiceRefund.setPaymentEffectiveDate(new Date()); // we are paying the customer today
-                invoiceRefund.setType("REFUND");
+                //invoiceRefund.setType("REFUND");
 
                 //invoice.getPaymentActivity().add(invoiceRefund);                
                 //this.invoicePaymentService.save(invoiceRefund);

@@ -34,14 +34,14 @@ public class GiftCardDAO {
         return false;
     }
 
-    public float getBalance(){
+    public double getBalance(){
         if (!populated) return 0.00f;
-        return Tools.round((Float)data[3]);
+        return Tools.round((Double)data[3]);
     }
 
-    public float useFunds(float amount){
+    public double useFunds(float amount){
 /* returns amount used on the card */
-        float balance = this.getBalance();
+        double balance = this.getBalance();
 
         if (amount > balance) {
             data[3] = 0.00f;

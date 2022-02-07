@@ -1,4 +1,3 @@
-
 package com.datavirtue.nevitium.models.invoices;
 
 import com.datavirtue.nevitium.database.orm.InvoicePaymentDao;
@@ -13,36 +12,37 @@ import lombok.Setter;
  *
  * @author SeanAnderson
  */
-@Getter @Setter
+@Getter
+@Setter
 @DatabaseTable(tableName = "invoice_payments", daoClass = InvoicePaymentDao.class)
 public class InvoicePayment extends BaseModel {
 
-    @DatabaseField(foreign=true,foreignAutoRefresh=true)
-    private Invoice invoice;    
-    
+    @DatabaseField(foreign = true, foreignAutoRefresh = true)
+    private Invoice invoice;
+
     @DatabaseField
-    private Date paymentEffectiveDate = new Date();    
-    
+    private Date paymentEffectiveDate = new Date();
+
     @DatabaseField
-    private Date paymentActivityDate = new Date();    
-    
-    @DatabaseField
-    private String type;
-    
+    private Date paymentActivityDate = new Date();
+
+    @DatabaseField(foreign = true, foreignAutoRefresh = true)
+    private InvoicePaymentType paymentType;
+
     @DatabaseField
     private String memo;
-    
+
     @DatabaseField
     private double debit;
     @DatabaseField
     private double credit;
-    
+
     @DatabaseField
     private String paymentSystem;
-    
+
     @DatabaseField
     private String paymentSystemReference;
-    
-    
-    
+
+       
+
 }

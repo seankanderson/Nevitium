@@ -213,26 +213,33 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="paymentSystemBox" alignment="0" pref="500" max="32767" attributes="2"/>
+                          <Component id="paymentSystemBox" alignment="0" pref="671" max="32767" attributes="2"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabel4" min="-2" pref="129" max="-2" attributes="0"/>
-                                  <Component id="typeCombo" min="-2" pref="133" max="-2" attributes="0"/>
+                                  <Component id="paymentTypeCombo" min="-2" pref="217" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="refField" min="-2" pref="170" max="-2" attributes="0"/>
                                   <Component id="memoLabel" min="-2" pref="166" max="-2" attributes="0"/>
+                                  <Component id="paymentMemoField" min="-2" pref="241" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="jLabel6" max="32767" attributes="1"/>
-                                  <Component id="amtField" alignment="0" pref="80" max="32767" attributes="1"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jLabel6" min="-2" pref="80" max="-2" attributes="1"/>
+                                      <EmptySpace min="-2" pref="92" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="paymentAmountField" min="-2" pref="92" max="-2" attributes="1"/>
+                                      <EmptySpace max="32767" attributes="0"/>
+                                      <Component id="postButton" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                  </Group>
                               </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jToolBar1" pref="99" max="32767" attributes="0"/>
+                              <Component id="jToolBar1" pref="21" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="detailsBox" alignment="0" pref="500" max="32767" attributes="2"/>
+                          <Component id="helpTextField" alignment="0" pref="671" max="32767" attributes="2"/>
                       </Group>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -248,65 +255,50 @@
                           <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="jToolBar1" max="32767" attributes="1"/>
-                          <Component id="refField" alignment="0" max="32767" attributes="1"/>
-                          <Component id="amtField" alignment="0" max="32767" attributes="1"/>
-                          <Component id="typeCombo" min="-2" pref="33" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="jToolBar1" max="32767" attributes="1"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="1" attributes="0">
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="paymentAmountField" alignment="3" max="32767" attributes="1"/>
+                                  <Component id="postButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="paymentMemoField" alignment="3" min="-2" max="-2" attributes="1"/>
+                                  <Component id="paymentTypeCombo" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="paymentSystemBox" min="-2" pref="18" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="detailsBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="helpTextField" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JComboBox" name="typeCombo">
+            <Component class="javax.swing.JComboBox" name="paymentTypeCombo">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="18" style="0"/>
-                </Property>
-                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                  <StringArray count="8">
-                    <StringItem index="0" value="Cash"/>
-                    <StringItem index="1" value="Check"/>
-                    <StringItem index="2" value="CC"/>
-                    <StringItem index="3" value="Debit/EFT"/>
-                    <StringItem index="4" value="Credit"/>
-                    <StringItem index="5" value="Prepaid"/>
-                    <StringItem index="6" value="Fee"/>
-                    <StringItem index="7" value="Refund"/>
-                  </StringArray>
-                </Property>
                 <Property name="toolTipText" type="java.lang.String" value="Select The Payment / Fee Type"/>
               </Properties>
               <Events>
-                <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="typeComboMouseClicked"/>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="typeComboActionPerformed"/>
+                <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="paymentTypeComboMouseClicked"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="paymentTypeComboActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JTextField" name="refField">
-              <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="18" style="0"/>
-                </Property>
-              </Properties>
+            <Component class="javax.swing.JTextField" name="paymentMemoField">
               <Events>
-                <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="refFieldKeyPressed"/>
+                <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="paymentMemoFieldKeyPressed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JTextField" name="amtField">
+            <Component class="javax.swing.JTextField" name="paymentAmountField">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="18" style="0"/>
-                </Property>
                 <Property name="horizontalAlignment" type="int" value="4"/>
               </Properties>
               <Events>
-                <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="amtFieldKeyPressed"/>
+                <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="paymentAmountFieldKeyPressed"/>
               </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel4">
@@ -330,18 +322,18 @@
                   <Font name="Tahoma" size="12" style="0"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Launch Payment System"/>
-                <Property name="horizontalAlignment" type="int" value="2"/>
+                <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="iconTextGap" type="int" value="7"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JTextField" name="detailsBox">
+            <Component class="javax.swing.JTextField" name="helpTextField">
               <Properties>
                 <Property name="editable" type="boolean" value="false"/>
                 <Property name="text" type="java.lang.String" value="A payment designated as cash received from the customer."/>
                 <Property name="toolTipText" type="java.lang.String" value="Payment Type Details"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="detailsBoxActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="helpTextFieldActionPerformed"/>
               </Events>
             </Component>
             <Container class="javax.swing.JToolBar" name="jToolBar1">
@@ -351,20 +343,15 @@
               </Properties>
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
-              <SubComponents>
-                <Component class="javax.swing.JButton" name="postButton">
-                  <Properties>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/businessmanager/res/Aha-24/enabled/OK.png"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="Post"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="postButtonActionPerformed"/>
-                  </Events>
-                </Component>
-              </SubComponents>
             </Container>
+            <Component class="javax.swing.JButton" name="postButton">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Post"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="postButtonActionPerformed"/>
+              </Events>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="jPanel4">

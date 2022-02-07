@@ -2,11 +2,14 @@
  * InvoiceManager.java
  *
  * Created on July 8, 2006, 8:25 AM
- ** Copyright (c) Data Virtue 2006
+ ** Copyright (c) Data Virtue 2006, 2022
  */
 package com.datavirtue.nevitium.ui.invoices;
 
+import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.models.invoices.InvoiceManagerTableModel;
+import com.datavirtue.nevitium.models.invoices.InvoicePayment;
+import com.datavirtue.nevitium.models.invoices.PaymentActivityTableModel;
 import com.datavirtue.nevitium.models.settings.AppSettings;
 import com.datavirtue.nevitium.models.settings.LocalAppSettings;
 import com.datavirtue.nevitium.services.AppSettingsService;
@@ -14,21 +17,21 @@ import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.InvoiceService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
+import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.DateCellRenderer;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 
-import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
 import javax.swing.*;
-import javax.swing.table.*;
 import java.util.ArrayList;
 import java.awt.event.*;
 import java.util.prefs.BackingStoreException;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -43,10 +46,7 @@ public class InvoiceManager extends javax.swing.JDialog {
     private InvoiceService invoiceService;
     private AppSettings appSettings;
     private LocalAppSettings localSettings;
-
-    /**
-     * Creates new form InvoiceManager
-     */
+   
     public InvoiceManager(java.awt.Frame parent, boolean modal) {
 
         super(parent, modal);
@@ -109,20 +109,14 @@ public class InvoiceManager extends javax.swing.JDialog {
         searchField.requestFocus();
         statusToolbar.setLayout(new FlowLayout());
         actionToolbar.setLayout(new FlowLayout());
-
-        invoiceTable.getColumnModel().getColumn(0).setCellRenderer(new DateCellRenderer());
-        invoiceTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18, 2, SwingConstants.RIGHT));
-//        invoiceTable.setShowGrid(true);
-//        invoiceTable.setGridColor(Color.WHITE);
-//        invoiceTable.setShowHorizontalLines(true);
-//        invoiceTable.setShowVerticalLines(true);
-
+        
         this.setVisible(true);
     }
 
     private void recordWindowSizeAndPosition() throws BackingStoreException {
         var screenSettings = localSettings.getScreenSettings();
         var sizeAndPosition = LocalSettingsService.getWindowSizeAndPosition(this);
+        sizeAndPosition.setSplitFactor(this.invoiceManagerSplitPane.getDividerLocation());
         screenSettings.setInvoiceManager(sizeAndPosition);
         LocalSettingsService.saveLocalAppSettings(localSettings);
     }
@@ -131,6 +125,16 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         var screenSettings = localSettings.getScreenSettings().getInvoiceManager();
         LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
+        
+        var splitfactor = Double.valueOf(screenSettings.getSplitFactor()).intValue();
+        
+        if (splitfactor > 100) {
+            this.invoiceManagerSplitPane.setDividerLocation(splitfactor);
+        } else {
+            this.invoiceManagerSplitPane.setDividerLocation(300);
+        }
+        
+        
     }
 
     private int rememberedRow = 0;
@@ -165,28 +169,23 @@ public class InvoiceManager extends javax.swing.JDialog {
         if (invoiceTable.getRowCount() < 0) {
             return;
         }
-        TableColumnModel cm;
-        TableColumn tc;
-
-//            cm = invoiceTable.getColumnModel();
-//
-//            for (int i = 0; i < cols.length; i++) {
-//
-//                tc = cm.getColumn(cols[i]);
-//                invoiceTable.removeColumn(tc);
-//
-//            }
-        //properly size each col for the invoices
+                
+        invoiceTable.getColumnModel().getColumn(0).setCellRenderer(new DateCellRenderer());               
+        invoiceTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18, 2, SwingConstants.RIGHT));
+                
         invoiceTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         int[] widths = new int[]{45, 50, 270, 55};
-
         for (int i = 0; i < widths.length; i++) {
-
-            tc = invoiceTable.getColumnModel().getColumn(i);
-            tc.setPreferredWidth(widths[i]);
-
+            invoiceTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
 
+        invoiceTable.setCellSelectionEnabled(false);
+        invoiceTable.setRowSelectionAllowed(true);
+               
+        paymentTable.setCellSelectionEnabled(false);
+        paymentTable.setRowSelectionAllowed(true);
+       
+        
     }
 
     private void resetSearch() {
@@ -205,6 +204,9 @@ public class InvoiceManager extends javax.swing.JDialog {
     //refereshTables will attempt to restore he search
     private void refreshTables() {
 
+        this.paymentTable.setModel(new PaymentActivityTableModel(null));
+        
+        this.cachedPayments = new HashMap();
         restoreSearch();
         if (searchResults) {
             return;
@@ -232,7 +234,7 @@ public class InvoiceManager extends javax.swing.JDialog {
                 return;
             }
         }
-        
+
         if (this.paidRadio.isSelected()) {
             try {
                 var invoices = invoiceService.getPaidInvoices();
@@ -243,7 +245,7 @@ public class InvoiceManager extends javax.swing.JDialog {
                 return;
             }
         }
-        
+
         if (this.voidRadio.isSelected()) {
             try {
                 var invoices = invoiceService.getVoidInvoices();
@@ -254,78 +256,56 @@ public class InvoiceManager extends javax.swing.JDialog {
                 return;
             }
         }
-
-//        boolean quotes = quoteRadio.isSelected();
-//
-//        ArrayList al = new ArrayList();
-//
-//        boolean sel = paidRadio.isSelected();
-//
-//        if (!voidRadio.isSelected() && !quotes) {  
-//            
-//            
-//            al = db.search("invoice", 8, Boolean.toString(sel), false);  //list of all marked paid or unpaid
-//            
-//        }
-//
-//        if (quotes) {
-//            al = null;
-//            searchField.setText(qPrefix);
-//            tm = db.createTableModel("quote", invoiceTable);
-//            if (tm.getRowCount() < 1) {
-//                tm = new DefaultTableModel();
-//            }
-//        } else {
-//            searchField.setText(iPrefix);
-//        }
-//
-//        if (voidRadio.isSelected()) {
-//            al = db.search("invoice", 9, "true", false);  //list of voided invoices
-//        }
-//
-//        if (al == null && !quotes) {  //if no records set a blank table model
-//
-//            tm = new DefaultTableModel();
-//            invoiceTable.setModel(tm);
-//
-//            paymentTable.setModel(new DefaultTableModel());
-//
-//            setView();
-//            return;
-//        } else {
-//
-//            if (!quotes) {
-//                tm = db.createTableModel("invoice", al, invoiceTable);  //get a model from the list of all
-//            }
-//        }
-//
-//        /* Remove any voids */
-//        if (!voidRadio.isSelected() && al != null && !quotes) {  //if void was not selected
-//
-//            al = new ArrayList(); //al.clear();
-//            for (int r = 0; r < tm.getRowCount(); r++) {
-//
-//                if (!(Boolean) tm.getValueAt(r, 9)) {
-//                    al.add((Integer) tm.getValueAt(r, 0));
-//                }
-//            }
-//
-//            if (al.size() < 1) {
-//                tm = new DefaultTableModel();
-//            } else {
-//                tm = db.createTableModel("invoice", al, invoiceTable);
-//            }
-//
-//        }  //end void removal
-//
-//        invoiceTable.setModel(tm);
-//        paymentTable.setModel(new DefaultTableModel());
         customizeView();
 
     }
 
+    private HashMap<UUID, List<InvoicePayment>> cachedPayments = new HashMap();
+
+    private List<InvoicePayment> getPayments(Invoice invoice) throws SQLException {
+
+        var payments = cachedPayments.get(invoice.getId());
+
+        if (payments == null) {
+            payments = invoiceService.getPaymentsForInvoice(invoice);
+            this.cachedPayments.put(invoice.getId(), payments);
+        } else {
+            //System.out.println("cache hit!");
+        }
+
+        return payments;
+    }
+
     private void setPayments() {
 
+        var selectedRow = this.invoiceTable.getSelectedRow();
+        if (selectedRow < 0) {
+            return;
+        }
+
+        var tableModel = (InvoiceManagerTableModel) this.invoiceTable.getModel();
+
+        var invoice = tableModel.getValueAt(selectedRow);
+
+        List<InvoicePayment> payments = null;
+
+        try {
+            payments = this.getPayments(invoice);
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error getting payments from database");
+            return;
+        }
+
+        this.paymentTable.setModel(new PaymentActivityTableModel(payments));
+
+        var columnModel = this.paymentTable.getColumnModel();
+
+        this.paymentTable.removeColumn(columnModel.getColumn(1));
+        this.paymentTable.removeColumn(columnModel.getColumn(5));
+
+        columnModel.getColumn(0).setCellRenderer(new DateCellRenderer());
+        columnModel.getColumn(3).setCellRenderer(new DecimalCellRenderer(18, 2, SwingConstants.RIGHT));
+        columnModel.getColumn(4).setCellRenderer(new DecimalCellRenderer(18, 2, SwingConstants.RIGHT));
 //        if (invoiceTable.getRowCount() > 0) {
 //            //
 //        }
@@ -495,8 +475,13 @@ public class InvoiceManager extends javax.swing.JDialog {
         jTextArea1 = new javax.swing.JTextArea();
         buttonGroup2 = new NonSelectedButtonGroup();
         jButton1 = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        invoiceManagerSplitPane = new javax.swing.JSplitPane();
+        paymentActivityPanel = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        paymentTable = new javax.swing.JTable();
+        deleteButton = new javax.swing.JButton();
+        invoicePanel = new javax.swing.JPanel();
+        invoiceTableScrollPane = new javax.swing.JScrollPane();
         invoiceTable = new javax.swing.JTable();
         searchField = new javax.swing.JTextField();
         actionToolbar = new javax.swing.JToolBar();
@@ -514,10 +499,6 @@ public class InvoiceManager extends javax.swing.JDialog {
         quoteRadio = new javax.swing.JToggleButton();
         voidRadio = new javax.swing.JToggleButton();
         searchCombo = new javax.swing.JComboBox();
-        jPanel4 = new javax.swing.JPanel();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        paymentTable = new javax.swing.JTable();
-        deleteButton = new javax.swing.JButton();
 
         jLabel5.setText("Customer");
 
@@ -532,15 +513,63 @@ public class InvoiceManager extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Invoice Manager");
         setIconImage(winIcon);
-        setResizable(false);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Posted Invoices", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        invoiceManagerSplitPane.setDividerLocation(400);
+        invoiceManagerSplitPane.setDividerSize(10);
+        invoiceManagerSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        invoiceManagerSplitPane.setResizeWeight(0.8);
 
-        jScrollPane1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        paymentActivityPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Payment Activity", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+
+        paymentTable.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        paymentTable.setToolTipText("Invoice Activity");
+        jScrollPane3.setViewportView(paymentTable);
+
+        deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Delete.png"))); // NOI18N
+        deleteButton.setText("Delete");
+        deleteButton.setToolTipText("Deletes entries from Payment Activity.");
+        deleteButton.setMargin(new java.awt.Insets(2, 10, 2, 10));
+        deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteButtonActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout paymentActivityPanelLayout = new org.jdesktop.layout.GroupLayout(paymentActivityPanel);
+        paymentActivityPanel.setLayout(paymentActivityPanelLayout);
+        paymentActivityPanelLayout.setHorizontalGroup(
+            paymentActivityPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, paymentActivityPanelLayout.createSequentialGroup()
+                .add(paymentActivityPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 765, Short.MAX_VALUE)
+                    .add(paymentActivityPanelLayout.createSequentialGroup()
+                        .addContainerGap(688, Short.MAX_VALUE)
+                        .add(deleteButton)))
+                .addContainerGap())
+        );
+        paymentActivityPanelLayout.setVerticalGroup(
+            paymentActivityPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(paymentActivityPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 66, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(deleteButton)
+                .addContainerGap())
+        );
+
+        invoiceManagerSplitPane.setBottomComponent(paymentActivityPanel);
+
+        invoicePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Posted Invoices", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+
+        invoiceTableScrollPane.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        invoiceTableScrollPane.setViewportView(invoiceTable);
 
         invoiceTable.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.white, null));
         invoiceTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         invoiceTable.setToolTipText("Double-Click an Invoice to View or Print");
+        invoiceTable.setRowSelectionAllowed(true);
+        invoiceTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        invoiceTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         invoiceTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 invoiceTableMouseClicked(evt);
@@ -554,7 +583,7 @@ public class InvoiceManager extends javax.swing.JDialog {
                 invoiceTableKeyReleased(evt);
             }
         });
-        jScrollPane1.setViewportView(invoiceTable);
+        invoiceTableScrollPane.setViewportView(invoiceTable);
 
         searchField.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
         searchField.setToolTipText("Find an invoice IN THIS FILTER only.");
@@ -751,92 +780,54 @@ public class InvoiceManager extends javax.swing.JDialog {
             }
         });
 
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+        org.jdesktop.layout.GroupLayout invoicePanelLayout = new org.jdesktop.layout.GroupLayout(invoicePanel);
+        invoicePanel.setLayout(invoicePanelLayout);
+        invoicePanelLayout.setHorizontalGroup(
+            invoicePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, invoicePanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 782, Short.MAX_VALUE)
-                    .add(actionToolbar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 782, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1Layout.createSequentialGroup()
+                .add(invoicePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(actionToolbar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 759, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, invoiceTableScrollPane)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, invoicePanelLayout.createSequentialGroup()
                         .add(statusToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 384, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(searchCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 159, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(searchField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)))
+                        .add(searchField)))
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+        invoicePanelLayout.setVerticalGroup(
+            invoicePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(invoicePanelLayout.createSequentialGroup()
+                .add(invoicePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(invoicePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, searchField, 0, 0, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, searchCombo))
                     .add(statusToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 273, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(invoiceTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(actionToolbar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Payment Activity", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
-
-        paymentTable.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        paymentTable.setToolTipText("Invoice Activity");
-        jScrollPane3.setViewportView(paymentTable);
-
-        deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Delete.png"))); // NOI18N
-        deleteButton.setText("Delete");
-        deleteButton.setToolTipText("Deletes entries from Payment Activity.");
-        deleteButton.setMargin(new java.awt.Insets(2, 10, 2, 10));
-        deleteButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteButtonActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 782, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, deleteButton))
+                .add(actionToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 78, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(deleteButton)
-                .addContainerGap())
-        );
+
+        invoiceManagerSplitPane.setLeftComponent(invoicePanel);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(invoiceManagerSplitPane)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(invoiceManagerSplitPane)
                 .addContainerGap())
         );
 
@@ -979,22 +970,27 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
 
-        deletePayment();
+        try {
+            deletePayment();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error deleting payment from database");
+        }
 
     }//GEN-LAST:event_deleteButtonActionPerformed
 
-    private void deletePayment() {
+    private void deletePayment() throws SQLException {
 
-        int row = paymentTable.getSelectedRow();
+        int selectedPaymentRow = paymentTable.getSelectedRow();
 
-        if (row < 0) {
+        if (selectedPaymentRow < 0) {
             return;
         }
 
-        int paymentKey = (Integer) paymentTable.getModel().getValueAt(row, 0);
-        String paymentType = (String) paymentTable.getModel().getValueAt(row, 3);
+        var paymentTableModel = (PaymentActivityTableModel)paymentTable.getModel();
+        
+        var payment = paymentTableModel.getValueAt(selectedPaymentRow);
 
-        if (paymentType.toLowerCase().equals("return")) {
+        if (payment.getPaymentType().getName().equalsIgnoreCase("return")) {
 
             int a = javax.swing.JOptionPane.showConfirmDialog(null,
                     "Deleting a payment entry generated by a product Return will NOT reverse the return." + nl
@@ -1007,7 +1003,7 @@ public class InvoiceManager extends javax.swing.JDialog {
             }
         }
 
-        if (paymentType.toLowerCase().equals("fee")) {
+        if (payment.getPaymentType().getName().equalsIgnoreCase("fee")) {
 
             int a = javax.swing.JOptionPane.showConfirmDialog(null,
                     "The best way to reverse a fee is to issue a credit." + nl
@@ -1019,59 +1015,69 @@ public class InvoiceManager extends javax.swing.JDialog {
         }
 
         /* Fall-through action */
-        String iValue = javax.swing.JOptionPane.showInputDialog("Type DELETE to continue.");
-        if (iValue != null && iValue.equalsIgnoreCase("delete")) {
+        var confirmation = javax.swing.JOptionPane.showInputDialog("Type DELETE to continue.");
+        if (confirmation != null && confirmation.equalsIgnoreCase("delete")) {
             //db.removeRecord("payments", paymentKey);
 
         }
 
-        int invRow = invoiceTable.getSelectedRow();
-        int invKey = (Integer) invoiceTable.getModel().getValueAt(invRow, 0);
+        this.invoiceService.deletePayment(payment);
+                
+        var invoiceTableModel = (InvoiceManagerTableModel)invoiceTable.getModel();
+        
+        var selectedInvoiceRow = invoiceTable.getSelectedRow();
+        
+        var invoice = invoiceTableModel.getValueAt(selectedInvoiceRow);
 
-        /* Get an Invoice instance for this invoice and check balance */
- /* if the balance is over 0.00 mark unpaid, save and refresh tables */
-        //OldInvoice inv = new OldInvoice(null, invKey);
-//        float balance = inv.getInvoiceDueNow();
-//
-//        if (balance > 0) {
-//            boolean prevPdStatus = inv.isPaid();
-//            inv.setPaid(false);
-//            inv.saveInvoice();
-//            this.refreshTables();
-//            if (prevPdStatus) {
-//                javax.swing.JOptionPane.showMessageDialog(null,
-//                        "The invoice now shows a balance due of " + DV.money(balance) + nl
-//                        + "The status of the invoice has been changed to unpaid.");
-//            }
-//            return;
-//        }
-//
-//        if (balance < 0) {
-//
-//            inv.setPaid(false);
-//            inv.saveInvoice();
-//            this.refreshTables();
-//
-//            javax.swing.JOptionPane.showMessageDialog(null,
-//                    "The invoice now has a negative balance," + nl
-//                    + "showing that the customer has overpaid." + nl
-//                    + "Its status has been changed to unpaid so that" + nl
-//                    + " you can reconcile the invoice by issuing a refund.");
-//
-//            return;
-//        }
-//
-//        setPayments();
+        var balanceDue = invoiceService.calculateInvoiceAmountDue(invoice);
+        
+        if (balanceDue > 0) {
+            boolean prevPdStatus = invoice.isPaid();
+            invoice.setPaid(false);
+            invoiceService.save(invoice);
+            this.refreshTables();
+            if (prevPdStatus) {
+                javax.swing.JOptionPane.showMessageDialog(null,
+                        "The invoice now shows a balance due of " + DV.money(balanceDue) + nl
+                        + "The status of the invoice has been changed to unpaid.");
+            }
+            return;
+        }
+
+        if (balanceDue < 0) {
+
+            invoice.setPaid(false);
+            invoiceService.save(invoice);
+            this.refreshTables();
+
+            javax.swing.JOptionPane.showMessageDialog(null,
+                    "The invoice now has a negative balance," + nl
+                    + "showing that the customer has overpaid." + nl
+                    + "Its status has been changed to unpaid so that" + nl
+                    + " you can reconcile the invoice by issuing a refund.");
+
+            return;
+        }
+
+        setPayments();
     }
 
     private void voidButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_voidButtonActionPerformed
-        voidAction();
+        try {
+            voidAction();
+        } catch (SQLException ex) {
+            ExceptionService.showErrorDialog(this, ex, "Error voiding invoice in database");
+        }
     }//GEN-LAST:event_voidButtonActionPerformed
 
-    private void voidAction() {
+    private void voidAction() throws SQLException {
+        var selectedRow = invoiceTable.getSelectedRow();
+        
+        if (selectedRow < 0 || voidRadio.isSelected()) { 
+            return;
+        }
+        
 
-//        int row = invoiceTable.getSelectedRow();
-//
 //        if (row > -1 && !voidRadio.isSelected()) {
 //
 ////            if (!accessKey.checkManager(500)) {
@@ -1084,80 +1090,26 @@ public class InvoiceManager extends javax.swing.JDialog {
 //                return;
 //            }
 //
-//            //int a = JOptionPane.showConfirmDialog(this, "Sure you want to VOID the selected invoice?" + System.getProperty("line.separator") +"VOID is Permanent!","V O I D",  JOptionPane.YES_NO_OPTION);
-//            String iValue = JOptionPane.showInputDialog("To void this invoice type VOID and click OK.");
-//            if (iValue != null && iValue.equalsIgnoreCase("void")) {
-//
-//                int r = invoiceTable.getSelectedRow();
-//
-//                Object[] dataOut = db.getRecord("invoice", (Integer) tm.getValueAt(r, 0));
-//
-//                dataOut[9] = new Boolean(true);  //VOID it!
-//
-//                int savekey = db.saveRecord("invoice", dataOut, false);
-//
-//
-//                /* Blast sales and payments for this invoice */
-//                String inum = (String) dataOut[1];
-//                String invoice_key = Integer.toString((Integer) dataOut[0]);
-//
-//                /* Kill invoice payments */
-//                ArrayList al = db.search("payments", 1, inum, false);
-//
-//                if (al != null) {
-//
-//                    for (int i = 0; i < al.size(); i++) {
-//
-//                        db.removeRecord("payments", (Integer) al.get(i));
-//                    }
-//                }
-//
-//                /* Kill invoice items */
-//                al = db.search("invitems", 1, invoice_key, false);
-//                Object[] rec;
-//                String desc;
-//                String type;
-//                float qty;
-//
-//                ArrayList temp;
-//                if (al != null) {
-//
-//                    for (int i = 0; i < al.size(); i++) {
-//                        rec = db.getRecord("invitems", (Integer) al.get(i));
-//                        desc = (String) rec[5];  //desc
-//                        type = (String) rec[4];  //code
-//                        qty = (Float) rec[3]; //qty
-//
-//                        temp = db.search("inventory", 3, desc, false);
-//
-//                        if (temp != null) {
-//                            rec = db.getRecord("inventory", (Integer) temp.get(0));
-//
-//                            if (type.equalsIgnoreCase("RETURN")) {
-//                                rec[6] = (Float) rec[6] + (qty * -1);
-//                            } else {
-//                                rec[6] = (Float) rec[6] + qty;
-//                            }
-//                            db.removeRecord("invitems", (Integer) al.get(i));
-//                            db.saveRecord("inventory", rec, false);
-//
-//                        }
-//                    }
-//                }
-//                this.refreshTables();
-//
-//                if (savekey == -1) {
-//                    JOptionPane.showMessageDialog(null, "Problem accessing database, invoice was NOT voided.", "ERROR", JOptionPane.ERROR_MESSAGE);
-//                } else {
-//                    JOptionPane.showMessageDialog(null, "Invoice was VOIDED.");
-//                }
-//
-//            } else {
-//
-//                JOptionPane.showMessageDialog(null, "Invoice was NOT voided.");
-//
-//            }
-//        }
+            var proceed = JOptionPane.showConfirmDialog(this, "Sure you want to VOID the selected invoice?","V O I D",  JOptionPane.YES_NO_OPTION);
+            
+            if (proceed == JOptionPane.NO_OPTION) {
+                return;
+            }
+            
+            var confirmation = JOptionPane.showInputDialog("To void this invoice type VOID and click OK.");
+
+            if (!confirmation.equalsIgnoreCase("void")) {
+                return;
+            }
+            
+            var tableModel = (InvoiceManagerTableModel)invoiceTable.getModel();
+            
+            var invoice = tableModel.getValueAt(selectedRow);
+            
+            invoice.setVoided(true);
+            
+            invoiceService.save(invoice);
+            refreshTables();
     }
 
     private void voidRadioAction() {
@@ -1231,8 +1183,6 @@ public class InvoiceManager extends javax.swing.JDialog {
         if (invoiceTable.getSelectedRow() < 0) {
             return;
         }
-
-        Integer key = (Integer) invoiceTable.getModel().getValueAt(invoiceTable.getSelectedRow(), 0);
 
         setPayments();
 
@@ -1368,13 +1318,13 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         } else {
             var paymentDialog = new PaymentDialog(parentWin, true, invoice);
-            
+
             try {
                 paymentDialog.display();
             } catch (SQLException ex) {
                 ExceptionService.showErrorDialog(this, ex, "Error accessing invoice payments in database");
             }
-            
+
             refreshTables();
         }
 
@@ -1504,12 +1454,12 @@ public class InvoiceManager extends javax.swing.JDialog {
     private javax.swing.JButton closeButton;
     private javax.swing.JButton deleteButton;
     private javax.swing.JButton historyButton;
+    private javax.swing.JSplitPane invoiceManagerSplitPane;
+    private javax.swing.JPanel invoicePanel;
     private javax.swing.JTable invoiceTable;
+    private javax.swing.JScrollPane invoiceTableScrollPane;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTextArea jTextArea1;
@@ -1517,6 +1467,7 @@ public class InvoiceManager extends javax.swing.JDialog {
     private javax.swing.JButton openButton;
     private javax.swing.JToggleButton paidRadio;
     private javax.swing.JButton payButton;
+    private javax.swing.JPanel paymentActivityPanel;
     private javax.swing.JTable paymentTable;
     private javax.swing.JToggleButton quoteRadio;
     private javax.swing.JButton returnButton;

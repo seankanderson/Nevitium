@@ -33,10 +33,10 @@ public String getType(){
 public String getMemo(){
     return (String)payment[4];
 }
-public float getDebit(){
+public double getDebit(){
     return Tools.round((Float)payment[5]);
 }
-public float getCredit(){
+public double getCredit(){
     return Tools.round((Float)payment[6]);
 }
 public boolean isCredit(){

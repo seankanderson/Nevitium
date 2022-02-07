@@ -18,8 +18,12 @@ public class DecimalCellRenderer extends DefaultTableCellRenderer {
         this.integer = integer;
         this.fraction = fraction;
         this.align = align;
+        
     }
 
+    
+    
+    @Override
     protected void setValue(Object value){
 
         if (value != null && value instanceof Number){

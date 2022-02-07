@@ -1,5 +1,6 @@
 package com.datavirtue.nevitium.models;
 
+import java.util.Date;
 import java.util.List;
 import javax.swing.table.DefaultTableModel;
 
@@ -63,6 +64,10 @@ public abstract class AbstractCollectionTableModel<T> extends DefaultTableModel{
             return Boolean.class;
         }
         
+        if (value instanceof Date) {
+            return Date.class;
+        }
+        
         if (value instanceof Double) {
             return Double.class;
         }
@@ -70,9 +75,14 @@ public abstract class AbstractCollectionTableModel<T> extends DefaultTableModel{
         if (value instanceof String) {
             return String.class;
         }
-        
-        return Object.class;
-        
+                        
+        return Object.class;      
         
     }
+    
+     @Override
+    public boolean isCellEditable(int row, int column) {
+       return false;
+    }
+    
 }
