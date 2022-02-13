@@ -1,6 +1,9 @@
 package com.datavirtue.nevitium.services.util;
 
-import com.datavirtue.nevitium.ui.util.Tools;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 /**
  *
@@ -9,12 +12,12 @@ import com.datavirtue.nevitium.ui.util.Tools;
 public class CurrencyUtil {
 
     private static  double getHundredth(double decimal) {
-        double hundredth = Tools.round(((decimal * .1f) % 1) * 10);
+        double hundredth = CurrencyUtil.round(((decimal * .1f) % 1) * 10);
         return hundredth;
     }
 
     private static  double getDecimal(double amt) {
-        double decimal = Tools.round((amt % 1) * 100);
+        double decimal = CurrencyUtil.round((amt % 1) * 100);
         decimal = decimal - (decimal % 1);
         return decimal;
     }
@@ -39,6 +42,23 @@ public class CurrencyUtil {
             return (amt += (.10 - (hundredth * .01))); //rounded up to nearest 10th
         }
         return amt;
+    }
+    
+    public static double round(double value) {
+        BigDecimal result = new BigDecimal(Double.toString(value)).setScale(2,  RoundingMode.HALF_UP);
+        return result.doubleValue();
+    }
+    
+    public static String money (double money) {
+        //Locale locale = Locale.getDefault();
+        money = round(money);
+        NumberFormat formatter = new DecimalFormat("#,###,##0.00");        
+        return formatter.format(money);
+    }
+    
+    public static double parseToDouble(String value) {
+        var parsedValue = new BigDecimal(value.trim()).doubleValue();
+        return round(parsedValue);
     }
 
 }

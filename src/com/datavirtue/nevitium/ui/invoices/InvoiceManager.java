@@ -17,7 +17,7 @@ import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.InvoiceService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
-import com.datavirtue.nevitium.services.util.DV;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.ui.util.DateCellRenderer;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 
@@ -46,7 +46,7 @@ public class InvoiceManager extends javax.swing.JDialog {
     private InvoiceService invoiceService;
     private AppSettings appSettings;
     private LocalAppSettings localSettings;
-   
+
     public InvoiceManager(java.awt.Frame parent, boolean modal) {
 
         super(parent, modal);
@@ -109,7 +109,7 @@ public class InvoiceManager extends javax.swing.JDialog {
         searchField.requestFocus();
         statusToolbar.setLayout(new FlowLayout());
         actionToolbar.setLayout(new FlowLayout());
-        
+
         this.setVisible(true);
     }
 
@@ -125,16 +125,15 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         var screenSettings = localSettings.getScreenSettings().getInvoiceManager();
         LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
-        
+
         var splitfactor = Double.valueOf(screenSettings.getSplitFactor()).intValue();
-        
+
         if (splitfactor > 100) {
             this.invoiceManagerSplitPane.setDividerLocation(splitfactor);
         } else {
             this.invoiceManagerSplitPane.setDividerLocation(300);
         }
-        
-        
+
     }
 
     private int rememberedRow = 0;
@@ -169,10 +168,10 @@ public class InvoiceManager extends javax.swing.JDialog {
         if (invoiceTable.getRowCount() < 0) {
             return;
         }
-                
-        invoiceTable.getColumnModel().getColumn(0).setCellRenderer(new DateCellRenderer());               
+
+        invoiceTable.getColumnModel().getColumn(0).setCellRenderer(new DateCellRenderer());
         invoiceTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18, 2, SwingConstants.RIGHT));
-                
+
         invoiceTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         int[] widths = new int[]{45, 50, 270, 55};
         for (int i = 0; i < widths.length; i++) {
@@ -181,11 +180,10 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         invoiceTable.setCellSelectionEnabled(false);
         invoiceTable.setRowSelectionAllowed(true);
-               
+
         paymentTable.setCellSelectionEnabled(false);
         paymentTable.setRowSelectionAllowed(true);
-       
-        
+
     }
 
     private void resetSearch() {
@@ -205,7 +203,7 @@ public class InvoiceManager extends javax.swing.JDialog {
     private void refreshTables() {
 
         this.paymentTable.setModel(new PaymentActivityTableModel(null));
-        
+
         this.cachedPayments = new HashMap();
         restoreSearch();
         if (searchResults) {
@@ -360,18 +358,18 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         boolean found = false;
 
-        int len = tm.getRowCount();
+        //int len = tm.getRowCount();
 
-        if (searchCombo.getSelectedIndex() == 0) {
-            for (int i = 0; i < len; i++) {
-                if (searchField.getText().equalsIgnoreCase((String) tm.getValueAt(i, 1))) {
-                    invoiceTable.changeSelection(i, 0, false, false);
-                    setPayments();
-                    found = true;
-                }
-            }
-            resetSearch();
-        }
+//        if (searchCombo.getSelectedIndex() == 0) {
+//            for (int i = 0; i < len; i++) {
+//                if (searchField.getText().equalsIgnoreCase((String) tm.getValueAt(i, 1))) {
+//                    invoiceTable.changeSelection(i, 0, false, false);
+//                    setPayments();
+//                    found = true;
+//                }
+//            }
+//            resetSearch();
+//        }
 
         if (searchCombo.getSelectedIndex() == 2) { //search customers
             //search invoices for substring of customer
@@ -435,7 +433,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 //                    }
 //                }
                 // tm = db.createTableModel("invoice", clean, invoiceTable);
-                invoiceTable.setModel(tm);
+                //invoiceTable.setModel(tm);
 
                 this.customizeView();
 
@@ -461,6 +459,348 @@ public class InvoiceManager extends javax.swing.JDialog {
         }
     }
 
+    private void closeInvoice(int row) {
+
+        if (invoiceTable.getSelectedRow() < 0) {
+            return;
+        }
+        if ((Boolean) invoiceTable.getModel().getValueAt(row, 8) || (Boolean) invoiceTable.getModel().getValueAt(row, 8)) {
+
+            javax.swing.JOptionPane.showMessageDialog(null, "You cannot close an invoice which is already PAID or VOID.");
+            return;
+
+        }
+
+        //get typed verification
+        //pay out the invoice and record a refund against it
+        //refund == total cost of all items minus the amount that has been paid already
+        String iValue = JOptionPane.showInputDialog("To \"write off\" this invoice type CLOSE and click OK.");
+
+        if (iValue != null && iValue.trim().equalsIgnoreCase("close")) {
+
+            //get invoice number
+            int invoice_key = (Integer) invoiceTable.getModel().getValueAt(row, 0);
+
+            //System.out.println(invoice_key);
+//            invoice = new OldInvoice(application, invoice_key);
+//
+//            invoice.setPaid(true);
+//            invoice.saveInvoice();
+        }
+
+        this.refreshTables();
+
+    }
+
+    private void deleteQuote(int key) {
+
+        int a = javax.swing.JOptionPane.showConfirmDialog(null,
+                "Are you sure you want to delete this quote?", "Delete Quote", JOptionPane.YES_NO_OPTION);
+        if (a != 0) {
+            return;
+        }
+
+//        Quote theQuote = new Quote(db, key);
+//        int tmpKey;
+//
+//        // delete quote items
+//        DefaultTableModel items = theQuote.getItems();
+//
+//        for (int r = 0; r < items.getRowCount(); r++) {
+//
+//            tmpKey = (Integer) items.getValueAt(r, 0);
+//            db.removeRecord("qitems", tmpKey);
+//
+//        }
+//        //this.refreshTables();
+//
+//        db.removeRecord("quote", key);
+//
+//        // delete quote shipto
+//        tmpKey = theQuote.getShipToKey();
+//        if (tmpKey > 0) {
+//            db.removeRecord("qshipto", tmpKey);
+//        }
+//
+//        JOptionPane.showMessageDialog(null, "Quote was deleted.");
+//
+//        theQuote = null;
+//        this.refreshTables();
+    }
+
+    private void deletePayment() throws SQLException {
+
+        int selectedPaymentRow = paymentTable.getSelectedRow();
+
+        if (selectedPaymentRow < 0) {
+            return;
+        }
+
+        var paymentTableModel = (PaymentActivityTableModel) paymentTable.getModel();
+
+        var payment = paymentTableModel.getValueAt(selectedPaymentRow);
+
+        if (payment.getPaymentType().getName().equalsIgnoreCase("return")) {
+
+            int a = javax.swing.JOptionPane.showConfirmDialog(null,
+                    "Deleting a payment entry generated by a product return will NOT reverse the return." + nl
+                    + "The products will still show as being returned on this invoice." + nl
+                    + "This action is not recommended.  Do you still want to delete it?",
+                    "(Return) Credit Delete", JOptionPane.YES_NO_OPTION);
+            if (a == 0) {
+            } else {
+                return;
+            }
+        }
+
+        if (payment.getPaymentType().getName().equalsIgnoreCase("fee")) {
+
+            int a = javax.swing.JOptionPane.showConfirmDialog(null,
+                    "The best way to reverse a fee is to issue a credit." + nl
+                    + "Do you still want to delete it?", "Fee Debit Delete", JOptionPane.YES_NO_OPTION);
+            if (a == 0) {
+            } else {
+                return;
+            }
+        }
+
+        /* Fall-through action */
+        var confirmation = javax.swing.JOptionPane.showInputDialog("Type DELETE to continue.");
+        if (confirmation == null || !confirmation.equalsIgnoreCase("delete")) {
+            return;
+        }
+
+        this.invoiceService.deletePayment(payment);
+
+        var invoiceTableModel = (InvoiceManagerTableModel) invoiceTable.getModel();
+
+        var selectedInvoiceRow = invoiceTable.getSelectedRow();
+
+        var invoice = invoiceTableModel.getValueAt(selectedInvoiceRow);
+
+        var balanceDue = invoiceService.calculateInvoiceAmountDue(invoice);
+
+        if (balanceDue > 0) {
+            boolean prevPdStatus = invoice.isPaid();
+            invoice.setPaid(false);
+            invoiceService.save(invoice);
+            this.refreshTables();
+            if (prevPdStatus) {
+                javax.swing.JOptionPane.showMessageDialog(null,
+                        "The invoice now shows a balance due of " + CurrencyUtil.money(balanceDue) + nl
+                        + "The status of the invoice has been changed to unpaid.");
+            }
+            return;
+        }
+
+        if (balanceDue < 0) {
+
+            invoice.setPaid(false);
+            invoiceService.save(invoice);
+            this.refreshTables();
+
+            javax.swing.JOptionPane.showMessageDialog(null,
+                    "The invoice now has a negative balance," + nl
+                    + "showing that the customer has overpaid." + nl
+                    + "Its status has been changed to unpaid so that" + nl
+                    + " you can reconcile the invoice by issuing a refund.");
+
+            return;
+        }
+
+        setPayments();
+    }
+
+    private void voidAction() throws SQLException {
+        var selectedRow = invoiceTable.getSelectedRow();
+
+        if (selectedRow < 0 || voidRadio.isSelected()) {
+            return;
+        }
+
+//        if (row > -1 && !voidRadio.isSelected()) {
+//
+////            if (!accessKey.checkManager(500)) {
+////                accessKey.showMessage("Void");
+////                return;
+////            }
+//            if (quoteRadio.isSelected()) {
+//
+//                deleteQuote((Integer) invoiceTable.getModel().getValueAt(row, 0));
+//                return;
+//            }
+//
+        var proceed = JOptionPane.showConfirmDialog(this, "Sure you want to VOID the selected invoice?", "V O I D", JOptionPane.YES_NO_OPTION);
+
+        if (proceed == JOptionPane.NO_OPTION || proceed == JOptionPane.CANCEL_OPTION || proceed == JOptionPane.CLOSED_OPTION) {
+            return;
+        }
+
+        var confirmation = JOptionPane.showInputDialog("To void this invoice type VOID and click OK.");
+
+        if (confirmation == null || !confirmation.equalsIgnoreCase("void")) {
+            return;
+        }
+
+        var tableModel = (InvoiceManagerTableModel) invoiceTable.getModel();
+
+        var invoice = tableModel.getValueAt(selectedRow);
+
+        invoice.setVoided(true);
+
+        invoiceService.save(invoice);
+        refreshTables();
+    }
+
+    private void voidRadioAction() {
+        voidRadio.setSelected(true);
+        resetSearch();
+        refreshTables();
+        searchField.requestFocus();
+        voidButton.setText("VOID");
+        statementButton.setEnabled(false);
+        returnButton.setEnabled(false);
+        payButton.setEnabled(false);
+        closeButton.setEnabled(false);
+        voidButton.setEnabled(false);
+        historyButton.setEnabled(false);
+        this.selectFirstRow(invoiceTable);
+    }
+
+    private void unpaidRadioAction() {
+        unpaidRadio.setSelected(true);
+        resetSearch();
+        refreshTables();
+        searchField.requestFocus();
+        voidButton.setText("VOID");
+        openButton.setEnabled(true);
+        statementButton.setEnabled(true);
+        historyButton.setEnabled(true);
+        returnButton.setEnabled(true);
+        payButton.setEnabled(true);
+        closeButton.setEnabled(true);
+        voidButton.setEnabled(true);
+        this.selectFirstRow(invoiceTable);    
+    }
+
+    private void paidRadioAction() {
+        paidRadio.setSelected(true);
+        resetSearch();
+        refreshTables();
+        voidButton.setText("VOID");
+        searchField.requestFocus();
+        openButton.setEnabled(true);
+        statementButton.setEnabled(true);
+        historyButton.setEnabled(true);
+        returnButton.setEnabled(true);
+        payButton.setEnabled(false);
+        closeButton.setEnabled(false);
+        voidButton.setEnabled(true);
+        this.selectFirstRow(invoiceTable);
+    }
+
+        private void quoteRadioAction() {
+        quoteRadio.setSelected(true);
+        resetSearch();
+        refreshTables();
+        searchField.requestFocus();
+        voidButton.setText("VOID");
+        openButton.setEnabled(true);
+        statementButton.setEnabled(false);
+        historyButton.setEnabled(true);
+        returnButton.setEnabled(false);
+        payButton.setEnabled(false);
+        closeButton.setEnabled(false);
+        voidButton.setEnabled(true);
+        this.selectFirstRow(invoiceTable);
+    }
+
+    
+    private void openInvoice() {
+
+        if (voidRadio.isSelected()) {
+
+            javax.swing.JOptionPane.showMessageDialog(null,
+                    "Voided invoices contain no data.");
+            return;
+        }
+
+        rememberRow();
+
+        int selectedRow = invoiceTable.getSelectedRow();
+
+        if (selectedRow > -1) {
+
+            var tableModel = (InvoiceManagerTableModel) this.invoiceTable.getModel();
+
+            var invoice = tableModel.getValueAt(selectedRow);
+
+            var invoiceApp = new InvoiceApp(this.parentWin, true);
+            invoiceApp.setInvoice(invoice);
+            invoiceApp.display();
+            invoiceApp.dispose();
+//            if (quoteRadio.isSelected()) {
+//                /* Opening quotes, the key is used before the application to load quotes */
+//                //id = new InvoiceDialog (parentWin, true, k, application); //no select
+//
+//            } else {
+//
+////                if (!accessKey.checkInvoice(300)) {
+////                    accessKey.showMessage("Close");
+////                    return;
+////                }
+//                //id = new InvoiceDialog (parentWin, true, application, k); //no select
+//
+//            }
+
+            //id.setVisible(true);
+            //stat = id.getStat();
+            //id.dispose();
+        }
+
+        if (searchResults && searchCombo.getSelectedIndex() == 1) { //if set to customers and already searched
+            searchField.setText(searchString);//restore our search with possible new data
+            findInvoice();
+            this.restoreRow();
+            return;
+        }
+        this.refreshTables();
+        this.restoreRow();
+
+    }
+
+        private void takePayment() {
+
+        this.rememberRow();
+
+        int selectedRow = invoiceTable.getSelectedRow();
+
+        if (selectedRow < 0) {
+            return; // TODO: complain via dialog?
+        }
+
+        var tableModel = (InvoiceManagerTableModel) this.invoiceTable.getModel();
+        var invoice = tableModel.getValueAt(selectedRow);
+
+        if (invoice.isPaid()) {
+
+            JOptionPane.showMessageDialog(this, "Invoice number " + invoice.getInvoiceNumber() + " is marked as paid.");
+
+        } else {
+            var paymentDialog = new PaymentDialog(parentWin, true, invoice);
+
+            try {
+                paymentDialog.display();
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error accessing invoice payments in database");
+            }
+
+            refreshTables();
+        }
+
+        this.restoreRow();
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -521,7 +861,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         paymentActivityPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Payment Activity", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        paymentTable.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
         paymentTable.setToolTipText("Invoice Activity");
         jScrollPane3.setViewportView(paymentTable);
 
@@ -567,7 +906,6 @@ public class InvoiceManager extends javax.swing.JDialog {
         invoiceTable.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.white, null));
         invoiceTable.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         invoiceTable.setToolTipText("Double-Click an Invoice to View or Print");
-        invoiceTable.setRowSelectionAllowed(true);
         invoiceTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         invoiceTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         invoiceTable.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -849,7 +1187,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 //            return;
 //        }
         if (invoiceTable.getSelectedRow() > -1 && paymentTable.getRowCount() > 0) {
-            int k = (Integer) tm.getValueAt(invoiceTable.getSelectedRow(), 0);
+            //int k = (Integer) tm.getValueAt(invoiceTable.getSelectedRow(), 0);
             //ReportFactory.generateStatements(application, k);
         }
 
@@ -868,8 +1206,17 @@ public class InvoiceManager extends javax.swing.JDialog {
             var tableModel = (InvoiceManagerTableModel) this.invoiceTable.getModel();
             var invoice = tableModel.getValueAt(selectedRow);
             var returnDialog = new ReturnDialog(null, true, invoice);
-            returnDialog.setVisible(true);
-
+            try {
+                returnDialog.display();
+            } catch (SQLException ex) {
+                ExceptionService.showErrorDialog(this, ex, "Error getting returns from database");
+            }
+            
+            if (returnDialog.isRefreshNeeded()) {
+                this.refreshTables();
+            }
+            
+            
         }
 
     }//GEN-LAST:event_returnButtonActionPerformed
@@ -898,75 +1245,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     }//GEN-LAST:event_closeButtonActionPerformed
 
-    private void closeInvoice(int row) {
-
-        if (invoiceTable.getSelectedRow() < 0) {
-            return;  //geesh, this wastn here for several versions
-        }
-        if ((Boolean) invoiceTable.getModel().getValueAt(row, 8) || (Boolean) invoiceTable.getModel().getValueAt(row, 8)) {
-
-            javax.swing.JOptionPane.showMessageDialog(null, "You cannot close an invoice which is already PAID or VOID.");
-            return;
-
-        }
-
-        //get typed verification
-        //pay out the invoice and record a refund against it
-        //refund == total cost of all items minus the amount that has been paid already
-        String iValue = JOptionPane.showInputDialog("To \"write off\" this invoice type CLOSE and click OK.");
-
-        if (iValue != null && iValue.trim().equalsIgnoreCase("close")) {
-
-            //get invoice number
-            int invoice_key = (Integer) invoiceTable.getModel().getValueAt(row, 0);
-
-            //System.out.println(invoice_key);
-//            invoice = new OldInvoice(application, invoice_key);
-//
-//            invoice.setPaid(true);
-//            invoice.saveInvoice();
-        }
-
-        this.refreshTables();
-
-    }
-
-    private void deleteQuote(int key) {
-
-        int a = javax.swing.JOptionPane.showConfirmDialog(null,
-                "Are you sure you want to delete this quote?", "Delete Quote", JOptionPane.YES_NO_OPTION);
-        if (a != 0) {
-            return;
-        }
-
-//        Quote theQuote = new Quote(db, key);
-//        int tmpKey;
-//
-//        // delete quote items
-//        DefaultTableModel items = theQuote.getItems();
-//
-//        for (int r = 0; r < items.getRowCount(); r++) {
-//
-//            tmpKey = (Integer) items.getValueAt(r, 0);
-//            db.removeRecord("qitems", tmpKey);
-//
-//        }
-//        //this.refreshTables();
-//
-//        db.removeRecord("quote", key);
-//
-//        // delete quote shipto
-//        tmpKey = theQuote.getShipToKey();
-//        if (tmpKey > 0) {
-//            db.removeRecord("qshipto", tmpKey);
-//        }
-//
-//        JOptionPane.showMessageDialog(null, "Quote was deleted.");
-//
-//        theQuote = null;
-//        this.refreshTables();
-    }
-
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
 
@@ -978,89 +1256,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     }//GEN-LAST:event_deleteButtonActionPerformed
 
-    private void deletePayment() throws SQLException {
-
-        int selectedPaymentRow = paymentTable.getSelectedRow();
-
-        if (selectedPaymentRow < 0) {
-            return;
-        }
-
-        var paymentTableModel = (PaymentActivityTableModel)paymentTable.getModel();
-        
-        var payment = paymentTableModel.getValueAt(selectedPaymentRow);
-
-        if (payment.getPaymentType().getName().equalsIgnoreCase("return")) {
-
-            int a = javax.swing.JOptionPane.showConfirmDialog(null,
-                    "Deleting a payment entry generated by a product Return will NOT reverse the return." + nl
-                    + "The products will still show as being returned on this invoice." + nl
-                    + "This action is not recommended.  Do you still want to delete it?",
-                    "(Return) Credit Delete", JOptionPane.YES_NO_OPTION);
-            if (a == 0) {
-            } else {
-                return;
-            }
-        }
-
-        if (payment.getPaymentType().getName().equalsIgnoreCase("fee")) {
-
-            int a = javax.swing.JOptionPane.showConfirmDialog(null,
-                    "The best way to reverse a fee is to issue a credit." + nl
-                    + "Do you still want to delete it?", "Fee Debit Delete", JOptionPane.YES_NO_OPTION);
-            if (a == 0) {
-            } else {
-                return;
-            }
-        }
-
-        /* Fall-through action */
-        var confirmation = javax.swing.JOptionPane.showInputDialog("Type DELETE to continue.");
-        if (confirmation != null && confirmation.equalsIgnoreCase("delete")) {
-            //db.removeRecord("payments", paymentKey);
-
-        }
-
-        this.invoiceService.deletePayment(payment);
-                
-        var invoiceTableModel = (InvoiceManagerTableModel)invoiceTable.getModel();
-        
-        var selectedInvoiceRow = invoiceTable.getSelectedRow();
-        
-        var invoice = invoiceTableModel.getValueAt(selectedInvoiceRow);
-
-        var balanceDue = invoiceService.calculateInvoiceAmountDue(invoice);
-        
-        if (balanceDue > 0) {
-            boolean prevPdStatus = invoice.isPaid();
-            invoice.setPaid(false);
-            invoiceService.save(invoice);
-            this.refreshTables();
-            if (prevPdStatus) {
-                javax.swing.JOptionPane.showMessageDialog(null,
-                        "The invoice now shows a balance due of " + DV.money(balanceDue) + nl
-                        + "The status of the invoice has been changed to unpaid.");
-            }
-            return;
-        }
-
-        if (balanceDue < 0) {
-
-            invoice.setPaid(false);
-            invoiceService.save(invoice);
-            this.refreshTables();
-
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "The invoice now has a negative balance," + nl
-                    + "showing that the customer has overpaid." + nl
-                    + "Its status has been changed to unpaid so that" + nl
-                    + " you can reconcile the invoice by issuing a refund.");
-
-            return;
-        }
-
-        setPayments();
-    }
 
     private void voidButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_voidButtonActionPerformed
         try {
@@ -1070,109 +1265,6 @@ public class InvoiceManager extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_voidButtonActionPerformed
 
-    private void voidAction() throws SQLException {
-        var selectedRow = invoiceTable.getSelectedRow();
-        
-        if (selectedRow < 0 || voidRadio.isSelected()) { 
-            return;
-        }
-        
-
-//        if (row > -1 && !voidRadio.isSelected()) {
-//
-////            if (!accessKey.checkManager(500)) {
-////                accessKey.showMessage("Void");
-////                return;
-////            }
-//            if (quoteRadio.isSelected()) {
-//
-//                deleteQuote((Integer) invoiceTable.getModel().getValueAt(row, 0));
-//                return;
-//            }
-//
-            var proceed = JOptionPane.showConfirmDialog(this, "Sure you want to VOID the selected invoice?","V O I D",  JOptionPane.YES_NO_OPTION);
-            
-            if (proceed == JOptionPane.NO_OPTION) {
-                return;
-            }
-            
-            var confirmation = JOptionPane.showInputDialog("To void this invoice type VOID and click OK.");
-
-            if (!confirmation.equalsIgnoreCase("void")) {
-                return;
-            }
-            
-            var tableModel = (InvoiceManagerTableModel)invoiceTable.getModel();
-            
-            var invoice = tableModel.getValueAt(selectedRow);
-            
-            invoice.setVoided(true);
-            
-            invoiceService.save(invoice);
-            refreshTables();
-    }
-
-    private void voidRadioAction() {
-        voidRadio.setSelected(true);
-        resetSearch();
-        refreshTables();
-        searchField.requestFocus();
-
-        //jLabel4.setText("Find Invoice #");
-        voidButton.setText("VOID");
-
-        // openButton.setEnabled(false); //view
-        statementButton.setEnabled(false);
-        returnButton.setEnabled(false);
-        payButton.setEnabled(false);
-        //refundButton.setEnabled(false);
-        closeButton.setEnabled(false);
-        voidButton.setEnabled(false);
-        historyButton.setEnabled(false);
-        this.selectFirstRow(invoiceTable);
-    }
-
-    private void unpaidRadioAction() {
-        unpaidRadio.setSelected(true);
-        resetSearch();
-        refreshTables();
-        searchField.requestFocus();
-        //jLabel4.setText("Find Invoice #");
-        voidButton.setText("VOID");
-
-        openButton.setEnabled(true);
-        statementButton.setEnabled(true);
-        historyButton.setEnabled(true);
-        returnButton.setEnabled(true);
-        payButton.setEnabled(true);
-        //refundButton.setEnabled(true);
-        closeButton.setEnabled(true);
-        voidButton.setEnabled(true);
-
-        this.selectFirstRow(invoiceTable);
-        //toggleArrows();
-
-    }
-
-    private void paidRadioAction() {
-        paidRadio.setSelected(true);
-        resetSearch();
-        refreshTables();
-        //jLabel4.setText("Find Invoice #");
-        voidButton.setText("VOID");
-
-        searchField.requestFocus();
-        openButton.setEnabled(true);
-        statementButton.setEnabled(true);
-        historyButton.setEnabled(true);
-        returnButton.setEnabled(true);
-        payButton.setEnabled(false);
-        //refundButton.setEnabled(true);
-        closeButton.setEnabled(false);
-        voidButton.setEnabled(true);
-
-        this.selectFirstRow(invoiceTable);
-    }
 
     private void invoiceTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_invoiceTableKeyReleased
 
@@ -1202,58 +1294,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     }//GEN-LAST:event_searchFieldFocusGained
 
-    private void openInvoice() {
-
-        if (voidRadio.isSelected()) {
-
-            javax.swing.JOptionPane.showMessageDialog(null,
-                    "Voided invoices contain no data.");
-            return;
-        }
-
-        rememberRow();
-
-        int selectedRow = invoiceTable.getSelectedRow();
-
-        if (selectedRow > -1) {
-
-            var tableModel = (InvoiceManagerTableModel) this.invoiceTable.getModel();
-
-            var invoice = tableModel.getValueAt(selectedRow);
-
-            var invoiceApp = new InvoiceApp(this.parentWin, true);
-            invoiceApp.setInvoice(invoice);
-            invoiceApp.display();
-            invoiceApp.dispose();
-//            if (quoteRadio.isSelected()) {
-//                /* Opening quotes, the key is used before the application to load quotes */
-//                //id = new InvoiceDialog (parentWin, true, k, application); //no select
-//
-//            } else {
-//
-////                if (!accessKey.checkInvoice(300)) {
-////                    accessKey.showMessage("Close");
-////                    return;
-////                }
-//                //id = new InvoiceDialog (parentWin, true, application, k); //no select
-//
-//            }
-
-            //id.setVisible(true);
-            //stat = id.getStat();
-            //id.dispose();
-        }
-
-        if (searchResults && searchCombo.getSelectedIndex() == 1) { //if set to customers and already searched
-            searchField.setText(searchString);//restore our search with possible new data
-            findInvoice();
-            this.restoreRow();
-            return;
-        }
-        this.refreshTables();
-        this.restoreRow();
-
-    }
 
     private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
 
@@ -1299,37 +1339,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     }//GEN-LAST:event_invoiceTableMouseClicked
 
-    private void takePayment() {
 
-        this.rememberRow();
-
-        int selectedRow = invoiceTable.getSelectedRow();
-
-        if (selectedRow < 0) {
-            return; // TODO: complain via dialog?
-        }
-
-        var tableModel = (InvoiceManagerTableModel) this.invoiceTable.getModel();
-        var invoice = tableModel.getValueAt(selectedRow);
-
-        if (invoice.isPaid()) {
-
-            JOptionPane.showMessageDialog(this, "Invoice number " + (String) tm.getValueAt(selectedRow, 1) + " is marked as paid.");
-
-        } else {
-            var paymentDialog = new PaymentDialog(parentWin, true, invoice);
-
-            try {
-                paymentDialog.display();
-            } catch (SQLException ex) {
-                ExceptionService.showErrorDialog(this, ex, "Error accessing invoice payments in database");
-            }
-
-            refreshTables();
-        }
-
-        this.restoreRow();
-    }
 
     private void payButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_payButtonActionPerformed
 
@@ -1413,36 +1423,9 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     }
 
-    private void quoteRadioAction() {
-        quoteRadio.setSelected(true);
-        resetSearch();
-        refreshTables();
-        searchField.requestFocus();
-        voidButton.setText("VOID");
-        openButton.setEnabled(true);
-        statementButton.setEnabled(false);
-        historyButton.setEnabled(true);
-        returnButton.setEnabled(false);
-        payButton.setEnabled(false);
-        closeButton.setEnabled(false);
-
-        voidButton.setEnabled(true);
-
-        this.selectFirstRow(invoiceTable);
-
-    }
-
-    public String getStat() {
-
-        return stat;
-
-    }
 
     private java.awt.Frame parentWin;
-    private javax.swing.table.TableModel tm;
-
-    private int[] cols = new int[]{0, 3, 3, 3, 3, 6, 3, 3};
-    private String stat = "";
+    
     private String nl = System.getProperty("line.separator");
 
     private Image winIcon;

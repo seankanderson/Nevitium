@@ -133,16 +133,16 @@ public RevenueReport(){
 //    }//end day loop
 //
 //    
-//    summary = "Credits:" + DV.money(creditTotal) +
-//            "  Debits:" + DV.money(debitTotal) +
-//            "  Customer Credits:" + DV.money(custCreditTotal)+
-//            "  Prepaid Credits:" + DV.money(prepaidTotal)+
-//            "  Returns:"+ DV.money(returnTotal) +
-//            "  Refunds:"+ DV.money(refundTotal)+
-//            "  Fees:" + DV.money(feeTotal) +
-//            "  Interest:" + DV.money(interestTotal)+
+//    summary = "Credits:" + CurrencyUtil.money(creditTotal) +
+//            "  Debits:" + CurrencyUtil.money(debitTotal) +
+//            "  Customer Credits:" + CurrencyUtil.money(custCreditTotal)+
+//            "  Prepaid Credits:" + CurrencyUtil.money(prepaidTotal)+
+//            "  Returns:"+ CurrencyUtil.money(returnTotal) +
+//            "  Refunds:"+ CurrencyUtil.money(refundTotal)+
+//            "  Fees:" + CurrencyUtil.money(feeTotal) +
+//            "  Interest:" + CurrencyUtil.money(interestTotal)+
 //            "   Actual Revenue:"+ 
-//            DV.money(creditTotal - (returnTotal+refundTotal+custCreditTotal+prepaidTotal));
+//            CurrencyUtil.money(creditTotal - (returnTotal+refundTotal+custCreditTotal+prepaidTotal));
 //}
 //
 //
@@ -275,7 +275,7 @@ public RevenueReport(){
 //            }
 //            if (objId.equals(Float.class)){
 //                if (c != 1) {
-//                    chunk = DV.addSpace(DV.money((Float)value), fieldSizes[c], ' ');
+//                    chunk = DV.addSpace(CurrencyUtil.money((Float)value), fieldSizes[c], ' ');
 //                }else chunk = DV.addSpace(Float.toString((Float)value), fieldSizes[c], ' ');
 //            }
 //            if (objId.equals(Integer.class)){
@@ -301,36 +301,36 @@ public RevenueReport(){
 //    lp.addLine("Signs (+/-) show how the entry types affect the invoice.");
 //    char c = '_';
 //
-//    chunk = DV.addSpace("CREDITS(-) ", 84, c) + DV.money(creditTotal);
+//    chunk = DV.addSpace("CREDITS(-) ", 84, c) + CurrencyUtil.money(creditTotal);
 //    lp.addLine(chunk);
 //    
-//    chunk = DV.addSpace("Customer Credits(-) ", 84, c) + DV.money(custCreditTotal);
+//    chunk = DV.addSpace("Customer Credits(-) ", 84, c) + CurrencyUtil.money(custCreditTotal);
 //    lp.addLine(chunk);
 //
-//    chunk = DV.addSpace("Prepaid Credits(-) ", 84, c) + DV.money(prepaidTotal);
+//    chunk = DV.addSpace("Prepaid Credits(-) ", 84, c) + CurrencyUtil.money(prepaidTotal);
 //    lp.addLine(chunk);
 //
-//    chunk = DV.addSpace("Returns(-) ", 84, c)+ DV.money(returnTotal);
+//    chunk = DV.addSpace("Returns(-) ", 84, c)+ CurrencyUtil.money(returnTotal);
 //    lp.addLine(chunk);
 //
-//    chunk = DV.addSpace("Non-Revenue Credits ", 84, c)+ DV.money(returnTotal+custCreditTotal);
+//    chunk = DV.addSpace("Non-Revenue Credits ", 84, c)+ CurrencyUtil.money(returnTotal+custCreditTotal);
 //    lp.addLine(chunk);
 //    
-//    chunk = DV.addSpace("DEBITS(+) ", 72, c) + DV.money(debitTotal);
+//    chunk = DV.addSpace("DEBITS(+) ", 72, c) + CurrencyUtil.money(debitTotal);
 //    lp.addLine(chunk);
 //
 //    
-//    chunk = DV.addSpace("Refunds(+) ", 72, c)+ DV.money(refundTotal);
+//    chunk = DV.addSpace("Refunds(+) ", 72, c)+ CurrencyUtil.money(refundTotal);
 //    lp.addLine(chunk);
 //
-//    chunk = DV.addSpace("Fees(+) ", 72, c) + DV.money(feeTotal);
+//    chunk = DV.addSpace("Fees(+) ", 72, c) + CurrencyUtil.money(feeTotal);
 //    lp.addLine(chunk);
 //    
-//    chunk = DV.addSpace("Interest(+) ", 72, c) + DV.money(interestTotal);
+//    chunk = DV.addSpace("Interest(+) ", 72, c) + CurrencyUtil.money(interestTotal);
 //    lp.addLine(chunk);
 //    
 //    chunk = DV.addSpace("Actual Revenue ", 84, c) +
-//            DV.money(creditTotal - (returnTotal + refundTotal + custCreditTotal+prepaidTotal));
+//            CurrencyUtil.money(creditTotal - (returnTotal + refundTotal + custCreditTotal+prepaidTotal));
 //    lp.addLine(chunk);
 //    
 //    lp.formFeed();
@@ -391,7 +391,7 @@ public RevenueReport(){
 //            }
 //            if (objId.equals(Float.class)){
 //                if (c != 1) {
-//                    chunk = DV.addSpace(DV.money((Float)value), fieldSizes[c], ' ');
+//                    chunk = DV.addSpace(CurrencyUtil.money((Float)value), fieldSizes[c], ' ');
 //                }else chunk = DV.addSpace(Float.toString((Float)value), fieldSizes[c], ' ');
 //            }
 //            if (objId.equals(Integer.class)){
@@ -416,17 +416,17 @@ public RevenueReport(){
 //
 //    sb.append(DV.addSpace("=== Summary ",110, '=')+ nl +
 //    "Signs (+/-) show how the entry types affect the invoice."+ nl +
-//    DV.addSpace("CREDITS(-) ", 84, c) + DV.money(creditTotal) + nl +
-//    DV.addSpace("Customer Credits(-) ", 84, c) + DV.money(custCreditTotal)+ nl +
-//    DV.addSpace("Prepaid Credits(-) ", 84, c) + DV.money(prepaidTotal)+ nl +
-//    DV.addSpace("Returns(-) ", 84, c)+ DV.money(returnTotal) + nl +
-//    DV.addSpace("Non-Revenue Credits ", 84, c)+ DV.money(returnTotal+custCreditTotal)+ nl +
-//    DV.addSpace("DEBITS(+) ", 72, c) + DV.money(debitTotal)+ nl +
-//    DV.addSpace("Refunds(+) ", 72, c)+ DV.money(refundTotal)+ nl +
-//    DV.addSpace("Fees(+) ", 72, c) + DV.money(feeTotal)+ nl +
-//    DV.addSpace("Interest(+) ", 72, c) + DV.money(interestTotal)+ nl +
+//    DV.addSpace("CREDITS(-) ", 84, c) + CurrencyUtil.money(creditTotal) + nl +
+//    DV.addSpace("Customer Credits(-) ", 84, c) + CurrencyUtil.money(custCreditTotal)+ nl +
+//    DV.addSpace("Prepaid Credits(-) ", 84, c) + CurrencyUtil.money(prepaidTotal)+ nl +
+//    DV.addSpace("Returns(-) ", 84, c)+ CurrencyUtil.money(returnTotal) + nl +
+//    DV.addSpace("Non-Revenue Credits ", 84, c)+ CurrencyUtil.money(returnTotal+custCreditTotal)+ nl +
+//    DV.addSpace("DEBITS(+) ", 72, c) + CurrencyUtil.money(debitTotal)+ nl +
+//    DV.addSpace("Refunds(+) ", 72, c)+ CurrencyUtil.money(refundTotal)+ nl +
+//    DV.addSpace("Fees(+) ", 72, c) + CurrencyUtil.money(feeTotal)+ nl +
+//    DV.addSpace("Interest(+) ", 72, c) + CurrencyUtil.money(interestTotal)+ nl +
 //    DV.addSpace("Actual Revenue ", 84, c) +
-//            DV.money(creditTotal - (returnTotal + refundTotal + custCreditTotal+prepaidTotal)));
+//            CurrencyUtil.money(creditTotal - (returnTotal + refundTotal + custCreditTotal+prepaidTotal)));
 //
 //    pdf.addParagraph(sb.toString(), true);
 //    pdf.finish();

@@ -383,11 +383,11 @@ public class ReportFactory {
 //                        "Status: " + avail + nl +
 //            
 //                
-//                DV.addSpace("Cost  " + currency +DV.money(cost), 16,' ') +
-//                        "  Cost Total  " + currency +DV.money(cost_total)  + nl+
+//                DV.addSpace("Cost  " + currency +CurrencyUtil.money(cost), 16,' ') +
+//                        "  Cost Total  " + currency +CurrencyUtil.money(cost_total)  + nl+
 //                
-//                DV.addSpace("Price " + currency +DV.money(price), 16,' ') +
-//                        "  Price Total " + currency +DV.money(price_total) + nl +
+//                DV.addSpace("Price " + currency +CurrencyUtil.money(price), 16,' ') +
+//                        "  Price Total " + currency +CurrencyUtil.money(price_total) + nl +
 //                
 //                DV.addSpace("UPC: "+rm.getValueAt(1), 19,' ') + DV.addSpace("Code: "+rm.getValueAt(2), 20,' ')+
 //                       DV.addSpace(tax1name +": "+rm.getValueAt(13), 8,' ') + tax2name + ": "+rm.getValueAt(14) + nl + "Category: " + rm.getValueAt(9)); 
@@ -403,8 +403,8 @@ public class ReportFactory {
 //          
 //          //add line to paragraph???
 //          sb.append(nl+"_____________________________________________________" + nl);
-//          sb.append("           Total Cost of Goods On Hand  " + currency +DV.money(running_cost)+nl);
-//          sb.append("   Total Retail Value of Goods On Hand  " + currency +DV.money(running_retail)+nl);
+//          sb.append("           Total Cost of Goods On Hand  " + currency +CurrencyUtil.money(running_cost)+nl);
+//          sb.append("   Total Retail Value of Goods On Hand  " + currency +CurrencyUtil.money(running_retail)+nl);
 //          sb.append("        Total Number of Goods In-Stock  "+Float.toString(goods)+nl);          
 //          
 //          report.addParagraph(sb.toString(), true);
@@ -512,7 +512,7 @@ public class ReportFactory {
 //                        "Status: " + avail + nl +
 //            
 //                
-//                    DV.addSpace("Cost  " + currency +DV.money(cost), 16,' ')+
+//                    DV.addSpace("Cost  " + currency +CurrencyUtil.money(cost), 16,' ')+
 //                    
 //                    DV.addSpace("UPC: "+rm.getValueAt(1), 20,' ') + DV.addSpace("Code: "+rm.getValueAt(2), 23,' ') +
 //                            "Cat: "+rm.getValueAt(9) + nl +
@@ -965,42 +965,42 @@ public class ReportFactory {
 //                  
 //         totals.addCell(new Phrase("Invoice", font));
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(invoice_total), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(invoice_total), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //invoice grand total
 //         
 //         
 //         totals.addCell(new Phrase("Interest", font));
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(interest_total), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(interest_total), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  // total intetrest charges
 //         
 //         
 //         totals.addCell(new Phrase("Total", font));
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(invoice_total + interest_total), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(invoice_total + interest_total), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //total of invoice total and interest
 //         
 //         
 //         totals.addCell(new Phrase("Returns", font));//other
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(total_returns), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(total_returns), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //
 //         
 //         
 //         totals.addCell(new Phrase("Payments", font));
 //                  
-//         cell = new PdfPCell (new Phrase(DV.money(total_payments), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(total_payments), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //total payments
 //         
 //         
 //         totals.addCell(new Phrase("Refunds", font));
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(total_refunds), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(total_refunds), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //total refunds
 //                  
@@ -1009,7 +1009,7 @@ public class ReportFactory {
 //         
 //         totals.addCell(new Phrase(bd, font));   
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(balance_due), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(balance_due), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //current balance due
 //                  
@@ -1595,7 +1595,7 @@ public class ReportFactory {
 //                paymentType = "Invoice";
 //                paymentType = props.getProp("INVOICE NAME");
 //                invBalance = (Float)customerInvoices.getValueAt(i, 10);
-//                invoiceBalance = DV.money(invBalance);
+//                invoiceBalance = CurrencyUtil.money(invBalance);
 //                
 //                /* Keep running total of invoice balances */
 //                invoicesTotal += invBalance;
@@ -1773,25 +1773,25 @@ public class ReportFactory {
 //                  
 //         totals.addCell(new Phrase("Invoices", font));
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(invoicesTotal), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(invoicesTotal), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //invoice grand total
 //                  
 //         totals.addCell(new Phrase("Interest", font));
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(interestTotal), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(interestTotal), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  // total intetrest charges
 //                  
 //         totals.addCell(new Phrase("Credits", font));//other
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(totalPayments + totalReturns), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(totalPayments + totalReturns), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);         
 //
 //         totals.addCell(new Phrase("Refunds", font));
 //
-//         cell = new PdfPCell (new Phrase(DV.money(totalRefunds), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(totalRefunds), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //total of invoice total and interest
 //
@@ -1801,20 +1801,20 @@ public class ReportFactory {
 //         if (t1Name.equalsIgnoreCase("VAT")) t1Name = "VAT Content";
 //
 //         totals.addCell(new Phrase(t1Name, font));
-//         cell = new PdfPCell (new Phrase(DV.money(totalTax1), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(totalTax1), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //total payments
 //
 //         String t2Name = props.getProp("TAX2NAME");
 //         totals.addCell(new Phrase(t2Name, font));
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(totalTax2), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(totalTax2), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //total refunds
 //        
 //         totals.addCell(new Phrase("BAL DUE", font));   
 //         
-//         cell = new PdfPCell (new Phrase(DV.money(balanceDue), font));
+//         cell = new PdfPCell (new Phrase(CurrencyUtil.money(balanceDue), font));
 //         cell.setHorizontalAlignment(Rectangle.ALIGN_RIGHT);
 //         totals.addCell(cell);  //current balance due
 //                  

@@ -150,7 +150,7 @@ public PurchaseHistoryReport(){
 //        
 //        }
 //
-//        summary = "Total Sales: "+DV.money(totalCols(period));
+//        summary = "Total Sales: "+CurrencyUtil.money(totalCols(period));
 //      
 //        
 //}
@@ -224,7 +224,7 @@ public PurchaseHistoryReport(){
 //            }
 //            if (objId.equals(Float.class)){
 //                if (c != 1) {
-//                    chunk = DV.addSpace(DV.money((Float)value), fieldSizes[c], ' ');
+//                    chunk = DV.addSpace(CurrencyUtil.money((Float)value), fieldSizes[c], ' ');
 //                }else chunk = DV.addSpace(Float.toString((Float)value), fieldSizes[c], ' ');
 //            }
 //            if (objId.equals(Integer.class)){
@@ -304,7 +304,7 @@ public PurchaseHistoryReport(){
 //            }
 //            if (objId.equals(Float.class)){
 //                if (c != 1) {
-//                    chunk = DV.addSpace(DV.money((Float)value), fieldSizes[c], ' ');
+//                    chunk = DV.addSpace(CurrencyUtil.money((Float)value), fieldSizes[c], ' ');
 //                }else chunk = DV.addSpace(Float.toString((Float)value), fieldSizes[c], ' ');
 //            }
 //            if (objId.equals(Integer.class)){

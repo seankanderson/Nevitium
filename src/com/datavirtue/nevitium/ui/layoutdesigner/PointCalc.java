@@ -11,6 +11,7 @@
 
 package com.datavirtue.nevitium.ui.layoutdesigner;
 
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 
@@ -119,10 +120,10 @@ public class PointCalc extends javax.swing.JDialog {
     private void calculate(){
         if (metricBox.isSelected()){
             float points = (2.83464567f * DV.parseFloat(measurementField.getText()));
-            pointsLabel.setText(DV.money(points));
+            pointsLabel.setText(CurrencyUtil.money(points));
         }else {
             float points = (72 * DV.parseFloat(measurementField.getText()));
-            pointsLabel.setText(DV.money(points));
+            pointsLabel.setText(CurrencyUtil.money(points));
         }
         measurementField.requestFocus();
     }

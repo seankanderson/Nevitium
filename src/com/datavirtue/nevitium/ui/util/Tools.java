@@ -20,6 +20,7 @@ import java.text.DateFormat;
 import java.util.Date;
 import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.contacts.ContactAddress;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.services.util.PlayWave;
 import java.math.BigDecimal;
@@ -51,7 +52,7 @@ public class Tools {
 
         }
 
-        return Tools.round(colTotal);
+        return CurrencyUtil.round(colTotal);
 
     }
 
@@ -79,7 +80,7 @@ public class Tools {
         if (url != null) {
             f = url.getPath();
         }
-        //System.out.println("Sound File:  "+f);
+        
         new PlayWave(f).start();
 
     }
@@ -105,8 +106,6 @@ public class Tools {
 
     public static double round(double value) {
         BigDecimal result = new BigDecimal(Double.toString(value)).setScale(2,  RoundingMode.HALF_UP);
-        //double v = (double) (Math.round(value * 100.00f) / 100.00f);
-        //v = DV.flattenZero(v);
         return result.doubleValue();
     }
 

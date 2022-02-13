@@ -40,12 +40,13 @@ import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.AutoCompleteDocument;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 import org.apache.commons.lang3.StringUtils;
 
-public class MyInventoryApp extends javax.swing.JDialog {
+public class InventoryApp extends javax.swing.JDialog {
 
     private InventoryService inventoryService;
     private AppSettingsService appSettingsService;
@@ -66,7 +67,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
     /**
      * Creates new form InventoryDialog
      */
-    public MyInventoryApp(java.awt.Frame parent, boolean modal, boolean select) {
+    public InventoryApp(java.awt.Frame parent, boolean modal, boolean select) {
 
         super(parent, modal);
 
@@ -77,7 +78,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
         appSettingsService.setObjectType(AppSettings.class);
 
         Toolkit tools = Toolkit.getDefaultToolkit();
-        winIcon = tools.getImage(MyInventoryApp.class.getResource("/businessmanager/res/Orange.png"));
+        winIcon = tools.getImage(InventoryApp.class.getResource("/businessmanager/res/Orange.png"));
         this.setIconImage(winIcon);
 
         //Adjust references, to this context, for the needed objects 
@@ -179,9 +180,9 @@ public class MyInventoryApp extends javax.swing.JDialog {
             try {
                 d = (StatusDialog) get();
             } catch (InterruptedException ex) {
-                Logger.getLogger(MyInventoryApp.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(InventoryApp.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ExecutionException ex) {
-                Logger.getLogger(MyInventoryApp.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(InventoryApp.class.getName()).log(Level.SEVERE, null, ex);
             }
             d.addStatus("<<< Complete >>>");
             d.dispose();
@@ -273,7 +274,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
             try {
                 double cost = Double.parseDouble(costTextField.getText());
                 var price = inventoryService.calculateMarkup(cost);
-                priceTextField.setText(DV.money(price));
+                priceTextField.setText(CurrencyUtil.money(price));
             } catch (NumberFormatException numberFormatException) {
                 ExceptionService.showErrorDialog(this, numberFormatException, "Error parsing calculated markup number");
             } catch (SQLException sqlException) {
@@ -591,9 +592,9 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         if (UserService.getCurrentUser().isAdmin()
                 || UserService.getCurrentUser().getInventory() >= 300) {
-            costTextField.setText(DV.money(currentItem.getCost()));
+            costTextField.setText(CurrencyUtil.money(currentItem.getCost()));
         }
-        priceTextField.setText(DV.money(currentItem.getPrice()));
+        priceTextField.setText(CurrencyUtil.money(currentItem.getPrice()));
 
         catTextField.setText(currentItem.getCategory());
 
@@ -645,8 +646,8 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
                 float price = Float.parseFloat(priceTextField.getText());  //error
 
-                costTotalLabel.setText(DV.money(cost * qty));
-                retailTotalLabel.setText(DV.money(price * qty));
+                costTotalLabel.setText(CurrencyUtil.money(cost * qty));
+                retailTotalLabel.setText(CurrencyUtil.money(price * qty));
 
             } else {
 
@@ -697,7 +698,7 @@ public class MyInventoryApp extends javax.swing.JDialog {
 
         current += received;
 
-        qtyTextField.setText(DV.money(current));
+        qtyTextField.setText(CurrencyUtil.money(current));
 
         //Version 1.5
         lastRecvDate = new java.util.Date().getTime();

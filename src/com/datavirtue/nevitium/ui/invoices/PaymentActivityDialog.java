@@ -12,6 +12,7 @@ import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.InvoiceService;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -272,7 +273,7 @@ public class PaymentActivityDialog extends javax.swing.JDialog {
 
                 if (prevPdStatus && result > 0) {
                     javax.swing.JOptionPane.showMessageDialog(null,
-                            "The invoice now shows a balance due of " + DV.money(balance) + nl
+                            "The invoice now shows a balance due of " + CurrencyUtil.money(balance) + nl
                             + "The status of the invoice has been changed to unpaid.");
                 }
                 return;

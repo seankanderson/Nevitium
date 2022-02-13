@@ -673,16 +673,7 @@ public class DV	{
         return "0";*/
     }
    
-    public static String money (double money) {
-        //Locale locale = Locale.getDefault();
-
-        money = (float)(Math.round(money*100.00f)/100.00f);
-        NumberFormat formatter = new DecimalFormat("#,###,##0.00");
-        
-        return formatter.format(money);
-    }
-
-    
+      
     public static float lowerPrecision (float money) {        
         
         NumberFormat formatter = new DecimalFormat("#,###,##0.00");
@@ -950,7 +941,7 @@ public class DV	{
 
                 case 2: return Integer.toString( (Integer) obj );
 
-                case 3: return DV.money ( (Float) obj ) ;
+                case 3: return CurrencyUtil.money ( (Float) obj ) ;
 
                 case 4: return Boolean.toString( (Boolean) obj );
 

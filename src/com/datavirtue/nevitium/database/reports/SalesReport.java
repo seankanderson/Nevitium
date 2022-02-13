@@ -305,8 +305,8 @@ public class SalesReport implements ReportInterface {
 //        item[6] = new Float(totals[3]);
 //        period.addRow(item);
 //
-//        summary = "Total Margin "+DV.money((totals[0] - totals[1])) +
-//                "   Total Taxes Collected " + DV.money((totals[2] + totals[3]));
+//        summary = "Total Margin "+CurrencyUtil.money((totals[0] - totals[1])) +
+//                "   Total Taxes Collected " + CurrencyUtil.money((totals[2] + totals[3]));
 //        
 //}
 //
@@ -470,7 +470,7 @@ public class SalesReport implements ReportInterface {
 //            }
 //            if (objId.equals(Float.class)){
 //                if (c != 1) {
-//                    chunk = DV.addSpace(DV.money((Float)value), fieldSizes[c], ' ');
+//                    chunk = DV.addSpace(CurrencyUtil.money((Float)value), fieldSizes[c], ' ');
 //                }else chunk = DV.addSpace(Float.toString((Float)value), fieldSizes[c], ' ');
 //            }
 //            if (objId.equals(Integer.class)){
@@ -494,7 +494,7 @@ public class SalesReport implements ReportInterface {
 //
 //    lp.newLine();
 //    lp.addLine(DV.addSpace("=== Summary ",110, '='));
-//    lp.addLine("Total Margin: "+DV.money(periodSales - periodCost));
+//    lp.addLine("Total Margin: "+CurrencyUtil.money(periodSales - periodCost));
 //
 //
 //
@@ -555,7 +555,7 @@ public class SalesReport implements ReportInterface {
 //            }
 //            if (objId.equals(Float.class)){
 //                if (c != 1) {
-//                    chunk = DV.addSpace(DV.money((Float)value), fieldSizes[c], ' ');
+//                    chunk = DV.addSpace(CurrencyUtil.money((Float)value), fieldSizes[c], ' ');
 //                }else chunk = DV.addSpace(Float.toString((Float)value), fieldSizes[c], ' ');
 //            }
 //            if (objId.equals(Integer.class)){
@@ -579,7 +579,7 @@ public class SalesReport implements ReportInterface {
 //
 //    sb.append(nl+
 //            DV.addSpace("=== Summary ",110, '=')+ nl +
-//            "Total Margin: "+DV.money(periodSales - periodCost));
+//            "Total Margin: "+CurrencyUtil.money(periodSales - periodCost));
 //
 //    pdf.addParagraph(sb.toString(), true);
 //    pdf.finish();

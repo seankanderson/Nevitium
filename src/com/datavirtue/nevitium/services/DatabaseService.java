@@ -12,6 +12,7 @@ import com.datavirtue.nevitium.models.inventory.Inventory;
 import com.datavirtue.nevitium.models.inventory.InventoryItemNote;
 import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.models.invoices.InvoiceItem;
+import com.datavirtue.nevitium.models.invoices.InvoiceItemReturn;
 import com.datavirtue.nevitium.models.invoices.InvoiceMessages;
 import com.datavirtue.nevitium.models.invoices.InvoicePayment;
 import com.datavirtue.nevitium.models.invoices.InvoicePaymentType;
@@ -52,6 +53,7 @@ public class DatabaseService {
             TableUtils.dropTable(connectionSource, ContactAddress.class, true);
             TableUtils.dropTable(connectionSource, Invoice.class, true);
             TableUtils.dropTable(connectionSource, InvoiceItem.class, true);
+            TableUtils.dropTable(connectionSource, InvoiceItemReturn.class, true);
             TableUtils.dropTable(connectionSource, InvoicePayment.class, true);
             TableUtils.dropTable(connectionSource, InvoiceMessages.class, true);
             TableUtils.dropTable(connectionSource, InvoicePaymentType.class, true);
@@ -75,6 +77,9 @@ public class DatabaseService {
         
         TableUtils.createTableIfNotExists(getConnection(), InvoiceItem.class); 
         TableUtils.clearTable(connectionSource, InvoiceItem.class);  
+        
+        TableUtils.createTableIfNotExists(getConnection(), InvoiceItemReturn.class); 
+        TableUtils.clearTable(connectionSource, InvoiceItemReturn.class); 
         
         TableUtils.createTableIfNotExists(getConnection(), InvoicePayment.class); 
         TableUtils.clearTable(connectionSource, InvoicePayment.class);  

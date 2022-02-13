@@ -5,7 +5,7 @@
 
 package com.datavirtue.nevitium.models.prepaid;
 
-import com.datavirtue.nevitium.ui.util.Tools;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -36,7 +36,7 @@ public class GiftCardDAO {
 
     public double getBalance(){
         if (!populated) return 0.00f;
-        return Tools.round((Double)data[3]);
+        return CurrencyUtil.round((Double)data[3]);
     }
 
     public double useFunds(float amount){

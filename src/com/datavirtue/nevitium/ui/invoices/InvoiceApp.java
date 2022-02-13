@@ -14,7 +14,7 @@ import com.datavirtue.nevitium.ui.contacts.ContactsApp;
 import com.datavirtue.nevitium.ui.contacts.ContactShippingDialog;
 import com.datavirtue.nevitium.ui.util.NewEmail;
 import com.datavirtue.nevitium.ui.VATCalculator;
-import com.datavirtue.nevitium.ui.inventory.MyInventoryApp;
+import com.datavirtue.nevitium.ui.inventory.InventoryApp;
 import java.beans.PropertyVetoException;
 import javax.swing.JTextField;
 import javax.swing.table.*;
@@ -47,6 +47,7 @@ import com.datavirtue.nevitium.services.InvoiceItemService;
 import com.datavirtue.nevitium.services.InvoiceService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.services.util.LinePrinter;
 import com.datavirtue.nevitium.ui.EnhancedTableCellRenderer;
@@ -54,8 +55,6 @@ import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 import com.formdev.flatlaf.util.StringUtils;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
@@ -613,13 +612,13 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         totalTax1 = invoiceService.getTax1Total(currentInvoice);
         totalTax2 = invoiceService.getTax2Total(currentInvoice);
-        t1Field.setText(DV.money(totalTax1));
-        t2Field.setText(DV.money(totalTax2));
+        t1Field.setText(CurrencyUtil.money(totalTax1));
+        t2Field.setText(CurrencyUtil.money(totalTax2));
 
-        itemTotalField.setText(DV.money(invoiceService.getSubtotal(currentInvoice)));
+        itemTotalField.setText(CurrencyUtil.money(invoiceService.getSubtotal(currentInvoice)));
 
         grandTotal = invoiceService.getSubtotal(currentInvoice) + totalTax1 + totalTax2;
-        grandTotalField.setText(DV.money(grandTotal));
+        grandTotalField.setText(CurrencyUtil.money(grandTotal));
     }
 
     private void miscAction() {
@@ -1809,7 +1808,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private List<Inventory> addItemFromInventoryApp() {
-        var inventoryApp = new MyInventoryApp(this.parentWin, true, true);
+        var inventoryApp = new InventoryApp(this.parentWin, true, true);
 
         try {
             inventoryApp.display();
@@ -2417,7 +2416,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
             String num = qtyTextField.getText();
             float q = DV.parseFloat(num);
             q++;
-            qtyTextField.setText(DV.money(q));
+            qtyTextField.setText(CurrencyUtil.money(q));
             upcField.setText("");
             upcField.requestFocus();
 
@@ -2429,7 +2428,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
             if (q > 1) {
                 q--;
             }
-            qtyTextField.setText(DV.money(q));
+            qtyTextField.setText(CurrencyUtil.money(q));
             upcField.setText("");
             upcField.requestFocus();
         }

@@ -30,6 +30,7 @@ import com.datavirtue.nevitium.services.DatabaseService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.UserService;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.services.util.DVNET;
 import java.util.Locale;
@@ -441,7 +442,7 @@ public class SettingsDialog extends javax.swing.JDialog {
     private void updateInches() {
 
         float inches = (Integer) posPrinterPaperWidthSpinner.getModel().getValue() * 0.0393700787f;
-        inchLabel.setText(DV.money(inches));
+        inchLabel.setText(CurrencyUtil.money(inches));
 
     }
 

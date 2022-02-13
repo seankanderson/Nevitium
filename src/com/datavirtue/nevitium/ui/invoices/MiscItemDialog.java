@@ -13,6 +13,7 @@ import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.InventoryService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
@@ -103,10 +104,10 @@ public class MiscItemDialog extends javax.swing.JDialog {
 
     private void populate(InvoiceItem item) {
         descField.setText(item.getDescription());
-        unitField.setText(DV.money(item.getUnitPrice()));
+        unitField.setText(CurrencyUtil.money(item.getUnitPrice()));
         tax1Box.setSelected(item.isTaxable1());
         tax2Box.setSelected(item.isTaxable2());
-        costField.setText(DV.money(item.getCost()));
+        costField.setText(CurrencyUtil.money(item.getCost()));
         descField.requestFocus();
         currentItem = item;
     }

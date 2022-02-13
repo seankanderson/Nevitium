@@ -10,15 +10,14 @@
  */
 package com.datavirtue.nevitium.ui.invoices;
 
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
-import com.datavirtue.nevitium.ui.util.AutoCompleteDocument;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.ui.util.LimitedDocument;
 
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-import javax.swing.table.TableModel;
 
 /**
  *
@@ -191,7 +190,7 @@ public class DiscountDialog extends javax.swing.JDialog {
     int percentIndex = -1;
     private void percentageFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_percentageFieldKeyReleased
         float calc = ((DV.parseFloat(percentageField.getText()) * .01f) * priceTotal);
-        amountField.setText(DV.money(calc * -1));
+        amountField.setText(CurrencyUtil.money(calc * -1));
         kptemp = discDescField.getText();
         
         percentIndex = kptemp.indexOf("%");

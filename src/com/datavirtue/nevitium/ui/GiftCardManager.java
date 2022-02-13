@@ -93,7 +93,7 @@ public class GiftCardManager extends javax.swing.JDialog {
 //        cardField.setText(cardNo);
 //
 //        nameField.setText((String)tm.getValueAt(row, 2));
-//        balanceField.setText(DV.money((Float)tm.getValueAt(row, 3)));
+//        balanceField.setText(CurrencyUtil.money((Float)tm.getValueAt(row, 3)));
 //
 //        lastUseField.setText(df.format((Long)tm.getValueAt(row, 4)));
 //        dataOut[4] = new Long((Long)tm.getValueAt(row, 4));

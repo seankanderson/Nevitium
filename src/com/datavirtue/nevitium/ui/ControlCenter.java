@@ -7,7 +7,7 @@
 package com.datavirtue.nevitium.ui;
 
 import com.datavirtue.nevitium.ui.checks.CheckDialog;
-import com.datavirtue.nevitium.ui.inventory.MyInventoryApp;
+import com.datavirtue.nevitium.ui.inventory.InventoryApp;
 import com.datavirtue.nevitium.ui.contacts.ContactsApp;
 
 
@@ -1755,7 +1755,7 @@ public class ControlCenter extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
     private void launchInventoryApp() {
-         var inventoryApp = new MyInventoryApp(null, true, false);
+         var inventoryApp = new InventoryApp(null, true, false);
         try {
             inventoryApp.display();
         } catch (SQLException ex) {

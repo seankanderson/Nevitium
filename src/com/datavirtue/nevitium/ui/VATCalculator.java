@@ -11,6 +11,7 @@
 
 package com.datavirtue.nevitium.ui;
 
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 
@@ -135,8 +136,8 @@ private double tax_rate = .15d;
         double base = (entry * (100/(100+(tax_rate*100)) ) );
         double with = (entry + (entry * tax_rate));
 
-        baseField.setText(DV.money(base));
-        VATAddedField.setText(DV.money(with));
+        baseField.setText(CurrencyUtil.money(base));
+        VATAddedField.setText(CurrencyUtil.money(with));
 
     }//GEN-LAST:event_entryFieldKeyReleased
 

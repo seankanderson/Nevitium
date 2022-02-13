@@ -311,7 +311,7 @@ public int print(Graphics g, PageFormat pf, int pageIndex){
 //                if (tc.getColumnName().equals("qtyColumn")) data = Float.toString((Float)currentItem[2]);
 //                if (tc.getColumnName().equals("codeColumn")) data = (String)currentItem[3];
 //                if (tc.getColumnName().equals("descColumn")) data = (String)currentItem[4];
-//                if (tc.getColumnName().equals("unitColumn")) data = DV.money((Float)currentItem[5]);
+//                if (tc.getColumnName().equals("unitColumn")) data = CurrencyUtil.money((Float)currentItem[5]);
 //                if (tc.getColumnName().equals("t1Column")){
 //                    data = " ";
 //                    if ((Boolean)currentItem[6]) data = "*";
@@ -320,7 +320,7 @@ public int print(Graphics g, PageFormat pf, int pageIndex){
 //                    data = " ";
 //                    if ((Boolean)currentItem[7]) data = "*";
 //                }
-//                if (tc.getColumnName().equals("totalColumn")) data = DV.money(((Float)currentItem[2] * (Float)currentItem[5]));
+//                if (tc.getColumnName().equals("totalColumn")) data = CurrencyUtil.money(((Float)currentItem[2] * (Float)currentItem[5]));
 //                //if not GST and taxable, add tax to totals
 //
 //                if (tc.isVisible()){
@@ -407,39 +407,39 @@ public int print(Graphics g, PageFormat pf, int pageIndex){
 //        de = docLayout.getElement("subtotal");
 //        position = de.getDataPosition();
 //        this.setGraphicsFont(g2, de);
-//        x_temp = justifyText(position[0], DV.money(invoice.getItemTotal()), metrics);
-//        g2.drawString(DV.money(invoice.getItemTotal()), x_temp, position[1]);
+//        x_temp = justifyText(position[0], CurrencyUtil.money(invoice.getItemTotal()), metrics);
+//        g2.drawString(CurrencyUtil.money(invoice.getItemTotal()), x_temp, position[1]);
 //        
 //        
 //        de = docLayout.getElement("tax1");
 //        position = de.getDataPosition();
 //        this.setGraphicsFont(g2, de);
-//        x_temp = justifyText(position[0], DV.money(invoice.getTax1Total()), metrics);
-//        g2.drawString(DV.money(invoice.getTax1Total()), x_temp, position[1]);
+//        x_temp = justifyText(position[0], CurrencyUtil.money(invoice.getTax1Total()), metrics);
+//        g2.drawString(CurrencyUtil.money(invoice.getTax1Total()), x_temp, position[1]);
 //        
 //        de = docLayout.getElement("tax2");
 //        position = de.getDataPosition();
 //        this.setGraphicsFont(g2, de);
-//        x_temp = justifyText(position[0], DV.money(invoice.getTax2Total()), metrics);
-//        g2.drawString(DV.money(invoice.getTax2Total()), x_temp, position[1]);
+//        x_temp = justifyText(position[0], CurrencyUtil.money(invoice.getTax2Total()), metrics);
+//        g2.drawString(CurrencyUtil.money(invoice.getTax2Total()), x_temp, position[1]);
 //        
 //        de = docLayout.getElement("total");
 //        position = de.getDataPosition();
 //        this.setGraphicsFont(g2, de);
-//        x_temp = justifyText(position[0], DV.money(invoice.getInvoiceTotal()), metrics);
-//        g2.drawString(DV.money(invoice.getInvoiceTotal()), x_temp, position[1]);
+//        x_temp = justifyText(position[0], CurrencyUtil.money(invoice.getInvoiceTotal()), metrics);
+//        g2.drawString(CurrencyUtil.money(invoice.getInvoiceTotal()), x_temp, position[1]);
 //        
 //        de = docLayout.getElement("payment");
 //        position = de.getDataPosition();
 //        this.setGraphicsFont(g2, de);
-//        x_temp = justifyText(position[0], DV.money(invoice.getTotalPayments()), metrics);
-//        g2.drawString(DV.money(invoice.getTotalPayments()), x_temp, position[1]);
+//        x_temp = justifyText(position[0], CurrencyUtil.money(invoice.getTotalPayments()), metrics);
+//        g2.drawString(CurrencyUtil.money(invoice.getTotalPayments()), x_temp, position[1]);
 //        
 //        de = docLayout.getElement("balanceDue");
 //        position = de.getDataPosition();
 //        this.setGraphicsFont(g2, de);
-//        x_temp = justifyText(position[0], DV.money(invoice.getInvoiceDueNow()), metrics);
-//        g2.drawString(DV.money(invoice.getInvoiceDueNow()), x_temp, position[1]);
+//        x_temp = justifyText(position[0], CurrencyUtil.money(invoice.getInvoiceDueNow()), metrics);
+//        g2.drawString(CurrencyUtil.money(invoice.getInvoiceDueNow()), x_temp, position[1]);
 //                        
         /* print tag address */
         /* print page of page*/

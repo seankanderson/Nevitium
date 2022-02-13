@@ -23,10 +23,10 @@ import com.datavirtue.nevitium.models.contacts.Contact;
 import com.datavirtue.nevitium.models.settings.CheckSettings;
 import com.datavirtue.nevitium.services.CheckSettingsService;
 import com.datavirtue.nevitium.services.ExceptionService;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.AutoCompleteDocument;
 import java.util.prefs.BackingStoreException;
-import org.h2.jdbc.JdbcConnection.Settings;
 
 /**
  *
@@ -57,7 +57,7 @@ public class CheckDialog extends javax.swing.JDialog {
 
         /* init */
         if (amount > 0) {
-            amtField.setText(DV.money(amount));
+            amtField.setText(CurrencyUtil.money(amount));
         }
         if (contact != null) {
             setCustomer(contact);
@@ -543,7 +543,7 @@ public class CheckDialog extends javax.swing.JDialog {
                         address, 
                         DV.datetoString(datePicker1.getDate().getTime()),
                         "", 
-                        DV.money(amount), 
+                        CurrencyUtil.money(amount), 
                         forField.getText())
         );
         

@@ -8,9 +8,9 @@ import java.util.List;
  *
  * @author SeanAnderson
  */
-public class InvoiceReturnsTableModel extends AbstractCollectionTableModel<InvoiceItem> {
+public class InvoiceReturnsTableModel extends AbstractCollectionTableModel<InvoiceItemReturn> {
 
-    public InvoiceReturnsTableModel(List<InvoiceItem> items) {
+    public InvoiceReturnsTableModel(List<InvoiceItemReturn> items) {
         this.items = items;
         this.columns = new String[]{"Quantity", "Code", "Description", "Unit", "Tax1", "Tax2", "Total",};
     }
@@ -36,7 +36,7 @@ public class InvoiceReturnsTableModel extends AbstractCollectionTableModel<Invoi
                 item.setCode((String) value);
                 break;
             case 4:
-                item.setUnitPrice((Double) value);
+                item.setItemCreditAmount((Double) value);
                 break;
             case 5:
                 item.setTaxable1((Boolean) value);
@@ -72,7 +72,7 @@ public class InvoiceReturnsTableModel extends AbstractCollectionTableModel<Invoi
                 return item.getCode();
 
             case 4:
-                return item.getUnitPrice();
+                return item.getItemCreditAmount();
 
             case 5:
                 return item.isTaxable1();
@@ -81,7 +81,7 @@ public class InvoiceReturnsTableModel extends AbstractCollectionTableModel<Invoi
                 return item.isTaxable2();
 
             case 7:
-                return (item.getQuantity() * item.getUnitPrice()); // TODO: add taxable logic
+                return (item.getQuantity() * item.getItemCreditAmount()); // TODO: add taxable logic
 
         }
         return null;

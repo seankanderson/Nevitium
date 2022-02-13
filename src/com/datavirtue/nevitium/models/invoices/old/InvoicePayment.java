@@ -1,11 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package com.datavirtue.nevitium.models.invoices.old;
 
-import com.datavirtue.nevitium.ui.util.Tools;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 
 /**
  *
@@ -34,10 +30,10 @@ public String getMemo(){
     return (String)payment[4];
 }
 public double getDebit(){
-    return Tools.round((Float)payment[5]);
+    return CurrencyUtil.round((Float)payment[5]);
 }
 public double getCredit(){
-    return Tools.round((Float)payment[6]);
+    return CurrencyUtil.round((Float)payment[6]);
 }
 public boolean isCredit(){
    if (getCredit() > 0.00f) return true;

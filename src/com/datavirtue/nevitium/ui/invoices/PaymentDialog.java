@@ -14,16 +14,19 @@ import com.datavirtue.nevitium.services.DiService;
 import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.InvoicePaymentService;
 import com.datavirtue.nevitium.services.InvoiceService;
-import com.datavirtue.nevitium.ui.util.Tools;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
 import com.datavirtue.nevitium.services.util.DV;
 import javax.swing.*;
 import java.awt.event.*;
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -86,18 +89,52 @@ public class PaymentDialog extends javax.swing.JDialog {
         }
 
     }
-
-    public void display() throws SQLException {
-        modelToView(currentInvoice);
-
+    
+    
+    public void display(InvoicePayment suggestedPayment) throws SQLException { 
+        
         // get payment types
         this.paymentTypes = paymentService.getPaymentTypes();
-
         this.paymentTypeCombo.setModel(new PaymentTypeComboModel(this.paymentTypes));
-        this.paymentTypeCombo.setSelectedIndex(0);
+        
+        if (suggestedPayment == null)  {
+            modelToView(currentInvoice);
+            this.paymentTypeCombo.setSelectedIndex(0);
+        }else {
+            paymentModelToView(suggestedPayment);
+            this.paymentTypeCombo.setSelectedItem(suggestedPayment.getPaymentType().getName());
+        }
+                
         setDetails();
         this.setVisible(true);
+    }
+    
+    public void display() throws SQLException {
+        this.display(null);
 
+    }
+    
+    private void paymentModelToView(InvoicePayment suggestedPayment) throws SQLException {
+        
+        this.invoiceNumberField.setText(suggestedPayment.getInvoice().getInvoiceNumber());
+        
+        DateFormat df = paymentDatePicker.getDateFormat();
+        this.invoiceDateField.setText(df.format(suggestedPayment.getInvoice().getInvoiceDate()));
+        
+        this.balanceDue = invoiceService.calculateInvoiceAmountDue(suggestedPayment.getInvoice());
+        this.previousBalanceField.setText(CurrencyUtil.money(balanceDue));
+        this.interestField.setText("0.00");
+        this.balanceDueField.setText(CurrencyUtil.money(balanceDue));
+        
+        this.paymentMemoField.setText(suggestedPayment.getMemo());
+        this.paymentAmountField.setText(CurrencyUtil.money(suggestedPayment.getDebit()));
+        
+        try {
+            this.paymentDatePicker.setDate(suggestedPayment.getPaymentEffectiveDate());
+        } catch (PropertyVetoException ex) {
+            ex.printStackTrace();
+        }
+        
     }
 
     private void modelToView(Invoice invoice) throws SQLException {
@@ -107,9 +144,9 @@ public class PaymentDialog extends javax.swing.JDialog {
         this.invoiceDateField.setText(df.format(invoice.getInvoiceDate()));
 
         this.balanceDue = invoiceService.calculateInvoiceAmountDue(invoice);
-        this.previousBalanceField.setText(DV.money(balanceDue));
+        this.previousBalanceField.setText(CurrencyUtil.money(balanceDue));
         this.interestField.setText("0.00");
-        this.balanceDueField.setText(DV.money(balanceDue));
+        this.balanceDueField.setText(CurrencyUtil.money(balanceDue));
 
 //        inv_num = theInvoice.getInvoiceNumber();
 //        issueDate = new Date(theInvoice.getDate());
@@ -157,20 +194,20 @@ public class PaymentDialog extends javax.swing.JDialog {
 //        h = h - grace;
 //
 //        if (h > 0 && intBox.isSelected()) {
-//            current_interest = Tools.round(prev_balance * daily_rate * h);
+//            current_interest = CurrencyUtil.round(prev_balance * daily_rate * h);
 //
-//            due_now = Tools.round(prev_balance + current_interest);
+//            due_now = CurrencyUtil.round(prev_balance + current_interest);
 //
 //        } else {
 //
 //            current_interest = 0.00f;
-//            due_now = Tools.round(prev_balance + current_interest);
+//            due_now = CurrencyUtil.round(prev_balance + current_interest);
 //
 //        }
-//        previousField.setText(DV.money(prev_balance));
-//        interestField.setText(DV.money(current_interest));
-//        dueField.setText(DV.money(due_now));
-//        amtField.setText(DV.money(due_now));
+//        previousField.setText(CurrencyUtil.money(prev_balance));
+//        interestField.setText(CurrencyUtil.money(current_interest));
+//        dueField.setText(CurrencyUtil.money(due_now));
+//        amtField.setText(CurrencyUtil.money(due_now));
 
     }
 
@@ -195,7 +232,7 @@ public class PaymentDialog extends javax.swing.JDialog {
 //        } catch (Exception e) {
 //
 ////            javax.swing.JOptionPane.showMessageDialog(null, "Enter a valid amount, Example: "+
-////                    props.getProp("SYM") + Tools.round(due_now));
+////                    props.getProp("SYM") + CurrencyUtil.round(due_now));
 //            return false;
 //
 //        }
@@ -222,9 +259,9 @@ public class PaymentDialog extends javax.swing.JDialog {
 //
 //            if (acctBal < total_payment) {
 //                javax.swing.JOptionPane.showMessageDialog(null,
-//                        "The Prepaid account only has a balance of " + DV.money(acctBal) + nl
-//                        + "Only " + DV.money(acctBal) + " will be applied as a payment.");
-//                total_payment = Tools.round(acctBal);
+//                        "The Prepaid account only has a balance of " + CurrencyUtil.money(acctBal) + nl
+//                        + "Only " + CurrencyUtil.money(acctBal) + " will be applied as a payment.");
+//                total_payment = CurrencyUtil.round(acctBal);
 //                gc.useFunds(acctBal);
 //            } else {
 //
@@ -287,7 +324,7 @@ public class PaymentDialog extends javax.swing.JDialog {
 ////                        payment[3] = new String("Fee");  //cash cc chk int
 ////                        payment[4] = new String("CASH SALE ROUNDING OFFSET");  //memo
 ////                        diff = diff * -1;
-////                        payment[5] = new Float(Tools.round(diff));  //Debit, interest charge amount
+////                        payment[5] = new Float(CurrencyUtil.round(diff));  //Debit, interest charge amount
 ////                        payment[6] = new Float(0.00f);  //cr
 ////                        theInvoice.recordPayment(payment);
 ////                    }
@@ -296,7 +333,7 @@ public class PaymentDialog extends javax.swing.JDialog {
 ////                        payment[3] = new String("Credit");  //cash cc chk int
 ////                        payment[4] = new String("CASH SALE ROUNDING OFFSET");  //memo
 ////                        payment[5] = new Float(0.00f);  //db
-////                        payment[6] = new Float(Tools.round(diff));  //cr
+////                        payment[6] = new Float(CurrencyUtil.round(diff));  //cr
 ////                        theInvoice.recordPayment(payment);
 ////                    }
 ////                }
@@ -307,7 +344,7 @@ public class PaymentDialog extends javax.swing.JDialog {
 ////                    if (diff < 0) { //amount was increased, need to add a fee for diff amount
 ////                        payment[3] = new String("Fee");  //cash cc chk int
 ////                        payment[4] = new String("CASH SALE ROUNDING OFFSET");  //memo
-////                        payment[5] = new Float(Tools.round(diff));  //Debit, interest charge amount
+////                        payment[5] = new Float(CurrencyUtil.round(diff));  //Debit, interest charge amount
 ////                        payment[6] = new Float(0.00f);  //cr
 ////                        theInvoice.recordPayment(payment);
 ////                    }
@@ -316,7 +353,7 @@ public class PaymentDialog extends javax.swing.JDialog {
 ////                        payment[3] = new String("Credit");  //cash cc chk int
 ////                        payment[4] = new String("CASH SALE ROUNDING OFFSET");  //memo
 ////                        payment[5] = new Float(0.00f);  //db
-////                        payment[6] = new Float(Tools.round(diff));  //cr
+////                        payment[6] = new Float(CurrencyUtil.round(diff));  //cr
 ////                        theInvoice.recordPayment(payment);
 ////                    }
 ////                }
@@ -371,7 +408,7 @@ public class PaymentDialog extends javax.swing.JDialog {
 //            theInvoice.recordPayment(payment);
 //
 //            int a = javax.swing.JOptionPane.showConfirmDialog(null,
-//                    "A refund adjustment for " + DV.money(overPayment) + " was recorded." + nl
+//                    "A refund adjustment for " + CurrencyUtil.money(overPayment) + " was recorded." + nl
 //                    + "Do you want to print a check for this amount?", "Over Payment", JOptionPane.YES_NO_OPTION);
 //            if (a == JOptionPane.YES_OPTION) {
 //                printCheck = true;
@@ -981,9 +1018,9 @@ public class PaymentDialog extends javax.swing.JDialog {
 
     private String roundAmountDue() {
 
-        double decimal = Tools.round((balanceDue % 1) * 100);
+        double decimal = CurrencyUtil.round((balanceDue % 1) * 100);
         decimal = decimal - (decimal % 1);
-        double hundredth = Tools.round(((decimal * .1f) % 1) * 10);
+        double hundredth = CurrencyUtil.round(((decimal * .1f) % 1) * 10);
 
 //        /* 10th */
 //        if (props.getProp("CASHRND").equals(".10")) {
@@ -993,7 +1030,7 @@ public class PaymentDialog extends javax.swing.JDialog {
 //            if (hundredth > 5) {
 //                val += (.10 - (hundredth * .01)); //rounded up to nearest 10th
 //            }
-//            return DV.money(val);
+//            return CurrencyUtil.money(val);
 //        }
 //        /* 5th */
 //        if (props.getProp("CASHRND").equals(".05")) {
@@ -1006,9 +1043,9 @@ public class PaymentDialog extends javax.swing.JDialog {
 //            if (hundredth > 5) {
 //                val += (.10f - (hundredth * .01f)); //rounded up to nearest 5th
 //            }
-//            return DV.money(val);
+//            return CurrencyUtil.money(val);
 //        }
-        return DV.money(balanceDue);
+        return CurrencyUtil.money(balanceDue);
 
     }
 
@@ -1017,7 +1054,10 @@ public class PaymentDialog extends javax.swing.JDialog {
     private void setDetails() {
 
         var paymentTypeModel = (PaymentTypeComboModel) paymentTypeCombo.getModel();
-        var paymentType = (InvoicePaymentType) paymentTypeModel.getType(this.paymentTypeCombo.getSelectedIndex());
+        
+        var selectedTypeIndex = this.paymentTypeCombo.getSelectedIndex();
+        
+        var paymentType = (InvoicePaymentType) paymentTypeModel.getType(selectedTypeIndex);
 
         if (paymentType == null) {
             return;
@@ -1028,7 +1068,7 @@ public class PaymentDialog extends javax.swing.JDialog {
         helpTextField.setText(paymentType.getDescription());
 
         if (paymentType.isInvoiceCredit()) {
-            paymentAmountField.setText(DV.money(balanceDue));
+            paymentAmountField.setText(CurrencyUtil.money(balanceDue));
         }
 
         if (paymentType.getName().equals("card")) {

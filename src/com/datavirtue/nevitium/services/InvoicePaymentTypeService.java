@@ -13,5 +13,10 @@ public class InvoicePaymentTypeService extends BaseService<InvoicePaymentTypeDao
         return DaoManager.createDao(connection, InvoicePaymentType.class);
     }
 
+    public InvoicePaymentType getTypeByName(String name) throws SQLException {
+         var types =  this.getDao().queryForEq("name", name);
+         return types == null ? null : types.get(0);         
+    }
+    
    
 }

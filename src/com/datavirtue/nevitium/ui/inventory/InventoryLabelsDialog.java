@@ -6,6 +6,7 @@
 package com.datavirtue.nevitium.ui.inventory;
 
 import com.datavirtue.nevitium.services.PdfLabelService;
+import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import javax.swing.*;
 import java.io.*;
@@ -205,10 +206,10 @@ public class InventoryLabelsDialog extends javax.swing.JDialog {
                         }
 
                         if (costBox.isSelected()) {
-                            sb.append("$" + DV.money((Float) tm.getValueAt(row, 7)) + "   ");
+                            sb.append("$" + CurrencyUtil.money((Float) tm.getValueAt(row, 7)) + "   ");
                         }
                         if (priceBox.isSelected()) {
-                            sb.append("$" + DV.money((Float) tm.getValueAt(row, 8)));
+                            sb.append("$" + CurrencyUtil.money((Float) tm.getValueAt(row, 8)));
                         }
                         if (costBox.isSelected() || priceBox.isSelected()) {
                             sb.append(nl);
