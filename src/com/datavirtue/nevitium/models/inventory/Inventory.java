@@ -2,6 +2,7 @@ package com.datavirtue.nevitium.models.inventory;
 
 import com.datavirtue.nevitium.database.orm.InventoryDao;
 import com.datavirtue.nevitium.models.BaseModel;
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import java.util.Date;
@@ -46,5 +47,6 @@ public class Inventory extends BaseModel{
     private int reorderCutoff;
     @DatabaseField
     private boolean partialSaleAllowed;
-    
+    @DatabaseField(dataType = DataType.BYTE_ARRAY)
+    private byte[] image;
 }

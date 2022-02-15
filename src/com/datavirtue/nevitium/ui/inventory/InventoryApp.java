@@ -44,6 +44,10 @@ import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.AutoCompleteDocument;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.nio.file.Files;
+import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 
 public class InventoryApp extends javax.swing.JDialog {
@@ -113,14 +117,13 @@ public class InventoryApp extends javax.swing.JDialog {
 
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-              
+
                 try {
                     recordWindowSizeAndPosition();
                 } catch (BackingStoreException ex) {
                     ExceptionService.showErrorDialog(e.getComponent(), ex, "Error saving local screen preferences");
                 }
-                    
-              
+
             }
         });
 
@@ -166,16 +169,16 @@ public class InventoryApp extends javax.swing.JDialog {
 
             sd.addStatus("Inventory table Complete.");
             sd.addStatus("Configuring inventory table...");
-            
+
             return sd;
         }
 
         public void done() {
             inventoryTable.setModel(tm);
-            
-            inventoryTable.getColumnModel().getColumn(2).setCellRenderer(new DecimalCellRenderer(18,2,SwingConstants.RIGHT));
-            inventoryTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18,2,SwingConstants.RIGHT));
-        
+
+            inventoryTable.getColumnModel().getColumn(2).setCellRenderer(new DecimalCellRenderer(18, 2, SwingConstants.RIGHT));
+            inventoryTable.getColumnModel().getColumn(3).setCellRenderer(new DecimalCellRenderer(18, 2, SwingConstants.RIGHT));
+
             StatusDialog d = null;
             try {
                 d = (StatusDialog) get();
@@ -233,7 +236,6 @@ public class InventoryApp extends javax.swing.JDialog {
         taxCheckBox.setToolTipText(appSettings.getInvoice().getTax1Name());
         tax2CheckBox.setToolTipText(appSettings.getInvoice().getTax2Name());
 
-        
         findTextField.requestFocus();
 
         worker.execute();
@@ -247,7 +249,7 @@ public class InventoryApp extends javax.swing.JDialog {
     }
 
     private void recordWindowSizeAndPosition() throws BackingStoreException {
-        var screenSettings = localSettings.getScreenSettings();     
+        var screenSettings = localSettings.getScreenSettings();
         var sizeAndPosition = LocalSettingsService.getWindowSizeAndPosition(this);
         screenSettings.setInventory(sizeAndPosition);
         LocalSettingsService.saveLocalAppSettings(localSettings);
@@ -255,7 +257,7 @@ public class InventoryApp extends javax.swing.JDialog {
 
     private void restoreSavedWindowSizeAndPosition() throws BackingStoreException {
 
-        var screenSettings = localSettings.getScreenSettings().getInventory();       
+        var screenSettings = localSettings.getScreenSettings().getInventory();
         LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
     }
 
@@ -798,6 +800,8 @@ public class InventoryApp extends javax.swing.JDialog {
         picturesPanel = new javax.swing.JPanel();
         picField = new javax.swing.JTextField();
         picButton = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        picLabel = new javax.swing.JLabel();
         searchFieldCombo = new javax.swing.JComboBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -1365,9 +1369,9 @@ public class InventoryApp extends javax.swing.JDialog {
         availableCheckBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
         availableCheckBox.setNextFocusableComponent(picButton);
 
+        notesPane.setEditable(false);
         notesPane.setBackground(new java.awt.Color(219, 216, 216));
         notesPane.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
-        notesPane.setEditable(false);
         notesPane.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 notesPaneMouseClicked(evt);
@@ -1455,15 +1459,21 @@ public class InventoryApp extends javax.swing.JDialog {
             }
         });
 
+        picLabel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jScrollPane2.setViewportView(picLabel);
+
         org.jdesktop.layout.GroupLayout picturesPanelLayout = new org.jdesktop.layout.GroupLayout(picturesPanel);
         picturesPanel.setLayout(picturesPanelLayout);
         picturesPanelLayout.setHorizontalGroup(
             picturesPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(picturesPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(picButton)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(picField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE)
+                .add(picturesPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(picturesPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .add(picButton)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(picField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE))
+                    .add(jScrollPane2))
                 .addContainerGap())
         );
         picturesPanelLayout.setVerticalGroup(
@@ -1473,7 +1483,9 @@ public class InventoryApp extends javax.swing.JDialog {
                 .add(picturesPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(picButton)
                     .add(picField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(368, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         detailTabPane.addTab("Pictures", picturesPanel);
@@ -1680,10 +1692,17 @@ public class InventoryApp extends javax.swing.JDialog {
                 return;
             }
 
+            var image = Files.readAllBytes(curFile.toPath());
+            this.currentItem.setImage(image);
+            //inventoryService.save(currentItem);
+
             picField.setText(curFile.getPath());
 
             picField.setText(DV.verifyPath(picField.getText()));
-
+            ByteArrayInputStream bis = new ByteArrayInputStream(this.currentItem.getImage());
+            BufferedImage wPic = ImageIO.read(bis);
+            this.picLabel.setIcon(new ImageIcon(wPic));
+            
         } catch (Exception e) {
 
             javax.swing.JOptionPane.showMessageDialog(null, "There was a problem with the file system.");
@@ -2235,6 +2254,7 @@ public class InventoryApp extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JToolBar jToolBar2;
     private javax.swing.JButton labelButton;
@@ -2244,6 +2264,7 @@ public class InventoryApp extends javax.swing.JDialog {
     private javax.swing.JCheckBox partialBox;
     private javax.swing.JButton picButton;
     private javax.swing.JTextField picField;
+    private javax.swing.JLabel picLabel;
     private javax.swing.JPanel picturesPanel;
     private javax.swing.JTextField priceTextField;
     private javax.swing.JTextField qtyTextField;
