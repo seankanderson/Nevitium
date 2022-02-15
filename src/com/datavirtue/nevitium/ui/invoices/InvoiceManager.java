@@ -125,15 +125,15 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         var screenSettings = localSettings.getScreenSettings().getInvoiceManager();
         LocalSettingsService.applyScreenSizeAndPosition(screenSettings, this);
+        if (screenSettings != null) {
+            var splitfactor = Double.valueOf(screenSettings.getSplitFactor()).intValue();
 
-        var splitfactor = Double.valueOf(screenSettings.getSplitFactor()).intValue();
-
-        if (splitfactor > 100) {
-            this.invoiceManagerSplitPane.setDividerLocation(splitfactor);
-        } else {
-            this.invoiceManagerSplitPane.setDividerLocation(300);
+            if (splitfactor > 100) {
+                this.invoiceManagerSplitPane.setDividerLocation(splitfactor);
+            } else {
+                this.invoiceManagerSplitPane.setDividerLocation(300);
+            }
         }
-
     }
 
     private int rememberedRow = 0;
@@ -359,7 +359,6 @@ public class InvoiceManager extends javax.swing.JDialog {
         boolean found = false;
 
         //int len = tm.getRowCount();
-
 //        if (searchCombo.getSelectedIndex() == 0) {
 //            for (int i = 0; i < len; i++) {
 //                if (searchField.getText().equalsIgnoreCase((String) tm.getValueAt(i, 1))) {
@@ -370,7 +369,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 //            }
 //            resetSearch();
 //        }
-
         if (searchCombo.getSelectedIndex() == 2) { //search customers
             //search invoices for substring of customer
             //apply table model
@@ -434,7 +432,6 @@ public class InvoiceManager extends javax.swing.JDialog {
 //                }
                 // tm = db.createTableModel("invoice", clean, invoiceTable);
                 //invoiceTable.setModel(tm);
-
                 this.customizeView();
 
                 //this.setPayments();
@@ -680,7 +677,7 @@ public class InvoiceManager extends javax.swing.JDialog {
         payButton.setEnabled(true);
         closeButton.setEnabled(true);
         voidButton.setEnabled(true);
-        this.selectFirstRow(invoiceTable);    
+        this.selectFirstRow(invoiceTable);
     }
 
     private void paidRadioAction() {
@@ -699,7 +696,7 @@ public class InvoiceManager extends javax.swing.JDialog {
         this.selectFirstRow(invoiceTable);
     }
 
-        private void quoteRadioAction() {
+    private void quoteRadioAction() {
         quoteRadio.setSelected(true);
         resetSearch();
         refreshTables();
@@ -715,7 +712,6 @@ public class InvoiceManager extends javax.swing.JDialog {
         this.selectFirstRow(invoiceTable);
     }
 
-    
     private void openInvoice() {
 
         if (voidRadio.isSelected()) {
@@ -769,7 +765,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     }
 
-        private void takePayment() {
+    private void takePayment() {
 
         this.rememberRow();
 
@@ -800,7 +796,7 @@ public class InvoiceManager extends javax.swing.JDialog {
 
         this.restoreRow();
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -1211,12 +1207,11 @@ public class InvoiceManager extends javax.swing.JDialog {
             } catch (SQLException ex) {
                 ExceptionService.showErrorDialog(this, ex, "Error getting returns from database");
             }
-            
+
             if (returnDialog.isRefreshNeeded()) {
                 this.refreshTables();
             }
-            
-            
+
         }
 
     }//GEN-LAST:event_returnButtonActionPerformed
@@ -1340,7 +1335,6 @@ public class InvoiceManager extends javax.swing.JDialog {
     }//GEN-LAST:event_invoiceTableMouseClicked
 
 
-
     private void payButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_payButtonActionPerformed
 
         takePayment();
@@ -1423,9 +1417,8 @@ public class InvoiceManager extends javax.swing.JDialog {
 
     }
 
-
     private java.awt.Frame parentWin;
-    
+
     private String nl = System.getProperty("line.separator");
 
     private Image winIcon;

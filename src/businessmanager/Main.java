@@ -11,6 +11,8 @@
  */
 package businessmanager;
 
+import com.datavirtue.nevitium.models.settings.AppSettings;
+import com.datavirtue.nevitium.services.AppSettingsService;
 import com.datavirtue.nevitium.ui.ControlCenter;
 import com.datavirtue.nevitium.services.DiService;
 import java.awt.Toolkit;
@@ -20,6 +22,7 @@ import com.datavirtue.nevitium.services.ExceptionService;
 import com.datavirtue.nevitium.services.LocalSettingsService;
 import com.datavirtue.nevitium.services.TestDataService;
 import com.datavirtue.nevitium.ui.LocalSettingsDialog;
+import com.datavirtue.nevitium.ui.SettingsDialog;
 
 /**
  *
@@ -44,6 +47,18 @@ public class Main {
             System.exit(-1);
         } 
         LocalSettingsService.setLookAndFeel();
+        
+        var injector = DiService.getInjector();
+        
+        var appSettingsService = injector.getInstance(AppSettingsService.class);
+        appSettingsService.setObjectType(AppSettings.class);
+        var settings = appSettingsService.getObject();
+        
+        if (settings == null) {
+            var settingsDialog = new SettingsDialog(frame, true, 0);
+            settingsDialog.display();
+        }        
+        
         try {
             TestDataService.populateTestData();  
         }catch(SQLException e) {
@@ -51,7 +66,8 @@ public class Main {
             ExceptionService.showErrorDialog(frame, e, "Error accessing database");
             System.exit(-2);
         }
-        var injector = DiService.getInjector();
+        
+        
         ControlCenter control = injector.getInstance(ControlCenter.class);
                     
         java.awt.EventQueue.invokeLater(new Runnable() {
