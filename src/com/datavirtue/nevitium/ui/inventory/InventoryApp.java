@@ -7,7 +7,7 @@
 /**
  *
  * @author  Sean K Anderson - Data Virtue
- * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010, 2011 All Rights
+ * @rights Copyright Data Virtue 2006, 2007, 2008, 2009, 2010, 2011, 2022 All Rights
  * Reserved.
  */
 package com.datavirtue.nevitium.ui.inventory;
@@ -145,10 +145,8 @@ public class InventoryApp extends javax.swing.JDialog {
 
         if (select) {
 
-            tabPanel.setVisible(false);
             savePanel.setVisible(false);
-            toggleButton.setText("More");
-
+           
         }
 
     }//end constructor
@@ -231,6 +229,8 @@ public class InventoryApp extends javax.swing.JDialog {
             setFieldsEnabled(false);
         }
 
+        
+        
         searchFieldCombo.setSelectedItem(appSettings.getInventory().getDefaultInventorySearchField());
 
         taxCheckBox.setToolTipText(appSettings.getInvoice().getTax1Name());
@@ -305,6 +305,7 @@ public class InventoryApp extends javax.swing.JDialog {
 
         taxCheckBox.setEnabled(enabled);
         tax2CheckBox.setEnabled(enabled);
+        partialBox.setEnabled(enabled);
         availableCheckBox.setEnabled(enabled);
 
         picButton.setEnabled(enabled);
@@ -734,26 +735,22 @@ public class InventoryApp extends javax.swing.JDialog {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
-        savePanel = new javax.swing.JPanel();
-        helpBox = new javax.swing.JTextField();
-        jToolBar2 = new javax.swing.JToolBar();
-        clearButton = new javax.swing.JButton();
-        saveButton = new javax.swing.JButton();
+        jSplitPane1 = new javax.swing.JSplitPane();
         tablePanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         inventoryTable = new javax.swing.JTable();
         jToolBar1 = new javax.swing.JToolBar();
-        toggleButton = new javax.swing.JButton();
         viewButton = new javax.swing.JButton();
         groupButton = new javax.swing.JButton();
         labelButton = new javax.swing.JButton();
         deleteButton = new javax.swing.JButton();
+        jPanel1 = new javax.swing.JPanel();
         selectButton = new javax.swing.JButton();
         voidButton = new javax.swing.JButton();
+        searchFieldCombo = new javax.swing.JComboBox();
         findTextField = new javax.swing.JTextField();
-        jLabel13 = new javax.swing.JLabel();
         receiveModeBox = new javax.swing.JCheckBox();
-        tabPanel = new javax.swing.JPanel();
+        jPanel2 = new javax.swing.JPanel();
         detailTabPane = new javax.swing.JTabbedPane();
         detailPanel = new javax.swing.JPanel();
         assField = new javax.swing.JLabel();
@@ -766,10 +763,6 @@ public class InventoryApp extends javax.swing.JDialog {
         jLabel8 = new javax.swing.JLabel();
         costTextField = new javax.swing.JTextField();
         descTextField = new javax.swing.JTextField();
-        jPanel5 = new javax.swing.JPanel();
-        tax2CheckBox = new javax.swing.JCheckBox();
-        taxCheckBox = new javax.swing.JCheckBox();
-        partialBox = new javax.swing.JCheckBox();
         receiveButton = new javax.swing.JButton();
         serviceBox = new javax.swing.JCheckBox();
         qtyTextField = new javax.swing.JTextField();
@@ -786,6 +779,9 @@ public class InventoryApp extends javax.swing.JDialog {
         jLabel14 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
+        partialBox = new javax.swing.JCheckBox();
+        taxCheckBox = new javax.swing.JCheckBox();
+        tax2CheckBox = new javax.swing.JCheckBox();
         statusPanel = new javax.swing.JPanel();
         jLabel15 = new javax.swing.JLabel();
         saleField = new javax.swing.JTextField();
@@ -802,7 +798,11 @@ public class InventoryApp extends javax.swing.JDialog {
         picButton = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         picLabel = new javax.swing.JLabel();
-        searchFieldCombo = new javax.swing.JComboBox();
+        savePanel = new javax.swing.JPanel();
+        helpBox = new javax.swing.JTextField();
+        jToolBar2 = new javax.swing.JToolBar();
+        clearButton = new javax.swing.JButton();
+        saveButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Inventory Manager");
@@ -815,58 +815,8 @@ public class InventoryApp extends javax.swing.JDialog {
             }
         });
 
-        savePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        savePanel.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                savePanelKeyPressed(evt);
-            }
-        });
-
-        helpBox.setEditable(false);
-        helpBox.setText("Click the UPC field to start a new record.");
-
-        jToolBar2.setFloatable(false);
-        jToolBar2.setRollover(true);
-
-        clearButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Corrupt text.png"))); // NOI18N
-        clearButton.setText("Clear");
-        clearButton.setToolTipText("Clear/Cancel");
-        clearButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                clearButtonActionPerformed(evt);
-            }
-        });
-        jToolBar2.add(clearButton);
-
-        saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Floppy.png"))); // NOI18N
-        saveButton.setText("Save");
-        saveButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveButtonActionPerformed(evt);
-            }
-        });
-        jToolBar2.add(saveButton);
-
-        org.jdesktop.layout.GroupLayout savePanelLayout = new org.jdesktop.layout.GroupLayout(savePanel);
-        savePanel.setLayout(savePanelLayout);
-        savePanelLayout.setHorizontalGroup(
-            savePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, savePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(savePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jToolBar2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, helpBox))
-                .addContainerGap())
-        );
-        savePanelLayout.setVerticalGroup(
-            savePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, savePanelLayout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jToolBar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(helpBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
+        jSplitPane1.setMinimumSize(new java.awt.Dimension(10, 10));
+        jSplitPane1.setOneTouchExpandable(true);
 
         tablePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -892,19 +842,6 @@ public class InventoryApp extends javax.swing.JDialog {
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
-
-        toggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Back.png"))); // NOI18N
-        toggleButton.setText("Less Detail");
-        toggleButton.setToolTipText("Hide/View Details");
-        toggleButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        toggleButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
-        toggleButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        toggleButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                toggleButtonActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(toggleButton);
 
         viewButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Camera.png"))); // NOI18N
         viewButton.setText("View Pic (F12)");
@@ -954,25 +891,6 @@ public class InventoryApp extends javax.swing.JDialog {
         });
         jToolBar1.add(deleteButton);
 
-        org.jdesktop.layout.GroupLayout tablePanelLayout = new org.jdesktop.layout.GroupLayout(tablePanel);
-        tablePanel.setLayout(tablePanelLayout);
-        tablePanelLayout.setHorizontalGroup(
-            tablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 529, Short.MAX_VALUE)
-            .add(tablePanelLayout.createSequentialGroup()
-                .add(10, 10, 10)
-                .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 509, Short.MAX_VALUE)
-                .add(10, 10, 10))
-        );
-        tablePanelLayout.setVerticalGroup(
-            tablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, tablePanelLayout.createSequentialGroup()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 51, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
         selectButton.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         selectButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/OK.png"))); // NOI18N
         selectButton.setText("Select");
@@ -990,6 +908,13 @@ public class InventoryApp extends javax.swing.JDialog {
         voidButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 voidButtonActionPerformed(evt);
+            }
+        });
+
+        searchFieldCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "UPC", "Code", "Description", "Size", "Weight", "Category" }));
+        searchFieldCombo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchFieldComboActionPerformed(evt);
             }
         });
 
@@ -1012,9 +937,6 @@ public class InventoryApp extends javax.swing.JDialog {
             }
         });
 
-        jLabel13.setBackground(new java.awt.Color(255, 255, 255));
-        jLabel13.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-
         receiveModeBox.setText("Receive Mode");
         receiveModeBox.setToolTipText("Allows You to Quickly Update Inventory Quantities for Scanned Items.");
         receiveModeBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
@@ -1028,6 +950,68 @@ public class InventoryApp extends javax.swing.JDialog {
                 receiveModeBoxActionPerformed(evt);
             }
         });
+
+        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(selectButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(voidButton)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(searchFieldCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 136, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(findTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 170, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(137, 137, 137))
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(receiveModeBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 96, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(selectButton)
+                    .add(voidButton)
+                    .add(searchFieldCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(findTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(receiveModeBox)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        org.jdesktop.layout.GroupLayout tablePanelLayout = new org.jdesktop.layout.GroupLayout(tablePanel);
+        tablePanel.setLayout(tablePanelLayout);
+        tablePanelLayout.setHorizontalGroup(
+            tablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(tablePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(tablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(tablePanelLayout.createSequentialGroup()
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 486, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(0, 59, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        tablePanelLayout.setVerticalGroup(
+            tablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, tablePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 453, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 51, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        jSplitPane1.setRightComponent(tablePanel);
 
         detailTabPane.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
 
@@ -1093,51 +1077,6 @@ public class InventoryApp extends javax.swing.JDialog {
         descTextField.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         descTextField.setToolTipText("[50 Char] Appears on the Invoices and Quotes  [REQUIRED FIELD]");
         descTextField.setNextFocusableComponent(sizeTextField);
-
-        tax2CheckBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tax2CheckBox.setText("Tax 2");
-        tax2CheckBox.setToolTipText("See Invoice Settings");
-        tax2CheckBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        tax2CheckBox.setNextFocusableComponent(availableCheckBox);
-
-        taxCheckBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        taxCheckBox.setText("Tax 1");
-        taxCheckBox.setToolTipText("See Invoice Settings");
-        taxCheckBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        taxCheckBox.setNextFocusableComponent(tax2CheckBox);
-
-        partialBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        partialBox.setText("Allow partial quantities");
-        partialBox.setToolTipText("Allows fractional quantities to be sold");
-        partialBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                partialBoxActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(taxCheckBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 61, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tax2CheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 74, Short.MAX_VALUE)
-                .add(18, 18, 18)
-                .add(partialBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 205, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel5Layout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(taxCheckBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(tax2CheckBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(partialBox))
-                .addContainerGap())
-        );
 
         receiveButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         receiveButton.setText("Receive");
@@ -1226,63 +1165,74 @@ public class InventoryApp extends javax.swing.JDialog {
         jLabel17.setForeground(new java.awt.Color(255, 0, 0));
         jLabel17.setText("*");
 
+        partialBox.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        partialBox.setLabel("Allow partial quantity sale");
+        partialBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                partialBoxActionPerformed(evt);
+            }
+        });
+
+        taxCheckBox.setLabel("Tax 1");
+
+        tax2CheckBox.setLabel("Tax 2");
+
         org.jdesktop.layout.GroupLayout detailPanelLayout = new org.jdesktop.layout.GroupLayout(detailPanel);
         detailPanel.setLayout(detailPanelLayout);
         detailPanelLayout.setHorizontalGroup(
             detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(detailPanelLayout.createSequentialGroup()
-                .addContainerGap()
+                .add(12, 12, 12)
+                .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jLabel4)
+                    .add(jLabel3)
+                    .add(jLabel5)
+                    .add(jLabel6)
+                    .add(jLabel7)
+                    .add(jLabel8)
+                    .add(jLabel9)
+                    .add(jLabel2)
+                    .add(jLabel1))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(detailPanelLayout.createSequentialGroup()
-                        .add(6, 6, 6)
-                        .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(jLabel4)
-                            .add(jLabel3)
-                            .add(jLabel5)
-                            .add(jLabel6)
-                            .add(jLabel7)
-                            .add(jLabel8)
-                            .add(jLabel9)
-                            .add(jLabel2)
-                            .add(jLabel1))
+                        .add(upcTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(assField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(detailPanelLayout.createSequentialGroup()
+                        .add(catTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 203, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(detailPanelLayout.createSequentialGroup()
-                                .add(catTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 203, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(serviceBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(tax2CheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(detailPanelLayout.createSequentialGroup()
+                        .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                            .add(partialBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, codeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 153, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, detailPanelLayout.createSequentialGroup()
+                                .add(descTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 293, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(serviceBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 126, Short.MAX_VALUE))
-                            .add(detailPanelLayout.createSequentialGroup()
-                                .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(codeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 153, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(detailPanelLayout.createSequentialGroup()
-                                        .add(descTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 293, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(jLabel17))
-                                    .add(detailPanelLayout.createSequentialGroup()
-                                        .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                                            .add(org.jdesktop.layout.GroupLayout.LEADING, sizeTextField)
-                                            .add(org.jdesktop.layout.GroupLayout.LEADING, weightTextField)
-                                            .add(org.jdesktop.layout.GroupLayout.LEADING, qtyTextField)
-                                            .add(org.jdesktop.layout.GroupLayout.LEADING, costTextField)
-                                            .add(org.jdesktop.layout.GroupLayout.LEADING, priceTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 78, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                        .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                            .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                                                .add(detailPanelLayout.createSequentialGroup()
-                                                    .add(jLabel16)
-                                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                                    .add(retailTotalLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                                .add(org.jdesktop.layout.GroupLayout.TRAILING, detailPanelLayout.createSequentialGroup()
-                                                    .add(jLabel14)
-                                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                                    .add(costTotalLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                            .add(receiveButton))))
-                                .add(0, 0, Short.MAX_VALUE))
-                            .add(detailPanelLayout.createSequentialGroup()
-                                .add(upcTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(jLabel17))
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, detailPanelLayout.createSequentialGroup()
+                                .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, sizeTextField)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, weightTextField)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, qtyTextField)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, costTextField)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, priceTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 78, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                .add(assField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                    .add(jPanel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                        .add(detailPanelLayout.createSequentialGroup()
+                                            .add(jLabel16)
+                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                            .add(retailTotalLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .add(org.jdesktop.layout.GroupLayout.TRAILING, detailPanelLayout.createSequentialGroup()
+                                            .add(jLabel14)
+                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                            .add(costTotalLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .add(receiveButton)))
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, taxCheckBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         detailPanelLayout.setVerticalGroup(
@@ -1315,7 +1265,8 @@ public class InventoryApp extends javax.swing.JDialog {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(jLabel6)
-                            .add(qtyTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(qtyTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(receiveButton))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(jLabel7)
@@ -1325,8 +1276,6 @@ public class InventoryApp extends javax.swing.JDialog {
                             .add(jLabel8)
                             .add(priceTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                     .add(detailPanelLayout.createSequentialGroup()
-                        .add(receiveButton)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(detailPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(jLabel14)
                             .add(costTotalLabel))
@@ -1339,9 +1288,13 @@ public class InventoryApp extends javax.swing.JDialog {
                     .add(jLabel9)
                     .add(catTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(serviceBox))
-                .add(87, 87, 87)
-                .add(jPanel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(partialBox)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(taxCheckBox)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(tax2CheckBox)
+                .addContainerGap(146, Short.MAX_VALUE))
         );
 
         detailTabPane.addTab("Detail", detailPanel);
@@ -1395,7 +1348,7 @@ public class InventoryApp extends javax.swing.JDialog {
             statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, statusPanelLayout.createSequentialGroup()
                 .add(statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(notesScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
+                    .add(notesScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE)
                     .add(statusPanelLayout.createSequentialGroup()
                         .addContainerGap()
                         .add(statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
@@ -1409,10 +1362,10 @@ public class InventoryApp extends javax.swing.JDialog {
                                     .add(saleField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE)
                                     .add(recvdField)
                                     .add(reorderSpinnerControl, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 56, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 155, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 124, Short.MAX_VALUE)
                                 .add(availableCheckBox))
                             .add(statusPanelLayout.createSequentialGroup()
-                                .add(0, 288, Short.MAX_VALUE)
+                                .add(0, 257, Short.MAX_VALUE)
                                 .add(noteButton)))))
                 .addContainerGap())
         );
@@ -1433,7 +1386,7 @@ public class InventoryApp extends javax.swing.JDialog {
                     .add(reorderSpinnerControl, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(availableCheckBox))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(notesScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
+                .add(notesScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 345, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(noteButton)
                 .addContainerGap())
@@ -1472,7 +1425,7 @@ public class InventoryApp extends javax.swing.JDialog {
                         .addContainerGap()
                         .add(picButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(picField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE))
+                        .add(picField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE))
                     .add(jScrollPane2))
                 .addContainerGap())
         );
@@ -1484,80 +1437,102 @@ public class InventoryApp extends javax.swing.JDialog {
                     .add(picButton)
                     .add(picField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 427, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         detailTabPane.addTab("Pictures", picturesPanel);
 
-        org.jdesktop.layout.GroupLayout tabPanelLayout = new org.jdesktop.layout.GroupLayout(tabPanel);
-        tabPanel.setLayout(tabPanelLayout);
-        tabPanelLayout.setHorizontalGroup(
-            tabPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(detailTabPane)
-        );
-        tabPanelLayout.setVerticalGroup(
-            tabPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(detailTabPane)
-        );
-
-        searchFieldCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "UPC", "Code", "Description", "Size", "Weight", "Category" }));
-        searchFieldCombo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchFieldComboActionPerformed(evt);
+        savePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        savePanel.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                savePanelKeyPressed(evt);
             }
         });
+
+        helpBox.setEditable(false);
+        helpBox.setText("Click the UPC field to start a new record.");
+
+        jToolBar2.setFloatable(false);
+        jToolBar2.setRollover(true);
+
+        clearButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Corrupt text.png"))); // NOI18N
+        clearButton.setText("Clear");
+        clearButton.setToolTipText("Clear/Cancel");
+        clearButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearButtonActionPerformed(evt);
+            }
+        });
+        jToolBar2.add(clearButton);
+
+        saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Floppy.png"))); // NOI18N
+        saveButton.setText("Save");
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveButtonActionPerformed(evt);
+            }
+        });
+        jToolBar2.add(saveButton);
+
+        org.jdesktop.layout.GroupLayout savePanelLayout = new org.jdesktop.layout.GroupLayout(savePanel);
+        savePanel.setLayout(savePanelLayout);
+        savePanelLayout.setHorizontalGroup(
+            savePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(savePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(savePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, helpBox)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jToolBar2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        savePanelLayout.setVerticalGroup(
+            savePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, savePanelLayout.createSequentialGroup()
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jToolBar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(helpBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(detailTabPane)
+                    .add(savePanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(detailTabPane)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(savePanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        jSplitPane1.setLeftComponent(jPanel2);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(tabPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(savePanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(tablePanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, receiveModeBox, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, selectButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE))
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(layout.createSequentialGroup()
-                                .add(93, 93, 93)
-                                .add(jLabel13))
-                            .add(layout.createSequentialGroup()
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(voidButton)
-                                .add(18, 18, 18)
-                                .add(searchFieldCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 136, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(findTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 170, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                        .add(0, 0, Short.MAX_VALUE)))
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(selectButton)
-                            .add(jLabel13)
-                            .add(voidButton)
-                            .add(findTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(searchFieldCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(receiveModeBox)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(tablePanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(layout.createSequentialGroup()
-                        .add(tabPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(savePanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1794,27 +1769,15 @@ public class InventoryApp extends javax.swing.JDialog {
     }//GEN-LAST:event_findTextFieldFocusGained
 
 
-    private void toggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_toggleButtonActionPerformed
-
-        togglePanels();
-
-
-    }//GEN-LAST:event_toggleButtonActionPerformed
-
     private void togglePanels() {
         if (savePanel.isVisible()) {
 
             savePanel.setVisible(false);
-            this.tabPanel.setVisible(false);
-            toggleButton.setText("More Detail");
-            toggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Forward.png")));
-
+           
         } else {
 
             savePanel.setVisible(true);
-            this.tabPanel.setVisible(true);
-            toggleButton.setText("Less Detail");
-            toggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/businessmanager/res/Aha-16/enabled/Back.png")));
+            
         }
         findTextField.requestFocus();
     }
@@ -2237,7 +2200,6 @@ public class InventoryApp extends javax.swing.JDialog {
     private javax.swing.JTextField helpBox;
     private javax.swing.JTable inventoryTable;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
@@ -2252,9 +2214,11 @@ public class InventoryApp extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JToolBar jToolBar2;
     private javax.swing.JButton labelButton;
@@ -2281,11 +2245,9 @@ public class InventoryApp extends javax.swing.JDialog {
     private javax.swing.JCheckBox serviceBox;
     private javax.swing.JTextField sizeTextField;
     private javax.swing.JPanel statusPanel;
-    private javax.swing.JPanel tabPanel;
     private javax.swing.JPanel tablePanel;
     private javax.swing.JCheckBox tax2CheckBox;
     private javax.swing.JCheckBox taxCheckBox;
-    private javax.swing.JButton toggleButton;
     private javax.swing.JTextField upcTextField;
     private javax.swing.JButton viewButton;
     private javax.swing.JButton voidButton;

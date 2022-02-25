@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /*
  * DiscountDialog.java
@@ -10,62 +6,58 @@
  */
 package com.datavirtue.nevitium.ui.invoices;
 
+import com.datavirtue.nevitium.models.invoices.InvoiceItem;
 import com.datavirtue.nevitium.services.util.CurrencyUtil;
 import com.datavirtue.nevitium.services.util.DV;
 import com.datavirtue.nevitium.ui.util.JTextFieldFilter;
-import com.datavirtue.nevitium.ui.util.LimitedDocument;
 
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 
-/**
- *
- * @author sean
- */
 public class DiscountDialog extends javax.swing.JDialog {
-    Image winIcon;
+    private Image winIcon;
+    private InvoiceItem itemToDiscount;
+    private InvoiceItem discountItem;
+    
     /** Creates new form DiscountDialog */
-    public DiscountDialog(java.awt.Frame parent, boolean modal, String desc, float total, boolean tx1, boolean tx2) {
+    public DiscountDialog(java.awt.Frame parent, boolean modal, InvoiceItem item) {
         super(parent, modal);
-        
+        itemToDiscount = item;
         Toolkit tools = Toolkit.getDefaultToolkit();
         winIcon = tools.getImage(getClass().getResource("/businessmanager/res/Aha-16/enabled/Percent.png"));
 
         initComponents();
-                
-        priceTotal = total;
-        tax1 = tx1;
-        tax2 = tx2;
-        //Setup textbox fields with data restrictions
-        this.discDescField.setDocument(new LimitedDocument(50));
+       
         percentageField.setDocument(new JTextFieldFilter(JTextFieldFilter.FLOAT));
         
         this.populateItemList();
         
-        discDescField.setText(desc);
+        
         percentageField.requestFocus();
         
         java.awt.Dimension dim = DV.computeCenter((java.awt.Window) this);
-        this.setLocation(dim.width, dim.height);
-       
+        this.setLocation(dim.width, dim.height);       
         
-        
-        this.setVisible(true);
+        if (item == null) { 
+            this.discountStrategyCheckbox.setEnabled(false);
+            this.discountStrategyCheckbox.setSelected(false);
+        }
         
     }
 
+    public InvoiceItem getDiscountItem() {
+        return this.discountItem;
+    }
     
-    boolean stat = false;
-    public Object [] getDisc(){
-        return discItem;
+    public void display() {
         
+        if (itemToDiscount != null) {
+            discDescField.setText(itemToDiscount.getDescription());
+        }
+        this.setVisible(true);
     }
-    
-    public boolean getStat(){
-        return stat;
-    }
-    
+       
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -83,6 +75,8 @@ public class DiscountDialog extends javax.swing.JDialog {
         jLabel3 = new javax.swing.JLabel();
         amountField = new javax.swing.JTextField();
         autoInsertBox = new javax.swing.JCheckBox();
+        helpTextField = new javax.swing.JTextField();
+        discountStrategyCheckbox = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Item Discount");
@@ -90,7 +84,6 @@ public class DiscountDialog extends javax.swing.JDialog {
 
         jLabel1.setText("Discount Description");
 
-        discDescField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
         discDescField.setNextFocusableComponent(percentageField);
         discDescField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -98,7 +91,6 @@ public class DiscountDialog extends javax.swing.JDialog {
             }
         });
 
-        percentageField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
         percentageField.setNextFocusableComponent(discDescField);
         percentageField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -121,14 +113,26 @@ public class DiscountDialog extends javax.swing.JDialog {
 
         jLabel3.setText("Amount");
 
-        amountField.setEditable(false);
-        amountField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-
         autoInsertBox.setSelected(true);
         autoInsertBox.setText("Auto Insert %");
         autoInsertBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 autoInsertBoxActionPerformed(evt);
+            }
+        });
+
+        helpTextField.setText("The discount appears as an item on the invoice.");
+
+        discountStrategyCheckbox.setSelected(true);
+        discountStrategyCheckbox.setText("Link discount to selected item");
+        discountStrategyCheckbox.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                discountStrategyCheckboxItemStateChanged(evt);
+            }
+        });
+        discountStrategyCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                discountStrategyCheckboxActionPerformed(evt);
             }
         });
 
@@ -139,22 +143,29 @@ public class DiscountDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(helpTextField)
                     .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(autoInsertBox)
+                                .addGap(18, 18, 18)
+                                .addComponent(discountStrategyCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel1)
+                                .addComponent(discDescField, javax.swing.GroupLayout.PREFERRED_SIZE, 364, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(discDescField, javax.swing.GroupLayout.PREFERRED_SIZE, 364, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(percentageField)
-                            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel3)
-                            .addComponent(amountField, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(autoInsertBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 378, Short.MAX_VALUE)
-                        .addComponent(applyButton)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(percentageField)
+                                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel3)
+                                    .addComponent(amountField)))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGap(107, 107, 107)
+                                .addComponent(applyButton)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -174,7 +185,11 @@ public class DiscountDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(applyButton)
-                    .addComponent(autoInsertBox))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(autoInsertBox)
+                        .addComponent(discountStrategyCheckbox)))
+                .addGap(18, 18, 18)
+                .addComponent(helpTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -189,7 +204,7 @@ public class DiscountDialog extends javax.swing.JDialog {
     String kptemp;
     int percentIndex = -1;
     private void percentageFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_percentageFieldKeyReleased
-        float calc = ((DV.parseFloat(percentageField.getText()) * .01f) * priceTotal);
+        double calc = ((DV.parseDouble(percentageField.getText()) * .01f) * itemToDiscount.getItemSubtotal());
         amountField.setText(CurrencyUtil.money(calc * -1));
         kptemp = discDescField.getText();
         
@@ -211,7 +226,7 @@ public class DiscountDialog extends javax.swing.JDialog {
     private void percentageFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_percentageFieldKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) applyDiscount();
         if (evt.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            stat = false;
+            
             this.setVisible(false);
         }
         
@@ -232,36 +247,40 @@ public class DiscountDialog extends javax.swing.JDialog {
     private void discDescFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_discDescFieldKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) percentageField.requestFocus();
         if (evt.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            stat = false;
+            
             this.setVisible(false);
         }
     }//GEN-LAST:event_discDescFieldKeyPressed
 
-    private Object [] discItem;
-    private java.util.ArrayList itemList;
-  
-    private float priceTotal;
-    private boolean tax1, tax2;
+    private void discountStrategyCheckboxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_discountStrategyCheckboxItemStateChanged
+        this.helpTextField.setText("Discounting the item allows better cost tracking");
+    }//GEN-LAST:event_discountStrategyCheckboxItemStateChanged
+
+    private void discountStrategyCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_discountStrategyCheckboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_discountStrategyCheckboxActionPerformed
+
     
     private void applyDiscount(){
-        //build item to insert in invoicedialog
-        //discItem = new Object[16];
-        float unit  = 0.00f;
-        float costf = 0.00f;
-        unit = DV.parseFloat(amountField.getText());
         
-        discItem [2] = "DISC";  //code
+        // if discount is greater than then margin of the item, then the difference is recorded as cost for the discount.
         
-        String note = discDescField.getText();
+        discountItem = new InvoiceItem();
+        double unit  = 0.00;
+        double cost = 0.00;
+        unit = DV.parseDouble(amountField.getText());
+        discountItem.setQuantity(1.00);
+        discountItem.setDiscount(true);
+        discountItem.setDescription(discDescField.getText());
+        discountItem.setUnitPrice(unit);
+        discountItem.setCost(cost);
+        
+        if (this.discountStrategyCheckbox.isSelected() && this.itemToDiscount != null) {
+            discountItem.setRelatedInvoiceItem(this.itemToDiscount);
+        }
                 
-        discItem [3] = note;  //desc
-        discItem [7] = new Float (costf);  //cost
-        discItem [8] = new Float (unit);  //unit
-        discItem [13] = tax1;  //t1
-        discItem [14] = tax2;  //t2
-                
-        this.normalizeItemList(discDescField.getText());
-        stat = true;
+        //this.normalizeItemList(discDescField.getText());
+        
         this.setVisible(false);    
     }
     
@@ -316,6 +335,8 @@ public class DiscountDialog extends javax.swing.JDialog {
     private javax.swing.JButton applyButton;
     private javax.swing.JCheckBox autoInsertBox;
     private javax.swing.JTextField discDescField;
+    private javax.swing.JCheckBox discountStrategyCheckbox;
+    private javax.swing.JTextField helpTextField;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

@@ -120,6 +120,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
 
     public static double calculateGrandTotal(Invoice invoice) {
         var subtotal = getSubtotal(invoice);
+        //TODO:  remove discounts before calculating taxes!!
         var tax1 = getTax1Total(invoice);
         var tax2 = getTax2Total(invoice);
         return CurrencyUtil.round(subtotal + tax1 + tax2);

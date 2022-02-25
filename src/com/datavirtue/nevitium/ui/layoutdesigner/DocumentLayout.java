@@ -254,12 +254,12 @@ public ArrayList buildLayout(boolean save){
 
                         if (leaf.toString().equalsIgnoreCase("x")){
 
-                            x = DV.parseFloat(attribute.toString());
+                            x = (float)DV.parseDouble(attribute.toString());
 
                         }
                         if (leaf.toString().equalsIgnoreCase("y")){
 
-                            y = DV.parseFloat(attribute.toString());
+                            y = (float)DV.parseDouble(attribute.toString());
                         }
                     }
 
@@ -304,12 +304,12 @@ public ArrayList buildLayout(boolean save){
 
                         if (leaf.toString().equalsIgnoreCase("x")){
 
-                            x = DV.parseFloat(attribute.toString());
+                            x = (float)DV.parseDouble(attribute.toString());
 
                         }
                         if (leaf.toString().equalsIgnoreCase("y")){
 
-                            y = DV.parseFloat(attribute.toString());
+                            y = (float)DV.parseDouble(attribute.toString());
                         }
                     }
 
@@ -326,10 +326,10 @@ public ArrayList buildLayout(boolean save){
                         TreeNode attribute = leaf.getChildAt(a);
 
                         if (leaf.toString().equalsIgnoreCase("x")){
-                            x = DV.parseFloat(attribute.toString());
+                            x = (float)DV.parseDouble(attribute.toString());
                         }
                         if (leaf.toString().equalsIgnoreCase("y")){
-                            y = DV.parseFloat(attribute.toString());
+                            y = (float)DV.parseDouble(attribute.toString());
                         }
                     }
 
@@ -346,10 +346,10 @@ public ArrayList buildLayout(boolean save){
                         TreeNode attribute = leaf.getChildAt(a);
 
                         if (leaf.toString().equalsIgnoreCase("x")){
-                            x = DV.parseFloat(attribute.toString());
+                            x = (float)DV.parseDouble(attribute.toString());
                         }
                         if (leaf.toString().equalsIgnoreCase("y")){
-                            y = DV.parseFloat(attribute.toString());
+                            y = (float)DV.parseDouble(attribute.toString());
                         }
                     }
 
@@ -410,7 +410,7 @@ public ArrayList buildLayout(boolean save){
                                         if (leaf.toString().trim().length() < 1 || leaf.toString()==null){
                                             column.setWidth(10);
                                         }else {
-                                            column.setWidth(DV.parseFloat(leaf.toString()));
+                                            column.setWidth((float)DV.parseDouble(leaf.toString()));
 
                                         }
 
@@ -440,7 +440,7 @@ public ArrayList buildLayout(boolean save){
                                         if (leaf.toString().trim().length() < 1 || leaf.toString()==null){
                                             column.setArc_width(0);
                                         }else {
-                                            column.setArc_width(DV.parseFloat(leaf.toString()));
+                                            column.setArc_width((float)DV.parseDouble(leaf.toString()));
 
                                         }
 
@@ -455,7 +455,7 @@ public ArrayList buildLayout(boolean save){
                                         if (leaf.toString().trim().length() < 1 || leaf.toString()==null){
                                             column.setArc_height(0);
                                         }else {
-                                            column.setArc_height(DV.parseFloat(leaf.toString()));
+                                            column.setArc_height((float)DV.parseDouble(leaf.toString()));
 
                                         }
 
@@ -550,7 +550,7 @@ public ArrayList buildLayout(boolean save){
                                 if (leaf.toString().trim().length() < 1 || leaf.toString()==null){
                                     de.getTable().setRow_height(20);
                                 }else {
-                                    de.getTable().setRow_height(DV.parseFloat(leaf.toString()));
+                                    de.getTable().setRow_height((float)DV.parseDouble(leaf.toString()));
                                 }
                             }//end width col element child loop (Should be single iteration)
 
@@ -584,7 +584,7 @@ public ArrayList buildLayout(boolean save){
                         TreeNode attribute = leaf.getChildAt(a);
 
                         if (leaf.toString().equalsIgnoreCase("border")){
-                            border = DV.parseFloat(attribute.toString());
+                            border = (float)DV.parseDouble(attribute.toString());
                         }
                         if (leaf.toString().equalsIgnoreCase("fg_color")){
 
@@ -659,10 +659,10 @@ public ArrayList buildLayout(boolean save){
                                 }else t = attribute.toString();
                             }
                             if (leaf.toString().equalsIgnoreCase("x")){
-                                text_position[0] = DV.parseFloat(attribute.toString());
+                                text_position[0] = (float)(float)DV.parseDouble(attribute.toString());
                             }
                             if (leaf.toString().equalsIgnoreCase("y")){
-                                text_position[1] = DV.parseFloat(attribute.toString());
+                                text_position[1] = (float)(float)DV.parseDouble(attribute.toString());
                             }
 
                         }

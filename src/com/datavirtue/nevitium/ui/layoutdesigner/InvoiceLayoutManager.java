@@ -805,13 +805,13 @@ private DefaultMutableTreeNode addNewDocumentElement(){
                         TreeNode pos = prop.getChildAt(p);
                         if (pos.toString().equalsIgnoreCase("x")){
                             TreeNode x = pos.getChildAt(0);
-                            pos_x = DV.parseFloat(x.toString());
+                            pos_x = (float)(float)DV.parseDouble(x.toString());
                             //System.out.println("pos_x: "+pos_x);
 
                         }
                         if (pos.toString().equalsIgnoreCase("y")){
                             TreeNode y = pos.getChildAt(0);
-                            pos_y = DV.parseFloat(y.toString());
+                            pos_y = (float)DV.parseDouble(y.toString());
                             //System.out.println("pos_y: "+pos_y);
                         }
                     }
@@ -826,13 +826,13 @@ private DefaultMutableTreeNode addNewDocumentElement(){
                         TreeNode size = prop.getChildAt(p);
                         if (size.toString().equalsIgnoreCase("x")){
                             TreeNode x = size.getChildAt(0);
-                            size_x = DV.parseFloat(x.toString());
+                            size_x = (float)DV.parseDouble(x.toString());
                                 //System.out.println("size_x: "+size_x);
 
                         }
                         if (size.toString().equalsIgnoreCase("y")){
                             TreeNode y = size.getChildAt(0);
-                            size_y = DV.parseFloat(y.toString());
+                            size_y = (float)DV.parseDouble(y.toString());
                             //System.out.println("size_y: "+size_y);
                         }
                     }

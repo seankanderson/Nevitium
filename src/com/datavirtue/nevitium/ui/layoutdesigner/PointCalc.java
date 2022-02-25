@@ -119,10 +119,10 @@ public class PointCalc extends javax.swing.JDialog {
 
     private void calculate(){
         if (metricBox.isSelected()){
-            float points = (2.83464567f * DV.parseFloat(measurementField.getText()));
+            float points = (2.83464567f * (float)DV.parseDouble(measurementField.getText()));
             pointsLabel.setText(CurrencyUtil.money(points));
         }else {
-            float points = (72 * DV.parseFloat(measurementField.getText()));
+            float points = (72 * (float)DV.parseDouble(measurementField.getText()));
             pointsLabel.setText(CurrencyUtil.money(points));
         }
         measurementField.requestFocus();

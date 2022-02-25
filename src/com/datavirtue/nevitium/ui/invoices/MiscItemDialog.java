@@ -180,7 +180,6 @@ public class MiscItemDialog extends javax.swing.JDialog {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
 
-        descField.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         descField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 descFieldFocusGained(evt);
@@ -218,7 +217,6 @@ public class MiscItemDialog extends javax.swing.JDialog {
             }
         });
 
-        unitField.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         unitField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         unitField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
@@ -226,7 +224,6 @@ public class MiscItemDialog extends javax.swing.JDialog {
             }
         });
 
-        costField.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         costField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         costField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
@@ -293,7 +290,7 @@ public class MiscItemDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(itemNote)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -420,6 +417,10 @@ public class MiscItemDialog extends javax.swing.JDialog {
         currentItem.setDate(new Date());
         currentItem.setCost(costf);
         currentItem.setUnitPrice(unit);
+        currentItem.setTaxable1(tax1Box.isSelected());
+        currentItem.setTaxable2(tax2Box.isSelected());
+        currentItem.setTaxable1Rate(appSettings.getInvoice().getTax1Rate());
+        currentItem.setTaxable2Rate(appSettings.getInvoice().getTax2Rate());
         currentItem.setDescription(description);
 
         itemLongNote = longNoteBox.getText();

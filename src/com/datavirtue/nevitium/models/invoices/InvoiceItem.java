@@ -23,8 +23,8 @@ public class InvoiceItem extends BaseModel {
     @DatabaseField
     private UUID sourceInventoryId;
     
-    @DatabaseField
-    private UUID relatedInvoiceItem;
+    @DatabaseField(foreign=true,foreignAutoRefresh=true)
+    private InvoiceItem relatedInvoiceItem;
     
     @DatabaseField
     private Date date = new Date();    
@@ -50,6 +50,23 @@ public class InvoiceItem extends BaseModel {
     private double taxable2Rate;
     @DatabaseField
     private double cost;
+    @DatabaseField
+    private boolean discount;
     
     
+    public double getItemSubtotal() {
+        return this.quantity * this.unitPrice;
+    }
+    
+    public double getItemTax1Total() {
+        return taxable1 ? getItemSubtotal() * taxable1Rate : 0.00;
+    }
+    
+    public double getItemTax2Total() {
+        return taxable2 ? getItemSubtotal() * taxable2Rate : 0.00;
+    }
+    
+    public double getItemGrandTotal() {
+        return getItemSubtotal() + getItemTax1Total() + getItemTax2Total();
+    }
 }

@@ -56,6 +56,7 @@ import com.formdev.flatlaf.util.StringUtils;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
+import java.util.stream.Collectors;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 
@@ -633,7 +634,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         }
 
         var miscItem = miscItemDialog.getItem();
-        miscItem.setQuantity(DV.parseFloat(qtyTextField.getText()));
+        miscItem.setQuantity(DV.parseDouble(qtyTextField.getText()));
         miscItem.setTaxable1Rate(appSettings.getInvoice().getTax1Rate());
         miscItem.setTaxable2Rate(appSettings.getInvoice().getTax2Rate());
         if (miscItem != null) {
@@ -641,7 +642,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         }
 
         miscItemDialog.dispose();
-
+        computePrices();
         upcField.requestFocus();
     }
 
@@ -780,7 +781,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private void addItem(Inventory inventory) throws SQLException {
 
-        double quantity = DV.parseFloat(qtyTextField.getText());
+        double quantity = DV.parseDouble(qtyTextField.getText());
 
         if (!inventory.getCode().trim().equals("MISC") && !inventory.getCode().trim().equals("DISC")) {
             if (!canInventoryBeSold(inventory, quantity, true)) {
@@ -2178,20 +2179,59 @@ public class InvoiceApp extends javax.swing.JDialog {
             return;
         }
         int[] selectedRows = invoiceItemsTable.getSelectedRows();
-        int numberDeleted = 0;
 
         if (selectedRows == null || selectedRows.length == 0) {
             return;
         }
 
         var tableModel = (InvoiceItemsTableModel) invoiceItemsTable.getModel();
-        var items = tableModel.getCollection();
+        var invoiceItems = tableModel.getCollection();
+
+        var selectedItems = new ArrayList<InvoiceItem>();
+
         for (int index = 0; index < selectedRows.length; index++) {
-            items.remove(selectedRows[(index - numberDeleted)]);
-            numberDeleted++;
+            var item = invoiceItems.get(selectedRows[index]);
+            selectedItems.add(item);
         }
+
+        for (var item : selectedItems) {
+            invoiceItems.remove(item);
+            
+            if (invoiceItems.size() > 0) {
+                var relatedDiscounts = invoiceItems
+                        .stream()
+                        .filter(x -> x.getRelatedInvoiceItem().equals(item.getId()))
+                        .collect(Collectors.toList());
+                if (relatedDiscounts.size() > 0) {
+                    for (var relatedDiscount : relatedDiscounts) {
+                        invoiceItems.remove(relatedDiscount);
+                    }
+                }
+            }
+
+        }
+
         computePrices();
         upcField.requestFocus();
+
+    }
+
+    private void getDiscount() {
+        var selectedRow = invoiceItemsTable.getSelectedRow();
+
+        if (selectedRow < 0) {
+            return; //TODO: give feedback about selecting items?
+        }
+
+        var tableModel = (InvoiceItemsTableModel) this.invoiceItemsTable.getModel();
+        var item = tableModel.getValueAt(selectedRow);
+
+        var discountDialog = new DiscountDialog(this.parentWin, true, item);
+        discountDialog.display();
+
+        var discountItem = discountDialog.getDiscountItem();
+
+        this.addItemToInvoiceItemsTable(discountItem);
 
     }
 
@@ -2414,9 +2454,9 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     private void upcFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_upcFieldKeyReleased
         if (upcField.getText().equals("+")) {
             String num = qtyTextField.getText();
-            float q = DV.parseFloat(num);
-            q++;
-            qtyTextField.setText(CurrencyUtil.money(q));
+            double qty = DV.parseDouble(num);
+            qty++;
+            qtyTextField.setText(CurrencyUtil.money(qty));
             upcField.setText("");
             upcField.requestFocus();
 
@@ -2424,11 +2464,11 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
 
         if (upcField.getText().equals("-")) {
             String num = qtyTextField.getText();
-            float q = DV.parseFloat(num);
-            if (q > 1) {
-                q--;
+            double qty = DV.parseDouble(num);
+            if (qty > 1) {
+                qty--;
             }
-            qtyTextField.setText(CurrencyUtil.money(q));
+            qtyTextField.setText(CurrencyUtil.money(qty));
             upcField.setText("");
             upcField.requestFocus();
         }
@@ -2440,11 +2480,13 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     }//GEN-LAST:event_upcComboActionPerformed
 
     private void discountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_discountButtonActionPerformed
-        //cycle thru selected items and total prices
+
+        this.getDiscount();
+
+//cycle thru selected items and total prices
         //if one do something with the desc in the discdialog?
         //erect discdialog
         //resume from dialog and apply new item
-
 //        if (invoiceItemsTable.getSelectedRows() == null || invoiceItemsTable.getSelectedRow() < 0) {
 //
 //            //display a warning dialog, JIDE???

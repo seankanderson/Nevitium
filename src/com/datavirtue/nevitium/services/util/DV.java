@@ -641,10 +641,12 @@ public class DV	{
 
     }
     /* get rid of negative signs from zero values */
-    public static double flattenZero(double v){
-        v = (float)(Math.round(v*100.00f)/100.00f);
-        if (v == -0.00f) return Math.abs(v);
-        return v;
+    public static double flattenZero(double value){
+        value = (Math.round(value * 100.00)/100.00);
+        if (value == -0.00f) {
+            return Math.abs(value);
+        }
+        return value;
     }
 
     public static String deFormat(String flt){
@@ -688,11 +690,13 @@ public class DV	{
         
         return Float.parseFloat( formatter.format(money) );                
     }
-      /* Safe Float String parsing */
-    public static float parseFloat(String n) {
-        float result = 0.0f;
+    
+    
+    /* Safe Float String parsing */
+    public static double parseDouble(String n) {
+        double result = 0.0f;
         try {
-            result = Float.parseFloat(n);
+            result = Double.parseDouble(n);
         }catch(Exception e){
            return 0.0f;
         }

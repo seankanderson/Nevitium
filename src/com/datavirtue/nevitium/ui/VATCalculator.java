@@ -132,7 +132,7 @@ private double tax_rate = .15d;
 
     private void entryFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_entryFieldKeyReleased
 
-        double entry = DV.parseFloat(entryField.getText());
+        double entry = DV.parseDouble(entryField.getText());
         double base = (entry * (100/(100+(tax_rate*100)) ) );
         double with = (entry + (entry * tax_rate));
 
