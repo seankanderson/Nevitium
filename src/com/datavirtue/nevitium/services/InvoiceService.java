@@ -112,7 +112,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         double itemTotal = 0;
         for (var item : invoice.getItems()) {
 
-            itemTotal += InvoiceItemService.getItemSubTotal(item);
+            itemTotal += item.getItemSubtotal();
 
         }
         return CurrencyUtil.round(itemTotal);

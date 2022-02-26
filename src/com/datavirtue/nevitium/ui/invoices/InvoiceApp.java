@@ -609,16 +609,17 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         double totalTax1 = 0.00f;
         double totalTax2 = 0.00f;
-        double grandTotal = 0.00f;
-
+       
         totalTax1 = invoiceService.getTax1Total(currentInvoice);
         totalTax2 = invoiceService.getTax2Total(currentInvoice);
         t1Field.setText(CurrencyUtil.money(totalTax1));
         t2Field.setText(CurrencyUtil.money(totalTax2));
 
-        itemTotalField.setText(CurrencyUtil.money(invoiceService.getSubtotal(currentInvoice)));
+        var subTotal = invoiceService.getSubtotal(currentInvoice);
+        
+        itemTotalField.setText(CurrencyUtil.money(subTotal));
 
-        grandTotal = invoiceService.getSubtotal(currentInvoice) + totalTax1 + totalTax2;
+        var grandTotal = subTotal + totalTax1 + totalTax2;
         grandTotalField.setText(CurrencyUtil.money(grandTotal));
     }
 
@@ -2232,6 +2233,8 @@ public class InvoiceApp extends javax.swing.JDialog {
         var discountItem = discountDialog.getDiscountItem();
 
         this.addItemToInvoiceItemsTable(discountItem);
+        
+        computePrices();
 
     }
 
