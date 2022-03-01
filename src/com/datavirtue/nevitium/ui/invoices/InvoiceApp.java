@@ -606,21 +606,21 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private void computePrices() {
+ 
+        //double totalTax1 = 0.00f;
+       // double totalTax2 = 0.00f;
+        var totals = InvoiceService.calculateInvoiceTotals(currentInvoice);
+        //totalTax1 = invoiceService.getTax1Total(currentInvoice);
+        //totalTax2 = invoiceService.getTax2Total(currentInvoice);
+        t1Field.setText(CurrencyUtil.money(totals.getTax1()));
+        t2Field.setText(CurrencyUtil.money(totals.getTax2()));
 
-        double totalTax1 = 0.00f;
-        double totalTax2 = 0.00f;
-       
-        totalTax1 = invoiceService.getTax1Total(currentInvoice);
-        totalTax2 = invoiceService.getTax2Total(currentInvoice);
-        t1Field.setText(CurrencyUtil.money(totalTax1));
-        t2Field.setText(CurrencyUtil.money(totalTax2));
-
-        var subTotal = invoiceService.getSubtotal(currentInvoice);
+        //var subTotal = invoiceService.getSubtotal(currentInvoice);
         
-        itemTotalField.setText(CurrencyUtil.money(subTotal));
+        itemTotalField.setText(CurrencyUtil.money(totals.getItems()));
 
-        var grandTotal = subTotal + totalTax1 + totalTax2;
-        grandTotalField.setText(CurrencyUtil.money(grandTotal));
+        //var grandTotal = subTotal + totalTax1 + totalTax2;
+        grandTotalField.setText(CurrencyUtil.money(totals.getGrand()));
     }
 
     private void miscAction() {
@@ -713,6 +713,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private int addItemToInvoiceItemsTable(InvoiceItem newItem) {
+        newItem.setInvoice(currentInvoice);
         var items = (List<InvoiceItem>) this.currentInvoice.getItems();
 
         // update existing item instead of appending if there are existing items
@@ -2201,7 +2202,7 @@ public class InvoiceApp extends javax.swing.JDialog {
             if (invoiceItems.size() > 0) {
                 var relatedDiscounts = invoiceItems
                         .stream()
-                        .filter(x -> x.getRelatedInvoiceItem().equals(item.getId()))
+                        .filter(x -> x.getRelatedInvoiceItem() != null && x.getRelatedInvoiceItem().equals(item.getId()))
                         .collect(Collectors.toList());
                 if (relatedDiscounts.size() > 0) {
                     for (var relatedDiscount : relatedDiscounts) {

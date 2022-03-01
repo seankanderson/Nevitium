@@ -56,8 +56,7 @@ public class InvoiceManagerTableModel extends AbstractCollectionTableModel<Invoi
             case 2:
                 return item.getCustomer();
             case 3:
-                return InvoiceService.calculateGrandTotal(item);
-
+                return InvoiceService.calculateInvoiceTotals(item).getGrand();
         }
         return null;
 

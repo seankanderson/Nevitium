@@ -124,7 +124,7 @@ public class TestDataService {
         var contactAddress = new ContactAddress();
         contactAddress.setAttention("Sean Anderson");
         contactAddress.setCompany("Nucleus Mobile");
-        contactAddress.setAddress1("5244 LEninger Haiugh Rd");
+        contactAddress.setAddress1("5244 Leninger Haigh Rd");
         contactAddress.setContact(contact);
         contactAddress.setCity("Hillsboro");
         contactAddress.setState("OH");
@@ -136,6 +136,7 @@ public class TestDataService {
         inventory.setQuantity(10.00);
         inventory.setCost(7.69);
         inventory.setPrice(14.99);
+        inventory.setTax1(true);
         inventory.setCategory("DVD - SciFi");
         inventoryService.save(inventory);
 
@@ -159,6 +160,7 @@ public class TestDataService {
         inventory.setQuantity(10.00);
         inventory.setCost(8.69);
         inventory.setPrice(17.99);
+        inventory.setTax1(true);
         inventory.setCategory("DVD - SciFi");
         inventoryService.save(inventory);
 
@@ -168,6 +170,7 @@ public class TestDataService {
         inventory.setQuantity(10.00);
         inventory.setCost(58.76);
         inventory.setPrice(199.99);
+        inventory.setTax1(true);
         inventory.setCategory("USB - GAMING");
         inventoryService.save(inventory);
 

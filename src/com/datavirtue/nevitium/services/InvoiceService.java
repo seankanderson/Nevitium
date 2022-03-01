@@ -8,6 +8,7 @@ import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.models.invoices.InvoiceItem;
 import com.datavirtue.nevitium.models.invoices.InvoiceItemReturn;
 import com.datavirtue.nevitium.models.invoices.InvoicePayment;
+import com.datavirtue.nevitium.models.invoices.InvoiceTotals;
 import com.datavirtue.nevitium.services.exceptions.InvoiceItemAlreadyReturnedException;
 import com.datavirtue.nevitium.services.exceptions.InvoiceVoidedException;
 import com.datavirtue.nevitium.services.util.CurrencyUtil;
@@ -22,6 +23,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -81,51 +83,64 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         var dateString = dateFormat.format(now);
         return prefix + dateString.substring(2, dateString.length() - 2);
     }
-
+    
+        
     // https://www.calculator.net/sales-tax-calculator.html?beforetax=199.99&taxrate=7.0&finalprice=&x=51&y=20
-    public static double getTax1Total(Invoice invoice) {
+    
+    public static double getDiscountTotalForItem(InvoiceItem item) {
+            var allItems = item.getInvoice().getItems();
+            var discountItems = allItems
+                    .stream()
+                    .filter(x -> x.isDiscount() && x.getRelatedInvoiceItem() == item)
+                    .collect(Collectors.toList());
+            var itemDiscount = discountItems.stream().mapToDouble(x -> x.getUnitPrice()).sum();
+            return itemDiscount;
+    }
+    
+    public static InvoiceTotals calculateInvoiceTotals(Invoice invoice) {
+        var totals = new InvoiceTotals();
+        
         if (invoice.getItems() == null) {
-            return 0.00;
+            return totals;
         }
-        double taxTotal = 0;
+        
+        double itemsTotal = 0;
+        double tax1Total = 0;
+        double tax2Total = 0;
+        
+        /*
+            Calculates all totals for the invoice.
+            Subtracts item discounts from base price before calculating taxes.
+        */
         for (var item : invoice.getItems()) {
-            taxTotal += InvoiceItemService.getItemTax1Total(item);
+            if (item.isDiscount()) {
+                continue;
+            }
+            var itemTotal = item.getItemSubtotal();
+            
+            itemTotal += getDiscountTotalForItem(item);
+            
+            itemsTotal += itemTotal;
+            
+            if (item.isTaxable1()) {
+                tax1Total += itemTotal * item.getTaxable1Rate();
+            }   
+            
+            if (item.isTaxable2()) {
+                tax2Total += itemTotal * item.getTaxable2Rate();
+            }
+
         }
-        return CurrencyUtil.round(taxTotal);
+        
+        totals.setItems(CurrencyUtil.round(itemsTotal));
+        totals.setTax1(CurrencyUtil.round(tax1Total));
+        totals.setTax2(CurrencyUtil.round(tax2Total));
+        var grandTotal = totals.getItems() + totals.getTax1() + totals.getTax2();
+        totals.setGrand(CurrencyUtil.round(grandTotal));
+        
+        return totals;
     }
-
-    public static double getTax2Total(Invoice invoice) {
-        if (invoice.getItems() == null) {
-            return 0.00;
-        }
-        double taxTotal = 0;
-        for (var item : invoice.getItems()) {
-            taxTotal += InvoiceItemService.getItemTax2Total(item);            
-        }
-        return CurrencyUtil.round(taxTotal);
-    }
-
-    public static double getSubtotal(Invoice invoice) {
-        if (invoice.getItems() == null) {
-            return 0.00;
-        }
-        double itemTotal = 0;
-        for (var item : invoice.getItems()) {
-
-            itemTotal += item.getItemSubtotal();
-
-        }
-        return CurrencyUtil.round(itemTotal);
-    }
-
-    public static double calculateGrandTotal(Invoice invoice) {
-        var subtotal = getSubtotal(invoice);
-        //TODO:  remove discounts before calculating taxes!!
-        var tax1 = getTax1Total(invoice);
-        var tax2 = getTax2Total(invoice);
-        return CurrencyUtil.round(subtotal + tax1 + tax2);
-    }
-
+  
     public double calculateTotalCredits(Invoice invoice) throws SQLException {
         var payments = invoicePaymentService.getAllCreditsForInvoice(invoice);
         var credits = payments.stream().mapToDouble(x -> x.getCredit()).sum();
@@ -139,10 +154,10 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     }
 
     public double calculateInvoiceAmountDue(Invoice invoice) throws SQLException {
-        var total = calculateGrandTotal(invoice);
+        var totals = calculateInvoiceTotals(invoice);
         var debits = calculateTotalDebits(invoice);
         var credits = calculateTotalCredits(invoice);
-        return CurrencyUtil.round((total + debits) - credits);
+        return CurrencyUtil.round((totals.getGrand() + debits) - credits);
     }
 
     public double calculateNumberSold(InvoiceItem item) {

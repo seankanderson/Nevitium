@@ -275,8 +275,13 @@ public class DiscountDialog extends javax.swing.JDialog {
         discountItem.setUnitPrice(unit);
         discountItem.setCost(cost);
         
+        
+        // apply discount mapped to item always, interject 
+        
+        
         if (this.discountStrategyCheckbox.isSelected() && this.itemToDiscount != null) {
             discountItem.setRelatedInvoiceItem(this.itemToDiscount);
+            
         }
                 
         //this.normalizeItemList(discDescField.getText());
