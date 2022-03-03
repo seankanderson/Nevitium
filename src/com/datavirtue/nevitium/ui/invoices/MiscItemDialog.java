@@ -398,12 +398,12 @@ public class MiscItemDialog extends javax.swing.JDialog {
         String price = unitField.getText().trim();
         String cost = costField.getText().trim();
 
-        if (DV.validFloatString(price)); else {
+        if (!DV.validFloatString(price)) {
             JOptionPane.showMessageDialog(this, "Please enter a valid Unit Price: '0.00' numbers and decimal only.", price, JOptionPane.OK_OPTION);
             return;
         }
 
-        if (DV.validFloatString(cost)); else {
+        if (!DV.validFloatString(cost)) {
             JOptionPane.showMessageDialog(this, "Please enter a valid Cost Price: '0.00' numbers and decimal only.", cost, JOptionPane.OK_OPTION);
             return;
         }

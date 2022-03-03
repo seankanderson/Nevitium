@@ -103,40 +103,44 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         if (invoice.getItems() == null) {
             return totals;
         }
-        
-        double itemsTotal = 0;
-        double tax1Total = 0;
-        double tax2Total = 0;
-        
-        /*
-            Calculates all totals for the invoice.
-            Subtracts item discounts from base price before calculating taxes.
-        */
+      
         for (var item : invoice.getItems()) {
             if (item.isDiscount()) {
                 continue;
             }
+            
+            // full invoice discount for negative misc (non-inventory) item
+            if (item.getSourceInventoryId() == null && item.getUnitPrice() < 0) {
+                totals.pretaxDiscounts += item.getUnitPrice(); 
+                continue;
+            }
+            
             var itemTotal = item.getItemSubtotal();
-            
-            itemTotal += getDiscountTotalForItem(item);
-            
-            itemsTotal += itemTotal;
-            
+                        
+            totals.pretaxDiscounts += getDiscountTotalForItem(item);
+            totals.subTotal += itemTotal;
+                        
             if (item.isTaxable1()) {
-                tax1Total += itemTotal * item.getTaxable1Rate();
-            }   
+                totals.taxable1Subtotal += itemTotal; 
+                totals.taxableRate1 = item.getTaxable1Rate();
+            }
             
             if (item.isTaxable2()) {
-                tax2Total += itemTotal * item.getTaxable2Rate();
+                totals.taxable2Subtotal += itemTotal;   
+                totals.taxableRate2 = item.getTaxable2Rate();
             }
 
-        }
-        
-        totals.setItems(CurrencyUtil.round(itemsTotal));
-        totals.setTax1(CurrencyUtil.round(tax1Total));
-        totals.setTax2(CurrencyUtil.round(tax2Total));
-        var grandTotal = totals.getItems() + totals.getTax1() + totals.getTax2();
-        totals.setGrand(CurrencyUtil.round(grandTotal));
+        }        
+        totals.taxable1Subtotal += totals.pretaxDiscounts;
+        totals.taxable2Subtotal += totals.pretaxDiscounts;        
+        totals.taxable1Subtotal = totals.taxable1Subtotal < 0 ? 0.00 : totals.taxable1Subtotal;
+        totals.taxable2Subtotal = totals.taxable2Subtotal < 0 ? 0.00 : totals.taxable2Subtotal;        
+        totals.subTotal = CurrencyUtil.round(totals.subTotal);
+        totals.pretaxDiscounts = CurrencyUtil.round(totals.pretaxDiscounts);
+        totals.taxable1Subtotal = CurrencyUtil.round(totals.taxable1Subtotal);
+        totals.taxable2Subtotal = CurrencyUtil.round(totals.taxable2Subtotal);
+        totals.tax1Total = CurrencyUtil.round(totals.taxable1Subtotal * totals.taxableRate1);
+        totals.tax2Total = CurrencyUtil.round(totals.taxable2Subtotal * totals.taxableRate2);  
         
         return totals;
     }
@@ -157,7 +161,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         var totals = calculateInvoiceTotals(invoice);
         var debits = calculateTotalDebits(invoice);
         var credits = calculateTotalCredits(invoice);
-        return CurrencyUtil.round((totals.getGrand() + debits) - credits);
+        return CurrencyUtil.round((totals.getGrandTotal() + debits) - credits);
     }
 
     public double calculateNumberSold(InvoiceItem item) {

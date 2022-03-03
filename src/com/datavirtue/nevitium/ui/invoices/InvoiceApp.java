@@ -607,20 +607,15 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private void computePrices() {
  
-        //double totalTax1 = 0.00f;
-       // double totalTax2 = 0.00f;
         var totals = InvoiceService.calculateInvoiceTotals(currentInvoice);
-        //totalTax1 = invoiceService.getTax1Total(currentInvoice);
-        //totalTax2 = invoiceService.getTax2Total(currentInvoice);
-        t1Field.setText(CurrencyUtil.money(totals.getTax1()));
-        t2Field.setText(CurrencyUtil.money(totals.getTax2()));
+        t1Field.setText(CurrencyUtil.money(totals.getTax1Total()));
+        t2Field.setText(CurrencyUtil.money(totals.getTax2Total()));
 
-        //var subTotal = invoiceService.getSubtotal(currentInvoice);
-        
-        itemTotalField.setText(CurrencyUtil.money(totals.getItems()));
+        itemTotalField.setText(CurrencyUtil.money(totals.getSubTotal()));
 
-        //var grandTotal = subTotal + totalTax1 + totalTax2;
-        grandTotalField.setText(CurrencyUtil.money(totals.getGrand()));
+        this.discountTextField.setText(CurrencyUtil.money(totals.getPretaxDiscounts()));
+        this.taxableTotalField.setText(CurrencyUtil.money(totals.taxable1Subtotal));
+        grandTotalField.setText(CurrencyUtil.money(totals.getGrandTotal()));
     }
 
     private void miscAction() {
@@ -849,6 +844,10 @@ public class InvoiceApp extends javax.swing.JDialog {
         jToolBar3 = new javax.swing.JToolBar();
         receiptCheckBox = new javax.swing.JCheckBox();
         paymentCheckBox = new javax.swing.JCheckBox();
+        discountTextField = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        taxableTotalField = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
         jPanel7 = new javax.swing.JPanel();
         t1Field = new javax.swing.JTextField();
         t2Field = new javax.swing.JTextField();
@@ -1248,6 +1247,16 @@ public class InvoiceApp extends javax.swing.JDialog {
         paymentCheckBox.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jToolBar3.add(paymentCheckBox);
 
+        discountTextField.setEditable(false);
+
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel2.setText("Discounts");
+
+        taxableTotalField.setEditable(false);
+
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel3.setText("Taxable");
+
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1255,16 +1264,23 @@ public class InvoiceApp extends javax.swing.JDialog {
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel5Layout.createSequentialGroup()
+                    .add(jPanel5Layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jToolBar3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    .add(jPanel5Layout.createSequentialGroup()
                         .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, taxableTotalField)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, discountTextField)
                             .add(grandTotalField)
-                            .add(itemTotalField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jToolBar3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(itemTotalField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
@@ -1278,11 +1294,19 @@ public class InvoiceApp extends javax.swing.JDialog {
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(itemTotalField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel6))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(discountTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel2))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(taxableTotalField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel3))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(grandTotalField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel7))
-                .addContainerGap(65, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         jPanel7.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -2693,6 +2717,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     private com.michaelbaranov.microba.calendar.DatePicker datePicker1;
     private com.michaelbaranov.microba.calendar.DatePicker datePicker2;
     private javax.swing.JButton discountButton;
+    private javax.swing.JTextField discountTextField;
     private javax.swing.JTextField documentNumberField;
     private javax.swing.JTextField grandTotalField;
     private javax.swing.JButton historyButton;
@@ -2700,6 +2725,8 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     private javax.swing.JCheckBox invoiceNumberEditCheckBox;
     private javax.swing.JTextField itemTotalField;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
@@ -2738,6 +2765,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
     private javax.swing.JLabel t1Label;
     private javax.swing.JTextField t2Field;
     private javax.swing.JLabel t2Label;
+    private javax.swing.JTextField taxableTotalField;
     private javax.swing.JToolBar toolBar;
     private javax.swing.JComboBox upcCombo;
     private javax.swing.JTextField upcField;
