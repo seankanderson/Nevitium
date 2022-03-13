@@ -17,13 +17,13 @@ import com.google.inject.Inject;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.misc.TransactionManager;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -89,10 +89,29 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     
     public static double getDiscountTotalForItem(InvoiceItem item) {
             var allItems = item.getInvoice().getItems();
-            var discountItems = allItems
-                    .stream()
-                    .filter(x -> x.isDiscount() && x.getRelatedInvoiceItem() == item)
-                    .collect(Collectors.toList());
+            
+//            var discountItems = allItems
+//                    .stream()
+//                    .filter(x -> x.isDiscount() && x.getRelatedInvoiceItem() == item)
+//                    .collect(Collectors.toList());
+            var discountItems = new ArrayList<InvoiceItem>();
+            
+            for(var invoiceItem : allItems) { // for some reason I failed at implementing this logic in the lambda expression, most likely due to an order of operations issue
+                if (invoiceItem.isDiscount()) {
+                    if (invoiceItem.getRelatedInvoiceItem() != null){
+                        if (invoiceItem.getRelatedInvoiceItem().getId() == null) {
+                            if (invoiceItem.getRelatedInvoiceItem() == item) {
+                                discountItems.add(invoiceItem);
+                            }
+                        } else {
+                            if (invoiceItem.getRelatedInvoiceItem().getId().equals(item.getId())) {
+                                discountItems.add(invoiceItem);
+                            }
+                        }
+                    }
+                }
+            }
+            
             var itemDiscount = discountItems.stream().mapToDouble(x -> x.getUnitPrice()).sum();
             return itemDiscount;
     }

@@ -132,6 +132,7 @@ public class TestDataService {
 
         var inventory = new Inventory();
         inventory.setDescription("Battlestar Galactica: Miniseries");
+        inventory.setAvailable(true);
         inventory.setCode("025192792823");
         inventory.setQuantity(10.00);
         inventory.setCost(7.69);
@@ -143,6 +144,7 @@ public class TestDataService {
         var invoice = new Invoice();
         var billTo = Tools.formatAddress(contact);
         invoice.setCustomer(Tools.arrayToString(billTo));
+        invoice.setShiptToAddress(Tools.arrayToString(billTo));
         var items = new ArrayList();
         var item = invoiceItemService.mapInventoryToInvoiceItem(2, invoice, inventory);
         item.setTaxable1(true);
@@ -157,6 +159,7 @@ public class TestDataService {
         inventory = new Inventory();
         inventory.setDescription("Star Wars");
         inventory.setCode("045892797824");
+        inventory.setAvailable(true);
         inventory.setQuantity(10.00);
         inventory.setCost(8.69);
         inventory.setPrice(17.99);
@@ -167,6 +170,7 @@ public class TestDataService {
         inventory = new Inventory();
         inventory.setDescription("Gaming Keyboard");
         inventory.setCode("015692731899");
+        inventory.setAvailable(true);
         inventory.setQuantity(10.00);
         inventory.setCost(58.76);
         inventory.setPrice(199.99);
@@ -177,6 +181,7 @@ public class TestDataService {
         invoice = new Invoice();
         billTo = Tools.formatAddress(contact);
         invoice.setCustomer(Tools.arrayToString(billTo));
+        invoice.setShiptToAddress(Tools.arrayToString(billTo));
         items = new ArrayList();
         item = invoiceItemService.mapInventoryToInvoiceItem(1, invoice, inventory);
         item.setTaxable1(true);

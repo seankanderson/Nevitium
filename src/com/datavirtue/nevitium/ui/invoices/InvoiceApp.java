@@ -53,12 +53,30 @@ import com.datavirtue.nevitium.services.util.LinePrinter;
 import com.datavirtue.nevitium.ui.EnhancedTableCellRenderer;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 import com.formdev.flatlaf.util.StringUtils;
+import com.itextpdf.html2pdf.HtmlConverter;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.stream.Collectors;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import freemarker.template.*;
+import java.awt.Desktop;
+import java.io.CharArrayWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -606,7 +624,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     }
 
     private void computePrices() {
- 
+
         var totals = InvoiceService.calculateInvoiceTotals(currentInvoice);
         t1Field.setText(CurrencyUtil.money(totals.getTax1Total()));
         t2Field.setText(CurrencyUtil.money(totals.getTax2Total()));
@@ -1955,6 +1973,7 @@ public class InvoiceApp extends javax.swing.JDialog {
     }//GEN-LAST:event_upcFieldKeyPressed
 
     private void post() {
+        this.viewToModel();
         if (invoiceItemsTable.getRowCount() < 1) {
             return;
         }
@@ -1966,7 +1985,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         var tableModel = (InvoiceItemsTableModel) this.invoiceItemsTable.getModel();
 
         if (tableModel.getRowCount() < 1) {
-            return;
+            return; //TODO notify user 
         }
 
         if (custTextArea.getText().trim().equals("") || custTextArea.getText().trim().length() < 4) {
@@ -2044,9 +2063,33 @@ public class InvoiceApp extends javax.swing.JDialog {
 
     private void printButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printButtonActionPerformed
 
-        if (invoiceItemsTable.getRowCount() > 0) {
-            return;
+        try {
+
+            var html = createHtml();
+            System.out.print(html);
+            
+            
+            // write and open HTML file
+            Path htmlTempFile = Files.createTempFile(this.currentInvoice.getInvoiceNumber() + "__", ".html");
+            FileWriter fileWriter = new FileWriter(htmlTempFile.toFile());
+            PrintWriter printWriter = new PrintWriter(fileWriter);
+            printWriter.print(html);
+            printWriter.close();
+            Desktop.getDesktop().browse(htmlTempFile.toUri());
+            
+            // write and open PDF file
+            Path pdfTempFile = Files.createTempFile(this.currentInvoice.getInvoiceNumber() + "__", ".pdf");
+            HtmlConverter.convertToPdf(html, new FileOutputStream(pdfTempFile.toFile()));
+            Desktop.getDesktop().browse(pdfTempFile.toUri());
+
+        } catch (URISyntaxException ex) {
+            Logger.getLogger(InvoiceApp.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(InvoiceApp.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (TemplateException ex) {
+            Logger.getLogger(InvoiceApp.class.getName()).log(Level.SEVERE, null, ex);
         }
+
 
     }//GEN-LAST:event_printButtonActionPerformed
 
@@ -2158,7 +2201,61 @@ public class InvoiceApp extends javax.swing.JDialog {
         return true;
     }
 
+    private String createHtml() throws URISyntaxException, IOException, TemplateException {
+
+        this.viewToModel();
+        var totals = InvoiceService.calculateInvoiceTotals(currentInvoice);
+        
+        /* Create and adjust the configuration singleton */
+        Configuration cfg = new Configuration(Configuration.VERSION_2_3_29);
+        cfg.setDirectoryForTemplateLoading(new File(getClass().getResource("/businessmanager/res/html").toURI()));
+
+        // Recommended settings for new projects:
+        cfg.setDefaultEncoding("UTF-8");
+        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+        cfg.setLogTemplateExceptions(false);
+        cfg.setWrapUncheckedExceptions(true);
+        cfg.setFallbackOnNullLoopVariable(false);
+
+        /* ------------------------------------------------------------------------ */
+        /* You usually do these for MULTIPLE TIMES in the application life-cycle:   */
+
+        /* Create a data-model */
+        Map root = new HashMap();
+                
+        root.put("invoice", this.currentInvoice);
+        root.put("items", this.currentInvoice.getItems());
+        // totals
+        root.put("subTotal", CurrencyUtil.money(totals.subTotal));
+        root.put("discountsTotal", CurrencyUtil.money(totals.pretaxDiscounts));
+        root.put("taxable1Subtotal", CurrencyUtil.money(totals.taxable1Subtotal));
+        root.put("taxable2Subtotal", CurrencyUtil.money(totals.taxable2Subtotal));
+        root.put("tax1Total", CurrencyUtil.money(totals.tax1Total));
+        root.put("tax2Total", CurrencyUtil.money(totals.tax2Total));
+        root.put("payments", CurrencyUtil.money(0.00));
+        root.put("amountDue", CurrencyUtil.money(totals.getGrandTotal()));        
+        
+        /* Get the template (uses cache internally) */
+        Template template = cfg.getTemplate("invoice.html");
+
+        Path tempFile = Files.createTempFile(this.currentInvoice.getInvoiceNumber() + "__", ".html");
+
+        Writer str = new CharArrayWriter();
+        template.process(root, str);
+
+        var htmlString = str.toString();
+        return htmlString;
+
+//        try {
+//            //Desktop.getDesktop().browse(tempFile.toUri());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+
     private void calcButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calcButtonActionPerformed
+
         if (invoiceItemsTable.getRowCount() < 1) {
             return;
         }
@@ -2222,7 +2319,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         for (var item : selectedItems) {
             invoiceItems.remove(item);
-            
+
             if (invoiceItems.size() > 0) {
                 var relatedDiscounts = invoiceItems
                         .stream()
@@ -2258,7 +2355,7 @@ public class InvoiceApp extends javax.swing.JDialog {
         var discountItem = discountDialog.getDiscountItem();
 
         this.addItemToInvoiceItemsTable(discountItem);
-        
+
         computePrices();
 
     }
@@ -2677,7 +2774,7 @@ private void datePicker1PropertyChange(java.beans.PropertyChangeEvent evt) {//GE
 
         convertButton.setVisible(false);
         invoiceNumberEditCheckBox.setEnabled(true);
-        printButton.setVisible(false);
+        //printButton.setVisible(false);
         computePrices();
         postButton.setEnabled(true);
         saveButton.setEnabled(true);

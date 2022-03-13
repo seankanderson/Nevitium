@@ -19,7 +19,9 @@ public class ContactAddressService extends BaseService<ContactAddressDao, Contac
     
     @Override
     public ContactAddressDao getDao() throws SQLException {
-        return DaoManager.createDao(connection, ContactAddress.class);
+        var dao = (ContactAddressDao)DaoManager.createDao(connection, ContactAddress.class);
+        dao.setObjectCache(true);
+        return dao;
     }
     
     
