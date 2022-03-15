@@ -60,7 +60,7 @@
                 font-size: 13px;
             }
             table.invoiceItems tr:nth-child(even) {
-                background: #667FFF;
+                /*background: #667FFF;*/
             }
             table.invoiceItems thead {
                 background: #667FFF;
@@ -85,11 +85,11 @@
                 align-items: flex-start;
             }
             .billTo {
-                border-left: 15px solid #000000;
+                border-left: 15px solid #808080;
                 flex-grow: 1;
             }
             .shipTo {
-                border-left: 15px solid #000000;
+                border-left: 15px solid #808080;
                 flex-grow: 1;
             }
             .documentDetails {
@@ -201,39 +201,7 @@
 
             </div>
 
-            <div class="customerSection">
-                <div class="billTo">
-                    <pre>${invoice.customer}</pre>
-                </div>
 
-                <div class="shipTo">
-                    <pre>${invoice.shiptToAddress}</pre>
-                </div>        
-
-                <div class="documentDetails">
-                    <table class="documentInfo">
-                        <tbody>
-                            <tr>
-                                <td>Invoice Number</td>
-                                <td>${invoice.invoiceNumber}</td>
-                            </tr>
-                            <tr>
-                                <td>Invoice Date: </td>
-                                <td>2022-03-12</td>
-                            </tr>
-                            <tr>
-                                <td>Due Date</td>
-                                <td>2022-03-12</td>
-                            </tr>
-                            <tr>
-                                <td>Tax Id</td>
-                                <td>D288658797</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                </div> 
-            </div>
 
 
 
@@ -241,15 +209,48 @@
 
                 <table class="invoiceItems">
                     <thead>
-                        <tr>
-                            <th>Quantity</th>
-                            <th>Code</th>
-                            <th>Description</th>
-                            <th>Unit Price</th>
-                            <th>Tax1</th>
-                            <th>Tax2</th>
-                            <th>Line Total</th>                            
-                        </tr>
+
+
+                    <div class="customerSection">
+                        <div class="billTo"><span style="font-weight: bold;">Bill To:</span><br>${billTo}</div>
+
+                        <div class="shipTo"><span style="font-weight: bold;">Ship To:</span><br>${shipTo}</div>        
+
+                        <div class="documentDetails">
+                            <table class="documentInfo">
+                                <tbody>
+                                    <tr>
+                                        <td>Invoice Number</td>
+                                        <td>${invoice.invoiceNumber}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Invoice Date: </td>
+                                        <td>2022-03-12</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Due Date</td>
+                                        <td>2022-03-12</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tax Id</td>
+                                        <td>D288658797</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                        </div> 
+                    </div>
+
+
+                    <tr>
+                        <th>Quantity</th>
+                        <th>Code</th>
+                        <th>Description</th>
+                        <th>Unit Price</th>
+                        <th>Tax1</th>
+                        <th>Tax2</th>
+                        <th>Line Total</th>                            
+                    </tr>
                     </thead>
                     <tbody>
                         <#list items as item>

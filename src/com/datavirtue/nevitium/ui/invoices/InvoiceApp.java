@@ -2224,6 +2224,8 @@ public class InvoiceApp extends javax.swing.JDialog {
         Map root = new HashMap();
                 
         root.put("invoice", this.currentInvoice);
+        root.put("billTo", this.currentInvoice.getCustomer().replace(nl, "<br>"));
+        root.put("shipTo", this.currentInvoice.getShiptToAddress().replace(nl, "<br>"));
         root.put("items", this.currentInvoice.getItems());
         // totals
         root.put("subTotal", CurrencyUtil.money(totals.subTotal));
