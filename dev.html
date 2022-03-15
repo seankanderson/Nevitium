@@ -210,6 +210,17 @@
         .footer {
             border: 2px #000000;
         }
+
+        tbody.invoiceItems tr td { 
+            border: 1px solid #000000;
+            text-align: left;
+            border-collapse: collapse;
+            
+        }
+
+        table {
+            border-spacing: 0px;
+        }
     </style>
 
 </head>
@@ -227,7 +238,7 @@
 
         </div>
 
-        <table class="invoiceItems">
+        <table>
 
             <thead>
 
@@ -281,7 +292,7 @@
                 </tr>
             </thead>
 
-            <tbody>
+            <tbody class="invoiceItems">
                 <!-- <#list items as item> -->
                 <tr>
                     <td>${item.quantity}</td>
