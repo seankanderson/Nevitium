@@ -53,7 +53,7 @@ import com.datavirtue.nevitium.services.util.LinePrinter;
 import com.datavirtue.nevitium.ui.EnhancedTableCellRenderer;
 import com.datavirtue.nevitium.ui.util.DecimalCellRenderer;
 import com.formdev.flatlaf.util.StringUtils;
-import com.itextpdf.html2pdf.HtmlConverter;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
@@ -67,7 +67,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URISyntaxException;
@@ -2067,8 +2067,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
             var html = createHtml();
             System.out.print(html);
-            
-            
+
             // write and open HTML file
             Path htmlTempFile = Files.createTempFile(this.currentInvoice.getInvoiceNumber() + "__", ".html");
             FileWriter fileWriter = new FileWriter(htmlTempFile.toFile());
@@ -2076,10 +2075,23 @@ public class InvoiceApp extends javax.swing.JDialog {
             printWriter.print(html);
             printWriter.close();
             Desktop.getDesktop().browse(htmlTempFile.toUri());
-            
+
             // write and open PDF file
             Path pdfTempFile = Files.createTempFile(this.currentInvoice.getInvoiceNumber() + "__", ".pdf");
-            HtmlConverter.convertToPdf(html, new FileOutputStream(pdfTempFile.toFile()));
+//            MediaDeviceDescription mediaDeviceDescription = new MediaDeviceDescription(MediaType.PRINT);
+//            ConverterProperties props = new ConverterProperties();
+//            props.setMediaDeviceDescription(mediaDeviceDescription);
+//            HtmlConverter.convertToPdf(html, new FileOutputStream(pdfTempFile.toFile()), props);
+            
+            try (OutputStream os = new FileOutputStream(pdfTempFile.toAbsolutePath().toString())) {
+                PdfRendererBuilder builder = new PdfRendererBuilder();
+                builder.useFastMode();
+                var file = htmlTempFile.toUri().toString(); // .getFileName().toAbsolutePath().toString();
+                builder.withUri(file);
+                builder.toStream(os);
+                builder.run();
+            }
+            
             Desktop.getDesktop().browse(pdfTempFile.toUri());
 
         } catch (URISyntaxException ex) {
@@ -2205,7 +2217,7 @@ public class InvoiceApp extends javax.swing.JDialog {
 
         this.viewToModel();
         var totals = InvoiceService.calculateInvoiceTotals(currentInvoice);
-        
+
         /* Create and adjust the configuration singleton */
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_29);
         cfg.setDirectoryForTemplateLoading(new File(getClass().getResource("/businessmanager/res/html").toURI()));
@@ -2218,14 +2230,14 @@ public class InvoiceApp extends javax.swing.JDialog {
         cfg.setFallbackOnNullLoopVariable(false);
 
         /* ------------------------------------------------------------------------ */
-        /* You usually do these for MULTIPLE TIMES in the application life-cycle:   */
+ /* You usually do these for MULTIPLE TIMES in the application life-cycle:   */
 
-        /* Create a data-model */
+ /* Create a data-model */
         Map root = new HashMap();
-                
+
         root.put("invoice", this.currentInvoice);
-        root.put("billTo", this.currentInvoice.getCustomer().replace(nl, "<br>"));
-        root.put("shipTo", this.currentInvoice.getShiptToAddress().replace(nl, "<br>"));
+        root.put("billTo", this.currentInvoice.getCustomer().replace(nl, "<br/>"));
+        root.put("shipTo", this.currentInvoice.getShiptToAddress().replace(nl, "<br/>"));
         root.put("items", this.currentInvoice.getItems());
         // totals
         root.put("subTotal", CurrencyUtil.money(totals.subTotal));
@@ -2235,8 +2247,8 @@ public class InvoiceApp extends javax.swing.JDialog {
         root.put("tax1Total", CurrencyUtil.money(totals.tax1Total));
         root.put("tax2Total", CurrencyUtil.money(totals.tax2Total));
         root.put("payments", CurrencyUtil.money(0.00));
-        root.put("amountDue", CurrencyUtil.money(totals.getGrandTotal()));        
-        
+        root.put("amountDue", CurrencyUtil.money(totals.getGrandTotal()));
+
         /* Get the template (uses cache internally) */
         Template template = cfg.getTemplate("invoice.html");
 

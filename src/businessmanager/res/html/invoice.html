@@ -1,308 +1,282 @@
 <html>
 
-<head>
-    <title>Invoice</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <head>
+        <style>
+            @page {
+                size: letter;
+                margin: 10px;
+            }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
+            table.mainTable {
+                width: 100%;
+                font-size: 16px;
+                border-collapse: collapse;
 
-        @page {
-            margin: 0;
-        }
+                /* The magical table pagination property. */
+                -fs-table-paginate: paginate;
 
-        .label-font {
-            font-size: 18px;
-            letter-spacing: 3.6px;
-            word-spacing: 2.2px;
-            color: #000000;
-            font-weight: 700;
-            font-style: normal;
-            text-transform: none;
-        }
+                /* Recommended to avoid leaving thead on a page by itself. */
+                -fs-page-break-min-height: 1.5cm;
+            }
 
-        .headerSection {
-            margin-top: 10px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-        }
+            tr.mainTable ,
+            thead.mainTable ,
+            tfoot.mainTable  {
+                page-break-inside: avoid;
+            }
 
-        .logoBusinessDetails {
-            flex-grow: 1;
-        }
+            td.mainTable ,
+            th.mainTable  {
+                padding: 6px;
+                border: 1px solid gray;
+            }
 
-        .headerBusinessFont {
-            font-size: 32px;
-            letter-spacing: 3.6px;
-            word-spacing: 2.2px;
-            color: #000000;
-            font-weight: 700;
-            text-decoration: overline solid rgb(68, 68, 68);
-            font-style: normal;
-            font-variant: small-caps;
-            text-transform: none;
-        }
+            tfoot.mainTable td {
+                background-color: aqua;
+            }
 
-        table.invoiceItems {
-            margin-top: 10px;
-            border: 2px solid #000000;
-            width: 100%;
-            text-align: left;
-            border-collapse: collapse;
-        }
+            thead.mainTable  th {
+                background-color: coral;
+            }
 
-        table.invoiceItems td,
-        table.invoiceItems th {
-            border: 1px solid #000000;
-            padding: 6px 5px;
-        }
 
-        table.invoiceItems tbody td {
-            font-size: 13px;
-        }
+            .label-font {
+                font-size: 18px;
+                letter-spacing: 3.6px;
+                word-spacing: 2.2px;
+                color: #000000;
+                font-weight: 700;
+                font-style: normal;
+                text-transform: none;
+            }
 
-        table.invoiceItems tr:nth-child(even) {
-            /*background: #667FFF;*/
-        }
+            .companySection {
+                margin-top: 10px;
+                width: 100%;
+/*                display: flex;*/
+                justify-content: space-between;
+            }
 
-        table.invoiceItems thead {
-            background: #667FFF;
-            background: -moz-linear-gradient(top, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
-            background: -webkit-linear-gradient(top, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
-            background: linear-gradient(to bottom, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
-            border-bottom: 3px solid #000000;
-        }
+            .logoBusinessDetails {
+                flex-grow: 1;
+            }
 
-        table.invoiceItems thead th {
-            font-size: 15px;
-            font-weight: bold;
-            color: #000000;
-            text-align: left;
-        }
+            .headerBusinessFont {
+                font-size: 32px;
+                letter-spacing: 3.6px;
+                word-spacing: 2.2px;
+                color: #000000;
+                font-weight: 700;
+                text-decoration: overline solid rgb(68, 68, 68);
+                font-style: normal;
+                font-variant: small-caps;
+                text-transform: none;
+            }
 
-        invoiceItems.table.invoiceItems tfoot td {
-            font-size: 14px;
-        }
 
-        .customerSection {
-            width: 100%;
-            display: flex;
-            align-items: flex-start;
-        }
+            .billTo {
+                border-left: 15px solid #808080;
+                /*flex-grow: 1;*/
+            }
 
-        .billTo {
-            border-left: 15px solid #808080;
-            flex-grow: 1;
-        }
+            .shipTo {
+                border-left: 15px solid #808080;
+                /*flex-grow: 1;*/
+            }
 
-        .shipTo {
-            border-left: 15px solid #808080;
-            flex-grow: 1;
-        }
+            .documentDetails {
+                /*border-left: 15px solid #667FFF;*/
+                /*flex-grow: 1;*/
+            }
 
-        .documentDetails {
-            /*border-left: 15px solid #667FFF;*/
-            flex-grow: 1;
-        }
 
-        .summarySection {
-            width: 100%;
-            display: flex;
-            align-items: flex-start;
-        }
 
-        .message {
-            flex-basis: 65%
-        }
+            .message {
+                /*flex-basis: 65%*/
+            }
 
-        .totals {
-            flex-basis: 35%;
-        }
+            .totals {
+                /*flex-basis: 35%;*/
+            }
 
-        .totalColumns {
-            width: 100%;
-            display: flex;
-        }
+          
+            .totalLabels {
+                /*flex-basis: 50%*/
+            }
 
-        .totalLabels {
-            flex-basis: 50%
-        }
+            .totalAmounts {
+                /*flex-basis: 50%*/
+            }
 
-        .totalAmounts {
-            flex-basis: 50%
-        }
+            /* Total labels column*/
+            table.totalLabels {
+                border-width: 0px 1px 0px 2px;
+                border-style: solid;
+                border-color: #000000;
+                width: 100%;
+                text-align: right;
+                border-collapse: collapse;
+            }
 
-        /* Total labels column*/
-        table.totalLabels {
-            border-width: 0px 1px 0px 2px;
-            border-style: solid;
-            border-color: #000000;
-            width: 100%;
-            text-align: right;
-            border-collapse: collapse;
-        }
+            table.totalLabels td,
+            table.totalLabels th {
+                border: 1px solid #000000;
+                padding: 5px 4px;
+            }
 
-        table.totalLabels td,
-        table.totalLabels th {
-            border: 1px solid #000000;
-            padding: 5px 4px;
-        }
+            table.totalLabels tbody td {
+                font-size: 13px;
+            }
 
-        table.totalLabels tbody td {
-            font-size: 13px;
-        }
+            table.totalLabels tfoot {
+                font-size: 14px;
+                font-weight: bold;
+                color: #000000;
+                border-top: 3px solid #000000;
+            }
 
-        table.totalLabels tfoot {
-            font-size: 14px;
-            font-weight: bold;
-            color: #000000;
-            border-top: 3px solid #000000;
-        }
+            table.totalLabels tfoot td {
+                font-size: 14px;
+            }
 
-        table.totalLabels tfoot td {
-            font-size: 14px;
-        }
+            /* Amounts Column*/
+            table.totalAmounts {
+                border-width: 0px 2px 0px 1px;
+                border-style: solid;
+                border-color: #000000;
+                width: 100%;
+                text-align: right;
+                border-collapse: collapse;
+            }
 
-        /* Amounts Column*/
-        table.totalAmounts {
-            border-width: 0px 2px 0px 1px;
-            border-style: solid;
-            border-color: #000000;
-            width: 100%;
-            text-align: right;
-            border-collapse: collapse;
-        }
+            table.totalAmounts td,
+            table.totalAmounts th {
+                border: 1px solid #000000;
+                padding: 5px 4px;
+            }
 
-        table.totalAmounts td,
-        table.totalAmounts th {
-            border: 1px solid #000000;
-            padding: 5px 4px;
-        }
+            table.totalAmounts tbody td {
+                font-size: 13px;
+            }
 
-        table.totalAmounts tbody td {
-            font-size: 13px;
-        }
+            table.totalAmounts tfoot {
+                font-size: 14px;
+                font-weight: bold;
+                color: #000000;
+                border-top: 3px solid #000000;
+            }
 
-        table.totalAmounts tfoot {
-            font-size: 14px;
-            font-weight: bold;
-            color: #000000;
-            border-top: 3px solid #000000;
-        }
+            table.totalAmounts tfoot td {
+                font-size: 14px;
+            }
 
-        table.totalAmounts tfoot td {
-            font-size: 14px;
-        }
+            table.documentInfo {
+                width: 100%;
+                text-align: right;
+            }
 
-        table.documentInfo {
-            width: 100%;
-            text-align: right;
-        }
-
-        table.documentInfo td,
-        table.documentInfo th {}
-
-        .footer {
-            border: 2px #000000;
-        }
-
-        tbody.invoiceItems tr td { 
-            border: 1px solid #000000;
-            text-align: left;
-            border-collapse: collapse;
-            width: 100%;
+            table.documentInfo td,
+            table.documentInfo th {
+            }
             
-        }
-                
-        table {
-            border-spacing: 0px;
-            width: 100%;
-        }
-    </style>
+            .invoiceItemsHeading tbody tr td  {
+                border: 1px solid;
+                border-collapse: collapse;
+            }
+            
+            .mainTable tbody tr td {
+                border: 1px solid;
+                border-collapse: collapse;
+            }
+            
+        </style>
+    </head>
 
-</head>
+    <body>
 
-<body>
-
-
-    <div>
-
-       
-        <table>
+        <table class="mainTable" style="width: 100%;">
 
             <thead>
-
                 <tr>
-                    <td colspan="8">
+                    <td id="mainTableHeadingRow" colspan="7">
 
-                        <div class="headerSection">
-                        
-                            <div class="headerBusinessLogo headerBusinessFont  logoBusinessDetails">
-                                Nucleus Mobile LLC
-                            </div>
-                        
-                        </div>
+                        <table class="companyHeading" style="width: 100%; height: 200px;">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="companySection">
+                                            <div class="headerBusinessLogo headerBusinessFont  logoBusinessDetails">
+                                                Nucleus Mobile LLC
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
+                        <table class="customerHeading" style="width: 100%;">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="billTo"><span style="font-weight: bold;">Bill To:</span><br/>${billTo}</div>
+                                    </td>
+                                    <td>
+                                        <div class="shipTo"><span style="font-weight: bold;">Ship To:</span><br/>${shipTo}</div>
+                                    </td>
+                                    <td>
+                                        <div class="documentDetails">
+                                            <table class="documentInfo">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Invoice Number</td>
+                                                        <td>${invoice.invoiceNumber}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Invoice Date: </td>
+                                                        <td>2022-03-12</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Due Date</td>
+                                                        <td>2022-03-12</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Tax Id</td>
+                                                        <td>D288658797</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                        <div class="customerSection">
-                            <div class="billTo"><span style="font-weight: bold;">Bill To:</span><br>${billTo}</div>
+                        <table class="invoiceItemsHeading" style="width: 100%; border:1px solid;">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 10%;">Quantity</td>
+                                    <td style="width: 15%;">Code</td>
+                                    <td style="width: 45%;">Description</td>
+                                    <td style="width: 10%;">Unit Price</td>
+                                    <td style="width: 5%;">Tax1</td>
+                                    <td style="width: 5%;">Tax2</td>
+                                    <td style="width: 10%;">Line Total</td>
+                                </tr>
 
-                            <div class="shipTo"><span style="font-weight: bold;">Ship To:</span><br>${shipTo}</div>
-
-                            <div class="documentDetails">
-                                <table class="documentInfo">
-                                    <tbody>
-                                        <tr>
-                                            <td>Invoice Number</td>
-                                            <td>${invoice.invoiceNumber}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Invoice Date: </td>
-                                            <td>2022-03-12</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Due Date</td>
-                                            <td>2022-03-12</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Tax Id</td>
-                                            <td>D288658797</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                            </div>
-                        </div>
-
-
+                            </tbody>
+                        </table>
                     </td>
-                </tr>
 
-                <tr>
-
-
-                    <th>Quantity</th>
-                    <th>Code</th>
-                    <th>Description</th>
-                    <th>Unit Price</th>
-                    <th>Tax1</th>
-                    <th>Tax2</th>
-                    <th>Line Total</th>
-                </tr>
+                </tr> <!-- end colspan=7 thead row  -->
             </thead>
 
-            <tbody class="invoiceItems">
-                 <#list items as item> 
+            <tbody style="border: 1px solid;">
+                <#list items as item>
                 <tr>
                     <td style="width: 10%;">${item.quantity}</td>
                     <td style="width: 15%;">
                         <#if item.code?has_content>
-                            ${item.code}
+                        ${item.code}
                         </#if>
                     </td>
                     <td style="width: 45%;">${item.description}</td>
@@ -312,124 +286,223 @@
                     <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
 
                 </tr>
-                </#list> 
-
-            </tbody>
-
-            <tfoot>
 
                 <tr>
-
-                    <td colspan="8">
-
-                        <div class="summarySection">
-                            <div class="message">
-                                <p>The 13-letter motto was suggested in 1776 by Pierre Eugene du Simitiere to the
-                                    committee responsible for
-                                    developing the seal. At the time of the American Revolution, the phrase appeared
-                                    regularly on the title page
-                                    of the London-based Gentleman's Magazine, founded in 1731,[10][11] which collected
-                                    articles from many
-                                    sources into one periodical. This usage in turn can be traced back to the
-                                    London-based Huguenot Peter
-                                    Anthony Motteux, who had employed the adage for his The Gentleman's Journal, or the
-                                    Monthly Miscellany
-                                    (1692-1694). The phrase is similar to a Latin translation of a variation of
-                                    Heraclitus's tenth fragment,
-                                    "The one is made up of all things, and all things issue from the one".</p>
-                            </div>
-                            <div class="totals">
-                                <div class="totalColumns">
-
-                                    <table class="totalLabels">
-                                        <tbody>
-                                            <tr>
-                                                <td>Item Total</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Discounts</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Taxable1</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Taxable2</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Tax1</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Tax2</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Payments</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Amount Due</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <table class="totalAmounts">
-                                        <tbody>
-                                            <tr>
-                                                <td>${subTotal}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>${discountsTotal}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>${taxable1Subtotal}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>${taxable2Subtotal}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>${tax1Total}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>${tax2Total}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>${payments}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>${amountDue}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                </div>
-                            </div>
-
+                    <td style="width: 10%;">${item.quantity}</td>
+                    <td style="width: 15%;">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
                     </td>
-
-
+                    <td style="width: 45%;">${item.description}</td>
+                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
+                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
 
                 </tr>
 
+                <tr>
+                    <td style="width: 10%;">${item.quantity}</td>
+                    <td style="width: 15%;">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
+                    </td>
+                    <td style="width: 45%;">${item.description}</td>
+                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
+                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+
+                </tr>
+
+                <tr>
+                    <td style="width: 10%;">${item.quantity}</td>
+                    <td style="width: 15%;">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
+                    </td>
+                    <td style="width: 45%;">${item.description}</td>
+                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
+                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+
+                </tr>
+
+                <tr>
+                    <td style="width: 10%;">${item.quantity}</td>
+                    <td style="width: 15%;">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
+                    </td>
+                    <td style="width: 45%;">${item.description}</td>
+                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
+                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+
+                </tr>
+
+                <tr>
+                    <td style="width: 10%;">${item.quantity}</td>
+                    <td style="width: 15%;">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
+                    </td>
+                    <td style="width: 45%;">${item.description}</td>
+                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
+                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+
+                </tr>
+
+                <tr>
+                    <td style="width: 10%;">${item.quantity}</td>
+                    <td style="width: 15%;">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
+                    </td>
+                    <td style="width: 45%;">${item.description}</td>
+                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
+                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+
+                </tr>
+
+                <tr>
+                    <td style="width: 10%;">${item.quantity}</td>
+                    <td style="width: 15%;">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
+                    </td>
+                    <td style="width: 45%;">${item.description}</td>
+                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
+                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+
+                </tr>
+
+                <tr>
+                    <td style="width: 10%;">${item.quantity}</td>
+                    <td style="width: 15%;">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
+                    </td>
+                    <td style="width: 45%;">${item.description}</td>
+                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
+                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
+                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+
+                </tr>
+
+                </#list>
+            </tbody>
+
+            <tfoot>
+                <tr>
+                    <td colspan="7">
+                        <table style="width: 100%;">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 75%;">
+                                        <div class="message">
+                                            <p>The 13-letter motto was suggested in 1776 by Pierre Eugene du Simitiere to the
+                                                committee responsible for
+                                                developing the seal. At the time of the American Revolution, the phrase appeared
+                                                regularly on the title page
+                                                of the London-based Gentleman's Magazine, founded in 1731,[10][11] which collected
+                                                articles from many
+                                                sources into one periodical. This usage in turn can be traced back to the
+                                                London-based Huguenot Peter
+                                                Anthony Motteux, who had employed the adage for his The Gentleman's Journal, or the
+                                                Monthly Miscellany
+                                                (1692-1694). The phrase is similar to a Latin translation of a variation of
+                                                Heraclitus's tenth fragment,
+                                                "The one is made up of all things, and all things issue from the one".</p>
+                                        </div>
+                                    </td>
+                                    <td style="width: 15%;">
+                                        <table class="totalLabels">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Item Total</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Discounts</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Taxable1</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Taxable2</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Tax1</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Tax2</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Payments</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Amount Due</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                    <td style="width: 10%;">
+                                        <table class="totalAmounts">
+                                            <tbody>
+                                                <tr>
+                                                    <td>${subTotal}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>${discountsTotal}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>${taxable1Subtotal}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>${taxable2Subtotal}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>${tax1Total}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>${tax2Total}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>${payments}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>${amountDue}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
 
 
 
-    </div>
-
-
-
-    </tfoot>
-
-    </table>
-
-
-
-    <!--<div class="footer" style="border: 2px solid black;">Page 1 of 1</div>-->
-
-    </div>
-
-</body>
-
-
-
-
-
+    </body>
 
 </html>

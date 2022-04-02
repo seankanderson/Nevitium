@@ -141,6 +141,8 @@ public class TestDataService {
         inventory.setCategory("DVD - SciFi");
         inventoryService.save(inventory);
 
+        var battlestar = inventory;
+        
         var invoice = new Invoice();
         var billTo = Tools.formatAddress(contact);
         invoice.setCustomer(Tools.arrayToString(billTo));
@@ -166,7 +168,9 @@ public class TestDataService {
         inventory.setTax1(true);
         inventory.setCategory("DVD - SciFi");
         inventoryService.save(inventory);
-
+        var starWars = inventory;
+        
+        
         inventory = new Inventory();
         inventory.setDescription("Gaming Keyboard");
         inventory.setCode("015692731899");
@@ -178,15 +182,29 @@ public class TestDataService {
         inventory.setCategory("USB - GAMING");
         inventoryService.save(inventory);
 
+        var keyboard = inventory;
+        
         invoice = new Invoice();
         billTo = Tools.formatAddress(contact);
         invoice.setCustomer(Tools.arrayToString(billTo));
         invoice.setShiptToAddress(Tools.arrayToString(billTo));
         items = new ArrayList();
-        item = invoiceItemService.mapInventoryToInvoiceItem(1, invoice, inventory);
+        
+        item = invoiceItemService.mapInventoryToInvoiceItem(1, invoice, keyboard);
         item.setTaxable1(true);
         item.setTaxable1Rate(0.07);
         items.add(item);
+        
+        item = invoiceItemService.mapInventoryToInvoiceItem(1, invoice, starWars);
+        item.setTaxable1(true);
+        item.setTaxable1Rate(0.07);
+        items.add(item);
+        
+        item = invoiceItemService.mapInventoryToInvoiceItem(1, invoice, battlestar);
+        item.setTaxable1(true);
+        item.setTaxable1Rate(0.07);
+        items.add(item);        
+        
         invoice.setInvoiceDate(new Date());
         invoice.setItems(items);
         invoice.setInvoiceNumber(invoiceService.getNewInvoiceNumber("I"));
