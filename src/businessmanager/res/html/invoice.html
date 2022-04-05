@@ -2,9 +2,8 @@
 
     <head>
         <style>
-            @page {
-                size: letter;
-                margin: 10px;
+            * {
+                font-family: sans-serif;
             }
 
             table.mainTable {
@@ -16,52 +15,24 @@
                 -fs-table-paginate: paginate;
 
                 /* Recommended to avoid leaving thead on a page by itself. */
-                -fs-page-break-min-height: 1.5cm;
+                /*-fs-page-break-min-height: 1.5cm;*/
             }
 
-            tr.mainTable ,
-            thead.mainTable ,
-            tfoot.mainTable  {
+            tr.mainTable,
+            thead.mainTable,
+            tfoot.mainTable {
                 page-break-inside: avoid;
             }
 
-            td.mainTable ,
-            th.mainTable  {
+            td.mainTable,
+            th.mainTable {
                 padding: 6px;
-                border: 1px solid gray;
-            }
+                border: none;
 
-            tfoot.mainTable td {
-                background-color: aqua;
-            }
-
-            thead.mainTable  th {
-                background-color: coral;
             }
 
 
-            .label-font {
-                font-size: 18px;
-                letter-spacing: 3.6px;
-                word-spacing: 2.2px;
-                color: #000000;
-                font-weight: 700;
-                font-style: normal;
-                text-transform: none;
-            }
-
-            .companySection {
-                margin-top: 10px;
-                width: 100%;
-/*                display: flex;*/
-                justify-content: space-between;
-            }
-
-            .logoBusinessDetails {
-                flex-grow: 1;
-            }
-
-            .headerBusinessFont {
+            .companyHeaderFont {
                 font-size: 32px;
                 letter-spacing: 3.6px;
                 word-spacing: 2.2px;
@@ -74,100 +45,34 @@
             }
 
 
-            .billTo {
-                border-left: 15px solid #808080;
-                /*flex-grow: 1;*/
-            }
-
-            .shipTo {
-                border-left: 15px solid #808080;
-                /*flex-grow: 1;*/
-            }
-
-            .documentDetails {
-                /*border-left: 15px solid #667FFF;*/
-                /*flex-grow: 1;*/
-            }
-
-
-
-            .message {
-                /*flex-basis: 65%*/
-            }
-
-            .totals {
-                /*flex-basis: 35%;*/
-            }
-
-          
-            .totalLabels {
-                /*flex-basis: 50%*/
-            }
-
-            .totalAmounts {
-                /*flex-basis: 50%*/
-            }
-
             /* Total labels column*/
             table.totalLabels {
-                border-width: 0px 1px 0px 2px;
-                border-style: solid;
-                border-color: #000000;
                 width: 100%;
                 text-align: right;
-                border-collapse: collapse;
+                margin: 2px;
             }
 
-            table.totalLabels td,
-            table.totalLabels th {
-                border: 1px solid #000000;
-                padding: 5px 4px;
-            }
-
-            table.totalLabels tbody td {
-                font-size: 13px;
-            }
-
-            table.totalLabels tfoot {
+            table.totalLabels td {
+                padding: 5px 5px;
+                background-color: cornflowerblue;
                 font-size: 14px;
                 font-weight: bold;
-                color: #000000;
-                border-top: 3px solid #000000;
-            }
-
-            table.totalLabels tfoot td {
-                font-size: 14px;
+                color: white;
+                border: 0;
             }
 
             /* Amounts Column*/
             table.totalAmounts {
-                border-width: 0px 2px 0px 1px;
-                border-style: solid;
-                border-color: #000000;
                 width: 100%;
-                text-align: right;
-                border-collapse: collapse;
             }
 
-            table.totalAmounts td,
-            table.totalAmounts th {
-                border: 1px solid #000000;
-                padding: 5px 4px;
-            }
-
-            table.totalAmounts tbody td {
-                font-size: 13px;
-            }
-
-            table.totalAmounts tfoot {
+            table.totalAmounts td {
+                padding: 5px 5px;
+                background-color: azure;
                 font-size: 14px;
                 font-weight: bold;
-                color: #000000;
-                border-top: 3px solid #000000;
-            }
-
-            table.totalAmounts tfoot td {
-                font-size: 14px;
+                color: black;
+                text-align: right;
             }
 
             table.documentInfo {
@@ -178,21 +83,225 @@
             table.documentInfo td,
             table.documentInfo th {
             }
-            
-            .invoiceItemsHeading tbody tr td  {
+
+
+            .invoiceItemsHeading {
                 border: 1px solid;
                 border-collapse: collapse;
+                padding: 0;
+                height: 100%;
+                width: 100%;
             }
-            
-            .mainTable tbody tr td {
-                border: 1px solid;
-                border-collapse: collapse;
+
+            @page {
+                size: letter;
+                orientation: landscape;
+                margin: 10px 10px 240px 10px;
+
+                @bottom-center {
+                    content: element(testFooter);
+                }
             }
-            
+
+            .testFooter {
+                position: running(testFooter);
+            }
+
+            tbody.invoiceItems td {
+                background-color: cornflowerblue;
+                font-weight: bold;
+                color: white;
+            }
+
+            .companyHeading {
+                width: 100%;
+                height: 100px;
+            }
+
+            .companyHeading td {
+                padding: 20px;
+                border: none;
+            }
+
+            .customerHeading {
+                font-size: 20px;
+
+            }
+
+            .customerHeading td {
+                padding: 20px;
+                vertical-align: top;
+
+            }
+
+            .documentInfo td {
+                padding: 0px;
+                font-size: 20px;
+            }
+
+            /* Invoice documentdetail label etc... */
+            .documentInfo>tbody>tr>td:first-child {
+                font-weight: bold;
+                color: cornflowerblue;
+
+            }
+
+            .detailLabel {
+                font-size: 20px;
+                font-weight: bold;
+                color: cornflowerblue;
+            }
+
+            .documentInfo>tbody>tr>td:last-child {
+                padding:5px 5px;
+                font-size: 16px;
+                vertical-align: middle;
+                background-color: azure;
+            }
+
+            .quantity {
+                width: 5%;
+            }
+
+            .code {
+                width: 16%;
+            }
+
+            .description {
+                width: 45%;
+            }
+
+            .unitPrice {
+                width: 10%;
+                text-align: right;
+            }
+
+            .tax1 {
+                width: 7%;
+                text-align: center;
+            }
+
+            .tax2 {
+                width: 7%;
+                text-align: center;
+            }
+
+            .total {
+                width: 10%;
+                text-align: right;
+            }
+
+            .detailColumn {
+                padding: 10px;
+            }
+
+            .billTo {
+                font-family: sans-serif;
+
+            }
+
+            .billTo span {
+                font-weight: bold;
+                color: cornflowerblue;
+            }
+
+            .shipTo {
+                font-family: sans-serif;
+            }
+
+            .shipTo span {
+                font-weight: bold;
+                color: cornflowerblue;
+            }
+
+            .message {
+                vertical-align: text-top;
+                font-size: small;
+                font-family: sans-serif;
+            }
         </style>
     </head>
 
     <body>
+
+        <div class="testFooter">
+            <table style="width: 100%;">
+                <tbody>
+                    <tr>
+                        <td class="message" style="width: 75%;">
+                            <span class="detailLabel">Invoice and Payment Terms</span>
+                            <p>Unless alternate payment terms are specified and agreed to by Seller in writing, all charges, including applicable
+                                packing and transportation costs, billed by Seller are payable within net 30 days of the date of invoice. Seller
+                                reserves the right to modify or withdraw credit terms at any time without notice. Unless otherwise specified, all
+                                payments are due in the currency specified in Seller’s Proposal, Acknowledgment and/or invoice. Interest shall be due
+                                from Buyer to Seller on overdue accounts at the maximum rate allowed by law. </p>
+
+                        </td>
+                        <td style="width: 13%;">
+                            <table class="totalLabels">
+                                <tbody>
+                                    <tr>
+                                        <td>Item Total</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Discounts</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Taxable1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Taxable2</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tax1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tax2</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Payments</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Amount Due</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                        <td style="width: 12%;">
+                            <table class="totalAmounts">
+                                <tbody>
+                                    <tr>
+                                        <td>232.97</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>232.97</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>16.31</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>249.28</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
 
         <table class="mainTable" style="width: 100%;">
 
@@ -200,15 +309,19 @@
                 <tr>
                     <td id="mainTableHeadingRow" colspan="7">
 
-                        <table class="companyHeading" style="width: 100%; height: 200px;">
+                        <table class="companyHeading">
                             <tbody>
                                 <tr>
-                                    <td>
-                                        <div class="companySection">
-                                            <div class="headerBusinessLogo headerBusinessFont  logoBusinessDetails">
-                                                Nucleus Mobile LLC
-                                            </div>
-                                        </div>
+
+                                    <td style="width: 50%;">
+                                        <img src="https://www.logolynx.com/images/logolynx/s_89/898b65dc4e6156b0896b8b28d0150d6a.png" alt="Company Logo" />
+                                    </td>
+                                    <td style="vertical-align: text-top;  text-align: right; width: 50%;">
+                                        <span class="companyHeaderFont">Logo Sales LLC<br /></span>
+                                        <span>1711 Sycamore Dr Cincinnati, OH 45236<br /></span>
+                                        <span>+1(513)555-6722<br/></span>
+                                        <span>logo-sales.com</span>
+
                                     </td>
                                 </tr>
                             </tbody>
@@ -218,21 +331,23 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        <div class="billTo"><span style="font-weight: bold;">Bill To:</span><br/>${billTo}</div>
+                                        <div class="billTo"><span>Bill To:<br /></span> Data Virtue<br />Sean
+                                            Anderson<br />1711 Sanborn Dr<br /><br />Cincinnati OH 45215<br /> </div>
                                     </td>
                                     <td>
-                                        <div class="shipTo"><span style="font-weight: bold;">Ship To:</span><br/>${shipTo}</div>
+                                        <div class="shipTo"><span>Ship To:<br /></span> Data Virtue<br />Sean
+                                            Anderson<br />1711 Sanborn Dr<br /><br />Cincinnati OH 45215<br /> </div>
                                     </td>
                                     <td>
                                         <div class="documentDetails">
                                             <table class="documentInfo">
                                                 <tbody>
                                                     <tr>
-                                                        <td>Invoice Number</td>
-                                                        <td>${invoice.invoiceNumber}</td>
+                                                        <td>Invoice #</td>
+                                                        <td>I2204032344352</td>
                                                     </tr>
                                                     <tr>
-                                                        <td>Invoice Date: </td>
+                                                        <td>Invoice Date</td>
                                                         <td>2022-03-12</td>
                                                     </tr>
                                                     <tr>
@@ -251,16 +366,16 @@
                             </tbody>
                         </table>
 
-                        <table class="invoiceItemsHeading" style="width: 100%; border:1px solid;">
-                            <tbody>
+                        <table class="invoiceItemsHeading">
+                            <tbody class="invoiceItems">
                                 <tr>
-                                    <td style="width: 10%;">Quantity</td>
-                                    <td style="width: 15%;">Code</td>
-                                    <td style="width: 45%;">Description</td>
-                                    <td style="width: 10%;">Unit Price</td>
-                                    <td style="width: 5%;">Tax1</td>
-                                    <td style="width: 5%;">Tax2</td>
-                                    <td style="width: 10%;">Line Total</td>
+                                    <td class="quantity detailColumn">Qty</td>
+                                    <td class="code detailColumn">Code</td>
+                                    <td class="description detailColumn">Description</td>
+                                    <td class="unitPrice detailColumn">Price</td>
+                                    <td class="tax1 detailColumn">Tax1</td>
+                                    <td class="tax2 detailColumn">Tax2</td>
+                                    <td class="total detailColumn">Total</td>
                                 </tr>
 
                             </tbody>
@@ -269,240 +384,87 @@
 
                 </tr> <!-- end colspan=7 thead row  -->
             </thead>
-
             <tbody style="border: 1px solid;">
                 <#list items as item>
                 <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
+                    <td class="quantity detailColumn">${item.quantity}</td>
+                    <td class="code detailColumn">
                         <#if item.code?has_content>
                         ${item.code}
                         </#if>
                     </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+                    <td class="description detailColumn">${item.description}</td>
+                    <td class="unitPrice detailColumn">${item.unitPrice}</td>
+                    <td class="tax1 detailColumn">${item.taxable1?string('yes','no')}</td>
+                    <td class="tax2 detailColumn">${item.taxable2?string('yes','no')}</td>
+                    <td class="total detailColumn">${item.getItemSubtotal()}</td>
 
                 </tr>
 
                 <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
+                    <td class="quantity detailColumn">${item.quantity}</td>
+                    <td class="code detailColumn">
                         <#if item.code?has_content>
                         ${item.code}
                         </#if>
                     </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+                    <td class="description detailColumn">${item.description}</td>
+                    <td class="unitPrice detailColumn">${item.unitPrice}</td>
+                    <td class="tax1 detailColumn">${item.taxable1?string('yes','no')}</td>
+                    <td class="tax2 detailColumn">${item.taxable2?string('yes','no')}</td>
+                    <td class="total detailColumn">${item.getItemSubtotal()}</td>
 
                 </tr>
 
                 <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
+                    <td class="quantity detailColumn">${item.quantity}</td>
+                    <td class="code detailColumn">
                         <#if item.code?has_content>
                         ${item.code}
                         </#if>
                     </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+                    <td class="description detailColumn">${item.description}</td>
+                    <td class="unitPrice detailColumn">${item.unitPrice}</td>
+                    <td class="tax1 detailColumn">${item.taxable1?string('yes','no')}</td>
+                    <td class="tax2 detailColumn">${item.taxable2?string('yes','no')}</td>
+                    <td class="total detailColumn">${item.getItemSubtotal()}</td>
+
+                </tr><!-- comment -->
+
+                <tr>
+                    <td class="quantity detailColumn">${item.quantity}</td>
+                    <td class="code detailColumn">
+                        <#if item.code?has_content>
+                        ${item.code}
+                        </#if>
+                    </td>
+                    <td class="description detailColumn">${item.description}</td>
+                    <td class="unitPrice detailColumn">${item.unitPrice}</td>
+                    <td class="tax1 detailColumn">${item.taxable1?string('yes','no')}</td>
+                    <td class="tax2 detailColumn">${item.taxable2?string('yes','no')}</td>
+                    <td class="total detailColumn">${item.getItemSubtotal()}</td>
 
                 </tr>
 
                 <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
+                    <td class="quantity detailColumn">${item.quantity}</td>
+                    <td class="code detailColumn">
                         <#if item.code?has_content>
                         ${item.code}
                         </#if>
                     </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
+                    <td class="description detailColumn">${item.description}</td>
+                    <td class="unitPrice detailColumn">${item.unitPrice}</td>
+                    <td class="tax1 detailColumn">${item.taxable1?string('yes','no')}</td>
+                    <td class="tax2 detailColumn">${item.taxable2?string('yes','no')}</td>
+                    <td class="total detailColumn">${item.getItemSubtotal()}</td>
 
-                </tr>
+                </tr><!-- comment -->
 
-                <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
-                        <#if item.code?has_content>
-                        ${item.code}
-                        </#if>
-                    </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
-
-                </tr>
-
-                <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
-                        <#if item.code?has_content>
-                        ${item.code}
-                        </#if>
-                    </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
-
-                </tr>
-
-                <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
-                        <#if item.code?has_content>
-                        ${item.code}
-                        </#if>
-                    </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
-
-                </tr>
-
-                <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
-                        <#if item.code?has_content>
-                        ${item.code}
-                        </#if>
-                    </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
-
-                </tr>
-
-                <tr>
-                    <td style="width: 10%;">${item.quantity}</td>
-                    <td style="width: 15%;">
-                        <#if item.code?has_content>
-                        ${item.code}
-                        </#if>
-                    </td>
-                    <td style="width: 45%;">${item.description}</td>
-                    <td style="text-align: right; width: 10%;">${item.unitPrice}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable1?string('yes','no')}</td>
-                    <td style="text-align: center; width: 5%;">${item.taxable2?string('yes','no')}</td>
-                    <td style="text-align: right; width: 10%;">${item.getItemSubtotal()}</td>
-
-                </tr>
 
                 </#list>
             </tbody>
-
-            <tfoot>
-                <tr>
-                    <td colspan="7">
-                        <table style="width: 100%;">
-                            <tbody>
-                                <tr>
-                                    <td style="width: 75%;">
-                                        <div class="message">
-                                            <p>The 13-letter motto was suggested in 1776 by Pierre Eugene du Simitiere to the
-                                                committee responsible for
-                                                developing the seal. At the time of the American Revolution, the phrase appeared
-                                                regularly on the title page
-                                                of the London-based Gentleman's Magazine, founded in 1731,[10][11] which collected
-                                                articles from many
-                                                sources into one periodical. This usage in turn can be traced back to the
-                                                London-based Huguenot Peter
-                                                Anthony Motteux, who had employed the adage for his The Gentleman's Journal, or the
-                                                Monthly Miscellany
-                                                (1692-1694). The phrase is similar to a Latin translation of a variation of
-                                                Heraclitus's tenth fragment,
-                                                "The one is made up of all things, and all things issue from the one".</p>
-                                        </div>
-                                    </td>
-                                    <td style="width: 15%;">
-                                        <table class="totalLabels">
-                                            <tbody>
-                                                <tr>
-                                                    <td>Item Total</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Discounts</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Taxable1</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Taxable2</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Tax1</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Tax2</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Payments</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Amount Due</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </td>
-                                    <td style="width: 10%;">
-                                        <table class="totalAmounts">
-                                            <tbody>
-                                                <tr>
-                                                    <td>${subTotal}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>${discountsTotal}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>${taxable1Subtotal}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>${taxable2Subtotal}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>${tax1Total}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>${tax2Total}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>${payments}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>${amountDue}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-            </tfoot>
         </table>
 
-
-
     </body>
-
 </html>
