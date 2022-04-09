@@ -31,10 +31,14 @@
 
             }
 
+            img.logo {
+                max-width:200px;
+                max-height:200px;
+            }
 
             .companyHeaderFont {
                 font-size: 32px;
-                letter-spacing: 3.6px;
+                /*letter-spacing: 3.6px; NOT SUPPORTED */
                 word-spacing: 2.2px;
                 color: #000000;
                 font-weight: 700;
@@ -96,15 +100,23 @@
             @page {
                 size: letter;
                 orientation: landscape;
-                margin: 10px 10px 240px 10px;
+                margin: 10px 10px 250px 10px;
 
                 @bottom-center {
                     content: element(testFooter);
+                }
+
+                @top-right {
+                    content: "Page " counter(page) " of " counter(pages);
+                    font-family: sans-serif;
+                    padding-top: 10px;
+                    color: gray;
                 }
             }
 
             .testFooter {
                 position: running(testFooter);
+
             }
 
             tbody.invoiceItems td {
@@ -115,7 +127,7 @@
 
             .companyHeading {
                 width: 100%;
-                height: 100px;
+                /*height: 100px;*/
             }
 
             .companyHeading td {
@@ -228,7 +240,7 @@
             <table style="width: 100%;">
                 <tbody>
                     <tr>
-                        <td class="message" style="width: 75%;">
+                        <td class="message" style="width: 70%;">
                             <span class="detailLabel">Invoice and Payment Terms</span>
                             <p>Unless alternate payment terms are specified and agreed to by Seller in writing, all charges, including applicable
                                 packing and transportation costs, billed by Seller are payable within net 30 days of the date of invoice. Seller
@@ -237,7 +249,7 @@
                                 from Buyer to Seller on overdue accounts at the maximum rate allowed by law. </p>
 
                         </td>
-                        <td style="width: 13%;">
+                        <td style="width: 15%;">
                             <table class="totalLabels">
                                 <tbody>
                                     <tr>
@@ -267,7 +279,7 @@
                                 </tbody>
                             </table>
                         </td>
-                        <td style="width: 12%;">
+                        <td style="width: 15%;">
                             <table class="totalAmounts">
                                 <tbody>
                                     <tr>
@@ -314,7 +326,7 @@
                                 <tr>
 
                                     <td style="width: 50%;">
-                                        <img src="https://www.logolynx.com/images/logolynx/s_89/898b65dc4e6156b0896b8b28d0150d6a.png" alt="Company Logo" />
+                                        <img class="logo" src="https://www.logolynx.com/images/logolynx/s_89/898b65dc4e6156b0896b8b28d0150d6a.png" alt="Company Logo" />
                                     </td>
                                     <td style="vertical-align: text-top;  text-align: right; width: 50%;">
                                         <span class="companyHeaderFont">Logo Sales LLC<br /></span>
@@ -331,20 +343,21 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        <div class="billTo"><span>Bill To:<br /></span> Data Virtue<br />Sean
-                                            Anderson<br />1711 Sanborn Dr<br /><br />Cincinnati OH 45215<br /> </div>
+                                        <div class="billTo"><span>Bill To:<br /></span> 
+                                        ${billTo}</div>
                                     </td>
                                     <td>
-                                        <div class="shipTo"><span>Ship To:<br /></span> Data Virtue<br />Sean
-                                            Anderson<br />1711 Sanborn Dr<br /><br />Cincinnati OH 45215<br /> </div>
+                                        <div class="shipTo"><span>Ship To:<br /></span> ${shipTo} </div>
                                     </td>
                                     <td>
                                         <div class="documentDetails">
                                             <table class="documentInfo">
                                                 <tbody>
                                                     <tr>
-                                                        <td>Invoice #</td>
-                                                        <td>I2204032344352</td>
+                                                        <td style="background-color: white;" colspan="2">
+                                                            <img src=${invoiceNumberBarcode} />
+                                                        </td>
+                                                        <!--<td>I2204032344352</td>-->
                                                     </tr>
                                                     <tr>
                                                         <td>Invoice Date</td>
