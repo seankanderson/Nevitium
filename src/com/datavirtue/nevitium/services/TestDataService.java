@@ -7,7 +7,6 @@ import com.datavirtue.nevitium.models.inventory.Inventory;
 import com.datavirtue.nevitium.models.invoices.Invoice;
 import com.datavirtue.nevitium.models.invoices.InvoicePayment;
 import com.datavirtue.nevitium.models.invoices.InvoicePaymentType;
-import com.datavirtue.nevitium.ui.util.Tools;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -100,20 +99,20 @@ public class TestDataService {
         
         var contact = new Contact();
 
-        contact.setCompany("Data Virtue");
-        contact.setFirstName("Sean");
-        contact.setLastName("Anderson");
-        contact.setAddress1("1711 Sanborn Dr");
+        contact.setCompanyName("Logo Sales Inc.");
+        contact.setFirstName("Joan");
+        contact.setLastName("Marsh");
+        contact.setAddress1("1711 Sycamore Dr");
         contact.setAddress2("");
         contact.setCity("Cincinnati");
         contact.setState("OH");
-        contact.setPostalCode("45215");
-        contact.setContact("Sean Anderson");
-        contact.setPhone("937-509-8797");
+        contact.setPostalCode("45236");
+        contact.setContactName("Beth Kates");
+        contact.setPhone("937-555-6722");
         contact.setFax("");
-        contact.setEmail("sean.anderson@datavirtue.com");
-        contact.setWebLink("https://www.datavirtue.com");
-        contact.setNotes("Nevitium developer");
+        contact.setEmail("joan.marsh@logo-sales.com");
+        contact.setWebLink("https://www.logo-sales.com");
+        contact.setNotes("Electronics and Novelty Item Sales");
         contact.setCustomer(true);
         contact.setVendor(true);
         contact.setCountryCode("US");
@@ -122,12 +121,13 @@ public class TestDataService {
         contactService.save(contact);
 
         var contactAddress = new ContactAddress();
-        contactAddress.setAttention("Sean Anderson");
-        contactAddress.setCompany("Nucleus Mobile");
-        contactAddress.setAddress1("5244 Leninger Haigh Rd");
+        contactAddress.setContactName("Beth Kates");
+        contactAddress.setCompany("Logo Sales Inc. (Warehouse)");
+        contactAddress.setAddress1("5244 High-Vine St");
         contactAddress.setContact(contact);
-        contactAddress.setCity("Hillsboro");
+        contactAddress.setCity("Cincinnati");
         contactAddress.setState("OH");
+        contactAddress.setCountryCode("US");
         contactService.saveAddress(contactAddress);
 
         var inventory = new Inventory();
@@ -144,9 +144,10 @@ public class TestDataService {
         var battlestar = inventory;
         
         var invoice = new Invoice();
-        var billTo = Tools.formatAddress(contact);
-        invoice.setCustomer(Tools.arrayToString(billTo));
-        invoice.setShiptToAddress(Tools.arrayToString(billTo));
+        var billTo = invoiceService.mapContactToInvoiceCustomer(contact);
+        var shipTo = invoiceService.mapContactToInvoiceCustomer(contact);
+        invoice.setBillTo(billTo);
+        invoice.setShiptTo(shipTo);
         var items = new ArrayList();
         var item = invoiceItemService.mapInventoryToInvoiceItem(2, invoice, inventory);
         item.setTaxable1(true);
@@ -185,9 +186,7 @@ public class TestDataService {
         var keyboard = inventory;
         
         invoice = new Invoice();
-        billTo = Tools.formatAddress(contact);
-        invoice.setCustomer(Tools.arrayToString(billTo));
-        invoice.setShiptToAddress(Tools.arrayToString(billTo));
+        
         items = new ArrayList();
         
         item = invoiceItemService.mapInventoryToInvoiceItem(1, invoice, keyboard);
@@ -205,11 +204,18 @@ public class TestDataService {
         item.setTaxable1Rate(0.07);
         items.add(item);        
         
+        billTo = invoiceService.mapContactToInvoiceCustomer(contact);
+        shipTo = invoiceService.mapContactToInvoiceCustomer(contact);
+        invoice.setBillTo(billTo);
+        invoice.setShiptTo(shipTo);
+        
         invoice.setInvoiceDate(new Date());
         invoice.setItems(items);
         invoice.setInvoiceNumber(invoiceService.getNewInvoiceNumber("I"));
         invoice.setQuote(false);
         invoiceService.postInvoice(invoice);
+        
+        
         
         var payment = new InvoicePayment();
         payment.setPaymentEffectiveDate(new Date());

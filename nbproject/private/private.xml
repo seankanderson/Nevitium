@@ -32,12 +32,10 @@
         <group>
             <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/inventory/Inventory.java</file>
             <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/DatabaseService.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/TestDataService.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/inventory/InventoryApp.java</file>
+            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/BarcodeService.java</file>
             <file>file:/C:/dev/Nevitium/src/businessmanager/res/html/invoice.html</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/models/invoices/InvoiceTotals.java</file>
+            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/ImageCaptureService.java</file>
             <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/ui/invoices/InvoiceApp.java</file>
-            <file>file:/C:/dev/Nevitium/src/com/datavirtue/nevitium/services/InvoiceService.java</file>
         </group>
     </open-files>
 </project-private>

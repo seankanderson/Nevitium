@@ -33,7 +33,7 @@ public class InvoiceManagerTableModel extends AbstractCollectionTableModel<Invoi
                 item.setInvoiceNumber((String)value);
                 break;
             case 2: 
-                item.setCustomer((String)value);
+                item.setBillTo((InvoiceCustomerInfo)value);
                 break;
             case 3: 
                 break;
@@ -54,7 +54,7 @@ public class InvoiceManagerTableModel extends AbstractCollectionTableModel<Invoi
             case 1:
                 return item.getInvoiceNumber();
             case 2:
-                return item.getCustomer();
+                return item.getBillTo() != null ? item.getBillTo().getCompanyName() + " - " + item.getBillTo().getContactName() : ""; 
             case 3:
                 return InvoiceService.calculateInvoiceTotals(item).getGrandTotal();
         }

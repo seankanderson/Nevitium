@@ -97,6 +97,17 @@
                 width: 100%;
             }
 
+            .referenceInformation {
+                padding-top: 10px;
+                padding-bottom: 20px;
+                height: 100%;
+                width: 100%;
+            }
+            
+             .referenceInformation td{
+                padding: 2px;                
+            }
+
             @page {
                 size: letter;
                 orientation: landscape;
@@ -119,12 +130,19 @@
 
             }
 
-            tbody.invoiceItems td {
+            tbody.columnHeadings td {
                 background-color: cornflowerblue;
                 font-weight: bold;
                 color: white;
             }
 
+            .cellHeading {
+                background-color: cornflowerblue;
+                font-weight: bold;
+                color: white;
+                padding: 5px;
+            }
+            
             .companyHeading {
                 width: 100%;
                 /*height: 100px;*/
@@ -148,7 +166,7 @@
 
             .documentInfo td {
                 padding: 0px;
-                font-size: 20px;
+                font-size: 18px;
             }
 
             /* Invoice documentdetail label etc... */
@@ -207,29 +225,39 @@
                 padding: 10px;
             }
 
-            .billTo {
-                font-family: sans-serif;
-
-            }
-
             .billTo span {
                 font-weight: bold;
                 color: cornflowerblue;
+                font-size: 18px;
             }
 
-            .shipTo {
+            .shipTo, .billTo {
                 font-family: sans-serif;
+                font-size: 16px;
             }
 
             .shipTo span {
                 font-weight: bold;
                 color: cornflowerblue;
+                font-size: 18px;
             }
 
+            .customerAddress {
+                padding-left: 10px;
+            }
             .message {
                 vertical-align: text-top;
                 font-size: small;
                 font-family: sans-serif;
+            }
+
+            .companyAddress {
+                width: 100%;
+            }
+
+            .companyAddress td {
+                padding: 0;
+                text-align: right;
             }
         </style>
     </head>
@@ -240,7 +268,7 @@
             <table style="width: 100%;">
                 <tbody>
                     <tr>
-                        <td class="message" style="width: 70%;">
+                        <td class="message" style="width: 60%;">
                             <span class="detailLabel">Invoice and Payment Terms</span>
                             <p>Unless alternate payment terms are specified and agreed to by Seller in writing, all charges, including applicable
                                 packing and transportation costs, billed by Seller are payable within net 30 days of the date of invoice. Seller
@@ -249,10 +277,17 @@
                                 from Buyer to Seller on overdue accounts at the maximum rate allowed by law. </p>
 
                         </td>
+                        <td style="width: 10%; vertical-align: bottom; text-align: center;">
+                            <div style="border: 6px solid cornflowerblue; margin-bottom: 4px;">
+                                <span>Pay Online</span>
+                                <img style="padding: 1px;" src=${websiteQrCode}/>
+                            </div>
+
+                        </td>
                         <td style="width: 15%;">
                             <table class="totalLabels">
                                 <tbody>
-                                    <tr>
+                                    <tr>                                        
                                         <td>Item Total</td>
                                     </tr>
                                     <tr>
@@ -326,61 +361,124 @@
                                 <tr>
 
                                     <td style="width: 50%;">
-                                        <img class="logo" src="https://www.logolynx.com/images/logolynx/s_89/898b65dc4e6156b0896b8b28d0150d6a.png" alt="Company Logo" />
+                                        <img class="logo" src=${companyLogo} alt="Company Logo" />
                                     </td>
-                                    <td style="vertical-align: text-top;  text-align: right; width: 50%;">
-                                        <span class="companyHeaderFont">Logo Sales LLC<br /></span>
-                                        <span>1711 Sycamore Dr Cincinnati, OH 45236<br /></span>
-                                        <span>+1(513)555-6722<br/></span>
-                                        <span>logo-sales.com</span>
+                                    <td style="vertical-align: text-top; width: 50%;">
+                                        <table class="companyAddress">
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="2"  style="width: 90%">
+                                                        <span class="companyHeaderFont">Logo Sales LLC</span>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td><span>1711 Sycamore Dr</span></td>
+                                                    <td rowspan="4" style="width: 10%;">
+                                                        <img style="padding: 1px;" src=${companyQrCode}/>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td>Cincinnati, OH 45236</td>
+
+                                                </tr>
+                                                <tr>
+                                                    <td><span>+1(513)555-6722</span></td>
+
+                                                </tr>
+                                                <tr>
+                                                    <td><span>logo-sales.com</span></td>
+
+                                                </tr>
+                                            </tbody>  
+
+
+                                        </table>
 
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
 
-                        <table class="customerHeading" style="width: 100%;">
+                        <table  style="width: 100%;">
                             <tbody>
                                 <tr>
                                     <td>
-                                        <div class="billTo"><span>Bill To:<br /></span> 
-                                        ${billTo}</div>
-                                    </td>
-                                    <td>
-                                        <div class="shipTo"><span>Ship To:<br /></span> ${shipTo} </div>
-                                    </td>
-                                    <td>
-                                        <div class="documentDetails">
-                                            <table class="documentInfo">
-                                                <tbody>
-                                                    <tr>
-                                                        <td style="background-color: white;" colspan="2">
-                                                            <img src=${invoiceNumberBarcode} />
-                                                        </td>
-                                                        <!--<td>I2204032344352</td>-->
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Invoice Date</td>
-                                                        <td>2022-03-12</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Due Date</td>
-                                                        <td>2022-03-12</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Tax Id</td>
-                                                        <td>D288658797</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                        <div class="billTo">
+                                            <span>Bill To:<br /></span> 
+                                            <div class="customerAddress">
+                                                ${billTo.companyName}<br/>
+                                                ${billTo.contactName}<br/>
+                                                ${billTo.address1}<br/>
+                                                <#if billTo.address2?has_content>
+                                                ${billTo.address2}<br/>
+                                                </#if>
+                                                ${billTo.city}, ${billTo.state} ${billTo.postalCode} ${billTo.countryCode}<br/>
+                                                ${billTo.phoneNumber}<br/>
+                                                ${(billTo.emailAddress)!""}<br/>
+                                            </div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <div class="shipTo">
+                                            <span>Ship To:<br /></span>
+                                            <div class="customerAddress">
+                                                ${shipTo.companyName}<br/>
+                                                ${shipTo.contactName}<br/>
+                                                ${shipTo.address1}<br/>
+                                                <#if shipTo.address2?has_content>
+                                                ${shipTo.address2}<br/>
+                                                </#if>
+                                                ${shipTo.city}, ${shipTo.state} ${shipTo.postalCode} ${shipTo.countryCode}<br/>
+                                                ${shipTo.phoneNumber}<br/>
+                                                ${(shipTo.emailAddress)!""}<br/>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+
+                                        <table class="referenceInformation">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="cellHeading" >Invoice Date</td>                                                    
+                                                </tr>
+                                                <tr>
+                                                    <td>2022-05-31</td>                                                    
+                                                </tr>
+                                                <tr>
+                                                    <td  class="cellHeading">Invoice Number</td>                                                    
+                                                </tr>
+                                                <tr>
+                                                    <td style="text-align: center; background-color: white;" colspan="2">
+                                                        <img src=${invoiceNumberBarcode} />
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
 
-                        <table class="invoiceItemsHeading">
-                            <tbody class="invoiceItems">
+                        <table class="referenceInformation">
+                            <tbody>
+                                <tr>
+                                    <td class="cellHeading">Due Date</td>
+                                    <td class="cellHeading">PO Number</td>
+                                    <td class="cellHeading">Tax ID</td>
+                                </tr>
+                                <tr>
+                                    <td>2022-05-31</td>
+                                    <td>GH556327892</td>
+                                    <td>379-8879458</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table style="border: 0;" class="invoiceItemsHeading">
+                            <tbody class="columnHeadings">
                                 <tr>
                                     <td class="quantity detailColumn">Qty</td>
                                     <td class="code detailColumn">Code</td>
@@ -459,20 +557,6 @@
 
                 </tr>
 
-                <tr>
-                    <td class="quantity detailColumn">${item.quantity}</td>
-                    <td class="code detailColumn">
-                        <#if item.code?has_content>
-                        ${item.code}
-                        </#if>
-                    </td>
-                    <td class="description detailColumn">${item.description}</td>
-                    <td class="unitPrice detailColumn">${item.unitPrice}</td>
-                    <td class="tax1 detailColumn">${item.taxable1?string('yes','no')}</td>
-                    <td class="tax2 detailColumn">${item.taxable2?string('yes','no')}</td>
-                    <td class="total detailColumn">${item.getItemSubtotal()}</td>
-
-                </tr><!-- comment -->
 
 
                 </#list>

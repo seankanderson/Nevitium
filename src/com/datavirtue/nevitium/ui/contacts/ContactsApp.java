@@ -353,7 +353,7 @@ public class ContactsApp extends javax.swing.JDialog {
 //        supplierCheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 16));
 //        tax1CheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 18));
 //        tax2CheckBox.setSelected((Boolean) connTable.getModel().getValueAt(connTable.getSelectedRow(), 19));
-        companyTextField.setText(currentContact.getCompany());
+        companyTextField.setText(currentContact.getCompanyName());
         firstTextField.setText(currentContact.getFirstName());
         lastTextField.setText(currentContact.getLastName());
         addressTextField.setText(currentContact.getAddress1());
@@ -362,7 +362,7 @@ public class ContactsApp extends javax.swing.JDialog {
         stateTextField.setText(currentContact.getState());
         zipTextField.setText(currentContact.getPostalCode());
         countryCombo.setSelectedItem(currentContact.getCountryCode());
-        contactTextField.setText(currentContact.getContact());
+        contactTextField.setText(currentContact.getContactName());
         phoneTextField.setText(currentContact.getPhone());
         faxTextField.setText(currentContact.getFax());
         emailTextField.setText(currentContact.getEmail());
@@ -2137,7 +2137,7 @@ public class ContactsApp extends javax.swing.JDialog {
 //        if (!checkDuplicates()) {
 //            return;
 //        }
-        currentContact.setCompany(companyTextField.getText().trim());
+        currentContact.setCompanyName(companyTextField.getText().trim());
         currentContact.setFirstName(firstTextField.getText().trim());
         currentContact.setLastName(lastTextField.getText().trim());
         currentContact.setAddress1(addressTextField.getText().trim());
@@ -2145,7 +2145,7 @@ public class ContactsApp extends javax.swing.JDialog {
         currentContact.setCity(cityTextField.getText().trim());
         currentContact.setState(stateTextField.getText().trim());
         currentContact.setPostalCode(zipTextField.getText().trim());
-        currentContact.setContact(contactTextField.getText().trim());
+        currentContact.setContactName(contactTextField.getText().trim());
         currentContact.setPhone(phoneTextField.getText().trim());
         currentContact.setFax(faxTextField.getText().trim());
         currentContact.setEmail(emailTextField.getText().trim());

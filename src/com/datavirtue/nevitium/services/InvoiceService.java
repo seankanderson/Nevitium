@@ -2,9 +2,12 @@ package com.datavirtue.nevitium.services;
 
 import com.datavirtue.nevitium.services.exceptions.PartialQuantityException;
 import com.datavirtue.nevitium.database.orm.InvoiceDao;
+import com.datavirtue.nevitium.models.contacts.Contact;
+import com.datavirtue.nevitium.models.contacts.ContactAddress;
 import com.datavirtue.nevitium.models.inventory.Inventory;
 import java.sql.SQLException;
 import com.datavirtue.nevitium.models.invoices.Invoice;
+import com.datavirtue.nevitium.models.invoices.InvoiceCustomerInfo;
 import com.datavirtue.nevitium.models.invoices.InvoiceItem;
 import com.datavirtue.nevitium.models.invoices.InvoiceItemReturn;
 import com.datavirtue.nevitium.models.invoices.InvoicePayment;
@@ -36,6 +39,8 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     @Inject
     private InvoiceItemService invoiceItemService;
     @Inject
+    private InvoiceCustomerInfoService customerInfoService;
+    @Inject
     private InvoiceItemReturnService invoiceItemReturnService;
     @Inject
     private InvoicePaymentService invoicePaymentService;
@@ -54,17 +59,17 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     }
 
     public List<Invoice> getAllQuotes() throws SQLException {
-        var result = this.getDao().queryBuilder().where().eq("quote", true).and().eq("voided", false);
+        var result = this.getDao().queryBuilder().where().eq("isQuote", true).and().eq("voided", false);
         return result.query();
     }
 
     public List<Invoice> getUnpaidInvoices() throws SQLException {
-        var result = this.getDao().queryBuilder().where().eq("paid", false).and().eq("voided", false).and().eq("quote", false);
+        var result = this.getDao().queryBuilder().where().eq("paid", false).and().eq("voided", false).and().eq("isQuote", false);
         return result.query();
     }
 
     public List<Invoice> getPaidInvoices() throws SQLException {
-        var result = this.getDao().queryBuilder().where().eq("paid", true).and().eq("voided", false).and().eq("quote", false);
+        var result = this.getDao().queryBuilder().where().eq("paid", true).and().eq("voided", false).and().eq("isQuote", false);
         return result.query();
     }
 
@@ -73,7 +78,7 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
     }
 
     public List<Invoice> getVoidInvoices() throws SQLException {
-        var result = this.getDao().queryBuilder().where().eq("voided", true).and().eq("quote", false);;
+        var result = this.getDao().queryBuilder().where().eq("voided", true).and().eq("isQuote", false);;
         return result.query();
     }
 
@@ -83,87 +88,120 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         var dateString = dateFormat.format(now);
         return prefix + dateString.substring(2, dateString.length() - 2);
     }
-    
-        
+
+    public InvoiceCustomerInfo mapContactToInvoiceCustomer(Contact contact) {
+
+        var invoiceCustomer = new InvoiceCustomerInfo();
+
+        invoiceCustomer.setCompanyName(contact.getCompanyName());
+        invoiceCustomer.setContactName(contact.getContactName());
+        invoiceCustomer.setAddress1(contact.getAddress1());
+        invoiceCustomer.setAddress2(contact.getAddress2());
+        invoiceCustomer.setCity(contact.getCity());
+        invoiceCustomer.setState(contact.getState());
+        invoiceCustomer.setPostalCode(contact.getPostalCode());
+        invoiceCustomer.setCountryCode(contact.getCountryCode());
+        invoiceCustomer.setTaxId(contact.getTaxId());
+        invoiceCustomer.setPhoneNumber(contact.getPhone());
+
+        return invoiceCustomer;
+    }
+
+    public InvoiceCustomerInfo mapContactAddressToInvoiceShipTo(ContactAddress contactAddress) {
+
+        var invoiceCustomer = new InvoiceCustomerInfo();
+
+        invoiceCustomer.setCompanyName(contactAddress.getCompanyName());
+        invoiceCustomer.setContactName(contactAddress.getContactName());
+        invoiceCustomer.setAddress1(contactAddress.getAddress1());
+        invoiceCustomer.setAddress2(contactAddress.getAddress2());
+        invoiceCustomer.setCity(contactAddress.getCity());
+        invoiceCustomer.setState(contactAddress.getState());
+        invoiceCustomer.setPostalCode(contactAddress.getPostalCode());
+        invoiceCustomer.setCountryCode(contactAddress.getCountryCode());
+        invoiceCustomer.setPhoneNumber(contactAddress.getPhone());
+
+        return invoiceCustomer;
+    }
+
     // https://www.calculator.net/sales-tax-calculator.html?beforetax=199.99&taxrate=7.0&finalprice=&x=51&y=20
-    
     public static double getDiscountTotalForItem(InvoiceItem item) {
-            var allItems = item.getInvoice().getItems();
-            
+        var allItems = item.getInvoice().getItems();
+
 //            var discountItems = allItems
 //                    .stream()
 //                    .filter(x -> x.isDiscount() && x.getRelatedInvoiceItem() == item)
 //                    .collect(Collectors.toList());
-            var discountItems = new ArrayList<InvoiceItem>();
-            
-            for(var invoiceItem : allItems) { // for some reason I failed at implementing this logic in the lambda expression, most likely due to an order of operations issue
-                if (invoiceItem.isDiscount()) {
-                    if (invoiceItem.getRelatedInvoiceItem() != null){
-                        if (invoiceItem.getRelatedInvoiceItem().getId() == null) {
-                            if (invoiceItem.getRelatedInvoiceItem() == item) {
-                                discountItems.add(invoiceItem);
-                            }
-                        } else {
-                            if (invoiceItem.getRelatedInvoiceItem().getId().equals(item.getId())) {
-                                discountItems.add(invoiceItem);
-                            }
+        var discountItems = new ArrayList<InvoiceItem>();
+
+        for (var invoiceItem : allItems) { // the lambda expression failed to accomplish the below -- smells like an order-of-operations problem
+            if (invoiceItem.isDiscount()) {
+                if (invoiceItem.getRelatedInvoiceItem() != null) {
+                    if (invoiceItem.getRelatedInvoiceItem().getId() == null) {
+                        if (invoiceItem.getRelatedInvoiceItem() == item) {
+                            discountItems.add(invoiceItem);
+                        }
+                    } else {
+                        if (invoiceItem.getRelatedInvoiceItem().getId().equals(item.getId())) {
+                            discountItems.add(invoiceItem);
                         }
                     }
                 }
             }
-            
-            var itemDiscount = discountItems.stream().mapToDouble(x -> x.getUnitPrice()).sum();
-            return itemDiscount;
+        }
+
+        var itemDiscount = discountItems.stream().mapToDouble(x -> x.getUnitPrice()).sum();
+        return itemDiscount;
     }
-    
+
     public static InvoiceTotals calculateInvoiceTotals(Invoice invoice) {
         var totals = new InvoiceTotals();
-        
+
         if (invoice.getItems() == null) {
             return totals;
         }
-      
+
         for (var item : invoice.getItems()) {
             if (item.isDiscount()) {
                 continue;
             }
-            
+
             // full invoice discount for negative misc (non-inventory) item
             if (item.getSourceInventoryId() == null && item.getUnitPrice() < 0) {
-                totals.pretaxDiscounts += item.getUnitPrice(); 
+                totals.pretaxDiscounts += item.getUnitPrice();
                 continue;
             }
-            
+
             var itemTotal = item.getItemSubtotal();
-                        
+
             totals.pretaxDiscounts += getDiscountTotalForItem(item);
             totals.subTotal += itemTotal;
-                        
+
             if (item.isTaxable1()) {
-                totals.taxable1Subtotal += itemTotal; 
+                totals.taxable1Subtotal += itemTotal;
                 totals.taxableRate1 = item.getTaxable1Rate();
             }
-            
+
             if (item.isTaxable2()) {
-                totals.taxable2Subtotal += itemTotal;   
+                totals.taxable2Subtotal += itemTotal;
                 totals.taxableRate2 = item.getTaxable2Rate();
             }
 
-        }        
+        }
         totals.taxable1Subtotal += totals.pretaxDiscounts;
-        totals.taxable2Subtotal += totals.pretaxDiscounts;        
+        totals.taxable2Subtotal += totals.pretaxDiscounts;
         totals.taxable1Subtotal = totals.taxable1Subtotal < 0 ? 0.00 : totals.taxable1Subtotal;
-        totals.taxable2Subtotal = totals.taxable2Subtotal < 0 ? 0.00 : totals.taxable2Subtotal;        
+        totals.taxable2Subtotal = totals.taxable2Subtotal < 0 ? 0.00 : totals.taxable2Subtotal;
         totals.subTotal = CurrencyUtil.round(totals.subTotal);
         totals.pretaxDiscounts = CurrencyUtil.round(totals.pretaxDiscounts);
         totals.taxable1Subtotal = CurrencyUtil.round(totals.taxable1Subtotal);
         totals.taxable2Subtotal = CurrencyUtil.round(totals.taxable2Subtotal);
         totals.tax1Total = CurrencyUtil.round(totals.taxable1Subtotal * totals.taxableRate1);
-        totals.tax2Total = CurrencyUtil.round(totals.taxable2Subtotal * totals.taxableRate2);  
-        
+        totals.tax2Total = CurrencyUtil.round(totals.taxable2Subtotal * totals.taxableRate2);
+
         return totals;
     }
-  
+
     public double calculateTotalCredits(Invoice invoice) throws SQLException {
         var payments = invoicePaymentService.getAllCreditsForInvoice(invoice);
         var credits = payments.stream().mapToDouble(x -> x.getCredit()).sum();
@@ -233,10 +271,21 @@ public class InvoiceService extends BaseService<InvoiceDao, Invoice> {
         var returnValue = TransactionManager.callInTransaction(this.connection,
                 new Callable<Void>() {
             public Void call() throws SQLException {
-
-                // save invoice
+                
                 save(invoice);
-
+                
+                if (invoice.getBillTo() != null) {
+                    invoice.getBillTo().setInvoice(invoice);
+                    customerInfoService.save(invoice.getBillTo());
+                }
+                
+                if (invoice.getShiptTo() != null) {
+                    invoice.getShiptTo().setInvoice(invoice);
+                    customerInfoService.save(invoice.getShiptTo());
+                }
+                
+                save(invoice);
+                
                 // make sure invoice items reference the invoice
                 for (var item : invoice.getItems()) {
                     item.setInvoice(invoice);

@@ -216,8 +216,8 @@ public class Tools {
 
         String code = contact.getCountryCode();  //country code
 
-        address[0] = contact.getCompany() + nl;
-        address[1] = contact.getFirstName() + " " + contact.getLastName() + nl;
+        address[0] = contact.getCompanyName() + nl;
+        address[1] = contact.getContactName() + nl;
         address[2] = contact.getAddress1() + nl;
         address[3] = contact.getAddress2() + nl;
 
@@ -255,8 +255,8 @@ public class Tools {
 
         String code = contactAddress.getCountryCode();  //country code
 
-        address[0] = contactAddress.getCompany() + nl;
-        address[1] = contactAddress.getAttention() + nl;
+        address[0] = contactAddress.getCompanyName() + nl;
+        address[1] = contactAddress.getContactName() + nl;
         address[2] = contactAddress.getAddress1() + nl;
         address[3] = contactAddress.getAddress2() + nl;
 

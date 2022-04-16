@@ -23,7 +23,7 @@ public class ContactAddressTableModel extends AbstractCollectionTableModel<Conta
 
         switch (col) {
             case 0:
-                item.setAttention((String) value);
+                item.setContactName((String) value);
                 break;
             case 1:
                 item.setAddress1((String) value);
@@ -49,7 +49,7 @@ public class ContactAddressTableModel extends AbstractCollectionTableModel<Conta
 
         switch (columnIndex) {
             case 0:
-                return item.getAttention();
+                return item.getContactName();
             case 1:
                 return item.getAddress1();
             case 2:

@@ -16,9 +16,11 @@ import lombok.Setter;
  */
 @Getter @Setter
 @DatabaseTable(tableName = "contacts", daoClass = ContactDao.class)
-public class Contact extends BaseModel {    
+public class Contact extends BaseModel implements ContactAddressInterface {    
     @DatabaseField
-    private String company;
+    private String companyName;
+    @DatabaseField
+    private String taxId;
     @DatabaseField(canBeNull = false)
     private String firstName;
     @DatabaseField
@@ -34,7 +36,7 @@ public class Contact extends BaseModel {
     @DatabaseField
     private String postalCode;
     @DatabaseField
-    private String contact;
+    private String contactName;
     @DatabaseField
     private String countryCode;
     @DatabaseField

@@ -24,11 +24,12 @@ public class Invoice extends BaseModel {
     private String invoiceNumber;
     @DatabaseField
     private Date invoiceDate;
-    @DatabaseField
-    private String customer;
+    
+    @DatabaseField(foreign = true, foreignAutoRefresh = true)
+    private InvoiceCustomerInfo billTo;
 
-    @DatabaseField
-    private String shiptToAddress;
+    @DatabaseField(foreign = true, foreignAutoRefresh = true)
+    private InvoiceCustomerInfo shiptTo;
 
     @DatabaseField
     private UUID customerId;
@@ -37,11 +38,12 @@ public class Invoice extends BaseModel {
     @DatabaseField
     private boolean paid;
     @DatabaseField
-    private String message;
+    private String message;    
     @DatabaseField
-    private double shippingFee;
+    private boolean isQuote;
+    
     @DatabaseField
-    private boolean quote;
+    private String purchaseOrder;    
 
     @ForeignCollectionField(eager = true)
     private Collection<InvoiceItem> items;

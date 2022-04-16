@@ -475,7 +475,7 @@ public class ContactShippingDialog extends javax.swing.JDialog {
         if (currentAddress != null) {
 
             companyField.setText(currentAddress.getCompany());
-            nameField.setText(currentAddress.getAttention());
+            nameField.setText(currentAddress.getContactName());
             streetField.setText(currentAddress.getAddress1());
             addr2Field.setText(currentAddress.getAddress2());
             cityField.setText(currentAddress.getCity());
@@ -487,7 +487,7 @@ public class ContactShippingDialog extends javax.swing.JDialog {
             setFieldsEnabled(true);
 
         } else {
-            companyField.setText(currentContact.getCompany());
+            companyField.setText(currentContact.getCompanyName());
             currentAddress = new ContactAddress();
             currentAddress.setContact(currentContact);
         }
@@ -540,8 +540,8 @@ public class ContactShippingDialog extends javax.swing.JDialog {
 
     private void cloneButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cloneButtonActionPerformed
         clearFields();
-        companyField.setText(currentContact.getCompany());
-        nameField.setText(currentContact.getContact());
+        companyField.setText(currentContact.getCompanyName());
+        nameField.setText(currentContact.getContactName());
         streetField.setText(currentContact.getAddress1());
         addr2Field.setText(currentContact.getAddress2());
         cityField.setText(currentContact.getCity());
@@ -566,7 +566,7 @@ public class ContactShippingDialog extends javax.swing.JDialog {
         if (!companyField.isEnabled()) {
 
             setFieldsEnabled(true);
-            companyField.setText(currentContact.getCompany());
+            companyField.setText(currentContact.getCompanyName());
             currentAddress = new ContactAddress();
             currentAddress.setContact(currentContact);
             helpBox.setText("Remember to click 'Save' after making changes.");
@@ -625,7 +625,7 @@ public class ContactShippingDialog extends javax.swing.JDialog {
     private void saveAction() throws SQLException {
 
         currentAddress.setCompany(this.companyField.getText());
-        currentAddress.setAttention(this.nameField.getText());
+        currentAddress.setContactName(this.nameField.getText());
         currentAddress.setAddress1(this.streetField.getText());
         currentAddress.setAddress2(this.addr2Field.getText());
         currentAddress.setCity(this.cityField.getText());

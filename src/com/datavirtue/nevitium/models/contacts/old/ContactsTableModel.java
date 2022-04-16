@@ -25,7 +25,7 @@ public class ContactsTableModel extends AbstractCollectionTableModel<Contact> {
         
         switch (col) {
             case 0: 
-                item.setCompany((String)value);
+                item.setCompanyName((String)value);
                 break;
             case 1:
                 item.setFirstName((String)value);
@@ -51,13 +51,13 @@ public class ContactsTableModel extends AbstractCollectionTableModel<Contact> {
         
         switch (columnIndex) {
             case 0: 
-                return item.getCompany();
+                return item.getCompanyName();
             case 1:
                 return item.getFirstName();
             case 2:
                 return item.getLastName();
             case 3:
-                return item.getContact();
+                return item.getContactName();
             case 4:
                 return item.getCountryCode();
            }

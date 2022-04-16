@@ -1,29 +1,24 @@
-package com.datavirtue.nevitium.models.contacts;
+package com.datavirtue.nevitium.models.invoices;
 
-import com.datavirtue.nevitium.database.orm.ContactAddressDao;
+import com.datavirtue.nevitium.database.orm.InvoiceCustomerInfoDao;
 import com.datavirtue.nevitium.models.BaseModel;
+import com.datavirtue.nevitium.models.contacts.ContactAddressInterface;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 
+ *
  * @author SeanAnderson
  */
 @Getter @Setter
-@DatabaseTable(tableName = "contact_addresses", daoClass = ContactAddressDao.class)
-public class ContactAddress extends BaseModel implements ContactAddressInterface {
+@DatabaseTable(tableName = "invoice_customer_info", daoClass = InvoiceCustomerInfoDao.class)
+public class InvoiceCustomerInfo extends BaseModel implements ContactAddressInterface {
      
     @DatabaseField(foreign=true,foreignAutoRefresh=true, canBeNull = false)
-    private Contact contact;
+    private Invoice invoice;
     
-    @DatabaseField
-    private String phoneNumber;
-    @DatabaseField
-    private String emailAddress;
-    @DatabaseField
-    private String company;
     @DatabaseField
     private String companyName;
     @DatabaseField
@@ -41,11 +36,9 @@ public class ContactAddress extends BaseModel implements ContactAddressInterface
     @DatabaseField
     private String countryCode;
     @DatabaseField
-    private String phone;
+    private String phoneNumber;
     @DatabaseField
-    private String addressType;
+    private String emailAddress;
     @DatabaseField
-    private boolean defaultAddress;
-        
+    private String taxId;     
 }
-
